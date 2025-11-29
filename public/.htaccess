@@ -1,0 +1,37 @@
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Excluir /assets/ de ser redirigido
+    #RewriteCond %{REQUEST_URI} ^/assets/ [NC]
+    #RewriteRule .* - [L]
+    <IfModule mod_rewrite.c>
+        RewriteEngine On
+        
+        # Permitir acceso a assets/js, assets/css y assets/img
+        RewriteCond %{REQUEST_URI} ^/assets/ [NC]
+        RewriteRule .* - [L]
+    </IfModule>
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Enviar solicitudes a index.php (excepto archivos existentes y carpetas)
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+
+    # Permitir acceso a archivos estáticos JS, CSS e imágenes
+    <FilesMatch "\.(js|css|woff|woff2|ttf|eot|svg|png|jpg|gif|ico)$">
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
+</IfModule>

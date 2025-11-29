@@ -1,0 +1,22 @@
+<?php
+// $command = 'soffice --headless --convert-to pdf --outdir /home/u168992517/domains/app.minduval.com/storage/app/public/documentos_generados /home/u168992517/domains/app.minduval.com/storage/app/public/documentos_generados/CONTRATO_OBRA_LABOR_YEISON_ANDRES.docx';
+// exec($command, $output, $return_var);
+
+// // Registra el comando, la salida y el código de retorno
+// $logMessage = "Comando ejecutado: $command\n";
+// $logMessage .= "Salida:\n" . implode("\n", $output) . "\n";
+// $logMessage .= "Código de retorno: $return_var\n";
+// $logMessage .= "Fecha: " . date('Y-m-d H:i:s') . "\n";
+// $logMessage .= str_repeat("=", 50) . "\n"; // Separador
+
+// // Guardar en el archivo de log
+// file_put_contents('exec_log.txt', $logMessage, FILE_APPEND);
+
+// echo "El comando se ha ejecutado y el log ha sido registrado.\n";
+
+exec('php artisan storage:link'); echo "¡Enlace simbólico creado!";
+// symlink(__DIR__ . '/storage/app/public', __DIR__ . '/public/storage');
+// echo 'Enlace simbólico creado correctamente.';
+?>
+
+

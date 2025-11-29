@@ -1,0 +1,12 @@
+Comando ejecutado: soffice --headless --convert-to pdf --outdir /home/u168992517/domains/app.minduval.com/storage/app/public/documentos_generados /home/u168992517/domains/app.minduval.com/storage/app/public/documentos_generados/CONTRATO_OBRA_LABOR_YEISON_ANDRES.docx
+Salida:
+
+Código de retorno: 127
+Fecha: 2025-03-13 00:13:05
+==================================================
+Comando ejecutado: soffice --headless --convert-to pdf --outdir /home/u168992517/domains/app.minduval.com/storage/app/public/documentos_generados /home/u168992517/domains/app.minduval.com/storage/app/public/documentos_generados/CONTRATO_OBRA_LABOR_YEISON_ANDRES.docx
+Salida:
+
+Código de retorno: 127
+Fecha: 2025-03-13 00:17:17
+==================================================

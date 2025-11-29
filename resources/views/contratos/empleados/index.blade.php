@@ -1,0 +1,65 @@
+@extends('adminlte::page')
+
+@section('title', 'Empleados')
+
+@section('plugin.Datatables')
+
+@section('plugin.Sweetalert2')
+
+
+@section('content')
+
+    <div class="card">
+        <div class="card-header">
+            <h4>Empleados</h4>
+        </div>
+        <div class="card-body" >
+            @if(auth()->user()->hasRole('Administrator'))
+                <div class="col-md-1">
+                <button type="button" onclick="regEmpleado()" class="btn btn-primary btn-block mb-1" data-toggle="tooltip" data-placement="top" title="Crear Empleado">
+                    <i class="fas fa-user-plus"></i>
+                </button>
+                </div>
+            @endif
+            <div class="col-md-12 my-3">
+              <div class="table-responsive">
+                  <table id="empleados-table" class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                           <th>#</th>
+                           <th>Id</th>
+                           <th>Nombres</th>
+                           <th>Identificación</th>
+                           <th>Expedida en</th>
+                           <th>Fecha nacimiento</th>
+                           <th>Fecha inicio labor</th>
+                           <th>Dirección</th>
+                           <th>Cargo</th>
+                           <th>Estado</th>
+                           <th>Fecha creación</th>
+                           <th>Acciones</th>
+                        </tr>
+                     </thead>
+                  </table>
+              </div>
+            </div>
+        </div>
+    </div>
+@stop
+
+@push('modals')
+@include('contratos.empleados.modal')
+@endpush
+
+@section('css')
+    {{-- Add here extra stylesheets --}}
+    {{-- <link rel="stylesheet" href="/css/admin_custom.css"> --}}
+@stop
+
+@section('js')
+    <script>
+        //const user_id = @json($user_id);
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.6.0/dist/autoNumeric.min.js"></script>
+    <script src="{{asset('assets/js/contratos/empleados/empleados.js') }}" type="text/javascript"></script>
+@stop
