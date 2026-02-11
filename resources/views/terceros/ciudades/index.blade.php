@@ -9,6 +9,20 @@
 
 @section('content')
 
+    {{-- Breadcrumbs mejorados usando componente --}}
+    @php
+        $breadcrumbs = [
+            [
+                'title' => 'Configuración',
+                'icon' => 'fas fa-cog',
+                'url' => null
+            ]
+        ];
+        $currentTitle = 'Ciudades';
+        $currentIcon = 'fas fa-city';
+    @endphp
+    <x-breadcrumbs :breadcrumbs="$breadcrumbs" :currentTitle="$currentTitle" :currentIcon="$currentIcon" />
+
     <div class="card">
         <div class="card-header">
             <h4>Ciudades</h4>
@@ -41,9 +55,9 @@
     </div>
 @stop
 
-@push('modals')
-    @include('terceros.ciudades.modal')
-@endpush
+@include('terceros.ciudades.modal')
+@include('terceros.ciudades.modal_pais_dpto')
+
 
 @section('css')
     {{-- Add here extra stylesheets --}}

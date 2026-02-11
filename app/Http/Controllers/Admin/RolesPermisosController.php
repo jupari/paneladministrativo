@@ -17,14 +17,20 @@ class RolesPermisosController extends Controller
     use AuthorizesRequests;
     public function __construct()
     {
-        $this->middleware('can:permisos.index')->only('index');
-        $this->middleware('can:permisos.create')->only('create','store');
-        $this->middleware('can:permisos.edit')->only('edit','update');
+        // Solo usuarios con rol sysadmin pueden gestionar permisos
+        //$this->middleware('sysadmin');
+
+        $this->middleware('can:permission.index')->only('index');
+        $this->middleware('can:permission.create')->only('create','store');
+        $this->middleware('can:permission.edit')->only('edit','update');
     }
 
     public function index(Request $request)
     {
-        $this->authorize('view', new Permission);
+        // Verificar que el usuario tenga permisos o rol adecuado
+        if (!auth()->user()->hasAnyRole(['Administrator', 'sysadmin']) && !auth()->user()->can('permission.index')) {
+            abort(403, 'Esta acción no está autorizada.');
+        }
 
         try {
 
@@ -87,7 +93,10 @@ class RolesPermisosController extends Controller
 
             $permission = Permission::select('id', 'name','description', 'guard_name')->findOrFail($id);
 
-            $this->authorize('update', $permission);
+            // Verificar autorización simplificada
+            if (!auth()->user()->hasAnyRole(['Administrator', 'sysadmin']) && !auth()->user()->can('permission.edit')) {
+                abort(403, 'Esta acción no está autorizada.');
+            }
 
             if($permission){
 
@@ -109,7 +118,10 @@ class RolesPermisosController extends Controller
 
     public function store(Request $request)
     {
-        $this->authorize('create', new Permission);
+        // Verificar autorización simplificada
+        if (!auth()->user()->hasAnyRole(['Administrator', 'sysadmin']) && !auth()->user()->can('permission.create')) {
+            abort(403, 'Esta acción no está autorizada.');
+        }
 
 
         $validation =  Validator::make($request->all(),[
@@ -154,7 +166,10 @@ class RolesPermisosController extends Controller
 
             $permission = Permission::findOrFail($id);
 
-            $this->authorize('update', $permission);
+            // Verificar autorización simplificada
+            if (!auth()->user()->hasAnyRole(['Administrator', 'sysadmin']) && !auth()->user()->can('permission.edit')) {
+                abort(403, 'Esta acción no está autorizada.');
+            }
 
             $validation =  Validator::make($request->all(),[
                 'name'=>'required',

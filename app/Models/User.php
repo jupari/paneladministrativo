@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable
 {
@@ -24,7 +25,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'identificacion'
+        'identificacion',
+        'company_id'
     ];
 
     /**
@@ -46,23 +48,64 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
+    // Relación con Company
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    // Métodos para verificar empresa y licencia
+    public function hasValidCompanyLicense(): bool
+    {
+        return $this->company && $this->company->isLicenseValid();
+    }
+
+    public function getCompanyName(): ?string
+    {
+        return $this->company ? $this->company->name : null;
+    }
+
+    public function getCompanyLogo(): ?string
+    {
+        return $this->company ? $this->company->getLogoUrl() : null;
+    }
+
+    public function getCompanyPrimaryColor(): string
+    {
+        return $this->company ? $this->company->primary_color : '#007bff';
+    }
+
+    // Scopes
+    public function scopeByCompany($query, $companyId)
+    {
+        return $query->where('company_id', $companyId);
+    }
+
+    public function scopeWithValidLicense($query)
+    {
+        return $query->whereHas('company', function($q) {
+            $q->withValidLicense();
+        });
+    }
+
     public function adminlte_image(){
         return 'https://picsum.photos/300/300';
     }
 
     public function adminlte_desc(){
-
-        $user = Auth::user();
-
         // Obtén los nombres de los roles del usuario
-        $roles = $user->getRoleNames();
+        $roles = $this->getRoleNames();
 
         // Asumiendo que un usuario tiene un solo rol, puedes obtener el primer rol
-        $roleName = $roles->first();
+        $roleName = $roles->isNotEmpty() ? $roles->first() : 'Sin rol asignado';
+
+        // Agregar nombre de empresa si existe
+        $companyName = $this->getCompanyName();
+        if ($companyName) {
+            $roleName .= ' - ' . $companyName;
+        }
 
         return $roleName;
-
-
     }
 
     public function adminlte_profile_url(){

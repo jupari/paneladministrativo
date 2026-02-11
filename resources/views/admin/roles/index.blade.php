@@ -10,6 +10,20 @@
 
 
 @section('content')
+    {{-- Breadcrumbs mejorados usando componente --}}
+    @php
+        $breadcrumbs = [
+            [
+                'title' => 'Administración',
+                'icon' => 'fas fa-shield-alt',
+                'url' => null
+            ]
+        ];
+        $currentTitle = 'Roles';
+        $currentIcon = 'fas fa-user-tag';
+    @endphp
+    <x-breadcrumbs :breadcrumbs="$breadcrumbs" :currentTitle="$currentTitle" :currentIcon="$currentIcon" />
+
     <div class="content-header">
     <div class="container-fluid">
         <div class="row mb-2">

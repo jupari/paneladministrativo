@@ -97,6 +97,7 @@ function Cargar() {
                 { data: 'nombres', name: 'nombres'},
                 { data: 'email', name: 'correo'},
                 { data: 'identificacion', name: 'identificacion'},
+                { data: 'empresa', name: 'empresa'},
                 { data: 'rol', name: 'rol'},
                 { data: 'fecha_cr', name: 'fecha_cr'},
                 { data: 'active', name: 'active',className:'text-center'},
@@ -116,7 +117,7 @@ function cleanInput(btn) {
     const bool = (btn == null) ? false : true;
 
     // Campos usuario
-    const usuarioFields = ['name','email', 'role','identificacion','password','password-confirm','reset-password'];
+    const usuarioFields = ['name','email', 'role','company_id','identificacion','password','password-confirm','reset-password'];
     usuarioFields.forEach(field => {
         $('#' + field).val('');
     });
@@ -138,7 +139,7 @@ function showCustomUser(btn) {
 
 
         // Mapear los campos del usuario
-        const usuarioFields = ['id','name','email','active','identificacion'];
+        const usuarioFields = ['id','name','email','active','identificacion','company_id'];
         usuarioFields.forEach(field => {
             if(field!='active'){
                 $('#' + field).val(usr[field]);
@@ -153,17 +154,77 @@ function showCustomUser(btn) {
 
 }
 
+// Función para filtrar empresas según rol del usuario
+function filterCompaniesForUser() {
+    const companySelect = $('#company_id');
+
+    if (typeof isSysAdmin !== 'undefined' && !isSysAdmin && currentUserCompany) {
+        // Si no es sysadmin, solo mostrar su empresa
+        companySelect.find('option').each(function() {
+            const option = $(this);
+            const optionValue = option.val();
+
+            if (optionValue === '') {
+                // Mantener opción vacía
+                return;
+            }
+
+            if (optionValue != currentUserCompany.id) {
+                option.hide();
+            } else {
+                option.show();
+            }
+        });
+
+        // Pre-seleccionar la empresa del usuario actual
+        if (companySelect.val() === '') {
+            companySelect.val(currentUserCompany.id);
+        }
+    } else {
+        // Si es sysadmin, mostrar todas las empresas
+        companySelect.find('option').show();
+    }
+}
+
+// Función para mostrar mensaje informativo sobre restricciones
+function showCompanyRestrictionMessage() {
+    const companyGroup = $('#company_id').closest('.form-group');
+
+    if (typeof isSysAdmin !== 'undefined' && !isSysAdmin && currentUserCompany) {
+        // Agregar mensaje informativo
+        if (companyGroup.find('.company-restriction-info').length === 0) {
+            const infoMessage = `
+                <small class="form-text text-info company-restriction-info">
+                    <i class="fas fa-info-circle"></i>
+                    Solo puede asignar usuarios a su empresa: <strong>${currentUserCompany.name}</strong>
+                </small>
+            `;
+            companyGroup.append(infoMessage);
+        }
+    } else {
+        // Remover mensaje si es sysadmin
+        companyGroup.find('.company-restriction-info').remove();
+    }
+}
+
 // //Registrar usuario
 function regUsr() {
-    myModal.show()
+    $('#myModal').modal('show');
     $('#exampleModalLabel').html('Registrar usuario');
-    $('#panelpassword').show();
+    //$('#myModalPss').modal('show');
 
     // LIMPIAR CAMPOS
     cleanInput();
      // FIN LIMPIAR CAMPOS
     limpiarValidaciones();
-    let r = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>' +
+
+    // Aplicar filtros de empresa y mensajes
+    setTimeout(() => {
+        filterCompaniesForUser();
+        showCompanyRestrictionMessage();
+    }, 100);
+
+    let r = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
         '<button type="button" class="btn btn-primary" onclick="registerUsr()" >Agregar</button>';
 
     $(".modal-footer").html(r);
@@ -188,6 +249,7 @@ function registerUsr() {
     ajax_data.append('name', $('#name').val());
     ajax_data.append('email', $('#email').val());
     ajax_data.append('role', $('#role').val());
+    ajax_data.append('company_id', $('#company_id').val());
     ajax_data.append('active', activo.toString());
     ajax_data.append('password', $('#password').val());
     ajax_data.append('identificacion', $('#identificacion').val());
@@ -196,6 +258,15 @@ function registerUsr() {
     if(!verificarContraseña){
         $('#repetir-password').text('La contraseña no coincide, por favor verifique');
         return;
+    }
+
+    // Validar restricción de empresa para usuarios no-sysadmin
+    if (typeof isSysAdmin !== 'undefined' && !isSysAdmin && currentUserCompany) {
+        const selectedCompanyId = $('#company_id').val();
+        if (selectedCompanyId && selectedCompanyId != currentUserCompany.id) {
+            $('#error_company_id').text('Solo puede asignar usuarios a su propia empresa.');
+            return;
+        }
     }
 
     $.ajax({
@@ -210,7 +281,7 @@ function registerUsr() {
 
         Cargar();
 
-        myModal.toggle();
+        $('#myModal').modal('toggle');
         toastr.success(response.message);
 
     })
@@ -248,21 +319,23 @@ function registerUsr() {
 
 // // Actualizar usuario
 function upUsr(btn) {
-    myModal.show()
+    $('#myModal').modal('show')
     $('#exampleModalLabel').html('Editar usuario');
-    $('#panelpassword').hide();
+    $('#panelpassword').modal('hide');
     // LIMPIAR CAMPOS
     cleanInput();
     limpiarValidaciones();
     showCustomUser(btn);
     // FIN LIMPIAR CAMPOS
 
-    let u = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>' +
+    // Aplicar filtros de empresa y mensajes al editar
+    setTimeout(() => {
+        filterCompaniesForUser();
+        showCompanyRestrictionMessage();
+    }, 100);
+
+    let u = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
         '<button id="editar" class="btn btn-primary" onclick="updateUsr(' + btn + ')">Guardar</button>';
-
-
-
-
     $(".modal-footer").html(u);
 
 }
@@ -290,9 +363,19 @@ function updateUsr(btn) {
         return;
     }
 
+    // Validar restricción de empresa para usuarios no-sysadmin
+    if (typeof isSysAdmin !== 'undefined' && !isSysAdmin && currentUserCompany) {
+        const selectedCompanyId = $('#company_id').val();
+        if (selectedCompanyId && selectedCompanyId != currentUserCompany.id) {
+            $('#error_company_id').text('Solo puede asignar usuarios a su propia empresa.');
+            return;
+        }
+    }
+
     ajax_data.append('name', $('#name').val());
     ajax_data.append('email', $('#email').val());
     ajax_data.append('role', $('#role').val());
+    ajax_data.append('company_id', $('#company_id').val());
     ajax_data.append('active', activo.toString());
     ajax_data.append('password', $('#password').val());
     ajax_data.append('identificacion', $('#identificacion').val());
@@ -310,7 +393,7 @@ function updateUsr(btn) {
 
         Cargar();
 
-        myModal.toggle();
+        $('#myModal').modal('toggle');
         toastr.success(response.message);
 
     })
@@ -338,7 +421,7 @@ function updateUsr(btn) {
 
             else if (e.status == 403) {
 
-                myModal.toggle();
+                myModal.modal('toggle');
                 toastr.warning(arr.message);
 
             }
@@ -349,9 +432,7 @@ function updateUsr(btn) {
 
 // // Cambiar password
 function changep(btn) {
-
-
-    myModalpss.show()
+    $('#myModalpss').modal('show')
 
     $('#exampleModalLabelPss').html('<b>Cambiar contraseña</b>');
 
@@ -359,7 +440,7 @@ function changep(btn) {
     cleanInput(btn);
     limpiarValidaciones();
 
-    let shw = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>' +
+    let shw = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>' +
         '<button type="button" class="btn btn-primary" onclick="usrChange(' + btn + ')" >Agregar</button>';
 
 
@@ -395,7 +476,7 @@ function usrChange(btn) {
 
         Cargar();
 
-        myModalpss.toggle();
+        $('#myModalpss').modal('toggle');
         toastr.success(response.message);
 
     })
@@ -418,7 +499,7 @@ function usrChange(btn) {
 
             else if (e.status == 403) {
 
-                myModalpss.toggle();
+                myModalpss.modal('toggle');
                 toastr.warning(arr.message);
 
             }
@@ -432,6 +513,7 @@ function limpiarValidaciones(){
     $('#error_email').text('');
     $('#error_name').text('');
     $('#error_password').text('');
+    $('#error_company_id').text('');
     $('#repetir-password').text('');
     $('#error_reset_password').text('');
     $('#error_cpassword').text('');
@@ -477,13 +559,13 @@ function validacionPassword(){
 //             }).then(response => {
 //                 //Swal.fire(response.message, "", "success");
 
-//                 $(btn).hide();
+//                 $(btn).modal('hide');
 
-//                 $(btn).siblings('.showFile').hide();
+//                 $(btn).siblings('.showFile').modal('hide');
 
-//                 $(btn).closest('.form-group').find('.custom-file').show();
+//                 $(btn).closest('.form-group').find('.custom-file').modal('show');
 
-//                 $(btn).closest('.form-group').find('.arch' + idArch).show();
+//                 $(btn).closest('.form-group').find('.arch' + idArch).modal('show');
 
 //                 $('.lb_' + (idArch)).text('');
 

@@ -30,8 +30,8 @@ class PermissionPolicy
      */
     public function view(User $user, Permission $permission)
     {
-        return $user->hasRole('Administrator')
-                    || $user->can('Ver permiso');
+        return $user->hasRole(['Administrator', 'sysadmin'])
+                    || $user->can('permission.index');
     }
 
     /**
@@ -42,8 +42,8 @@ class PermissionPolicy
      */
     public function create(User $user)
     {
-        return $user->hasRole('Administrator')
-                || $user->can('Crear permiso');
+        return $user->hasRole(['Administrator', 'sysadmin'])
+                || $user->can('permission.create');
     }
 
     /**
@@ -55,8 +55,8 @@ class PermissionPolicy
      */
     public function update(User $user, Permission $permission)
     {
-        return $user->hasRole('Administrator')
-        || $user->can('Actualizar permiso');
+        return $user->hasRole(['Administrator', 'sysadmin'])
+        || $user->can('permission.edit');
     }
 
     /**

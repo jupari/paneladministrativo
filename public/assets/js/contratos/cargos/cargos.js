@@ -37,11 +37,6 @@ $(function () {
     Cargar();
 });
 
-//se declara la variable del modal
-var myModal = new bootstrap.Modal(document.getElementById('ModalCargo'), {
-    keyboard: false
-})
-
 
 function Cargar() {
     if ($.fn.DataTable.isDataTable('#cargos-table')) {
@@ -132,7 +127,7 @@ function showCustomCargo(btn) {
 
 //Registrar usuario
 function regCargo() {
-    myModal.show()
+    $('#ModalCargo').modal('show');
     $('#exampleModalLabel').html('Registrar Cargo');
 
     // LIMPIAR CAMPOS
@@ -183,7 +178,7 @@ function registerCargo() {
         $('#spinnerRegister').addClass('d-none');
         $('#spinnerRegister').removeClass('d-block');
         Cargar();
-        myModal.toggle(); // Reemplaza con tu lógica de modal
+        myModal.modal('toggle'); // Reemplaza con tu lógica de modal
         toastr.success(response.message); // Muestra el mensaje de éxito
 
     }).catch(e => {
@@ -208,13 +203,13 @@ function registerCargo() {
 
 // Actualizar usuario
 function upCargo(btn) {
-    myModal.show()
+   $('#ModalCargo').modal('show');
     $('#exampleModalLabel').html('Editar Cargo');
     // LIMPIAR CAMPOS
     cleanInput();
     showCustomCargo(btn);
     // FIN LIMPIAR CAMPOS
-    let u = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>' +
+    let u = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
         '<button id="editar" class="btn btn-primary" onclick="updateCargo(' + btn + ')">Guardar</button>';
     $(".modal-footer").html(u);
 }
@@ -256,7 +251,7 @@ function updateCargo(btn) {
     })
     .then(response => {
         Cargar();
-        myModal.toggle();
+        $('#ModalCargo').modal('hide');
         toastr.success(response.message);
     })
     .catch(e => {
@@ -272,7 +267,7 @@ function updateCargo(btn) {
             });
         toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.');
         } else if (e.status === 403) {
-            myModal.toggle();
+            $('#ModalCargo').modal('hide');
             toastr.warning(arr.message);
         }
     });

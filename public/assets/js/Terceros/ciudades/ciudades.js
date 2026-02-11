@@ -153,14 +153,14 @@ function showCustomCiudad(btn) {
 
 //Registrar usuario
 function regCiudad() {
-    myModal.show()
+    $('#ModalCiudad').modal('show');
     $('#exampleModalLabel').html('Registrar Ciudad');
 
     // LIMPIAR CAMPOS
     cleanInput();
      // FIN LIMPIAR CAMPOS
     limpiarValidaciones();
-     let r = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>' +
+     let r = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
         '<button type="button" class="btn btn-primary" onclick="registerCiudad()"><span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="spinnerRegister"></span>Agregar</button>';
 
     $(".modal-footer").html(r);
@@ -206,7 +206,7 @@ function registerCiudad() {
         $('#spinnerRegister').addClass('d-none');
         $('#spinnerRegister').removeClass('d-block');
         Cargar();
-        myModal.toggle(); // Reemplaza con tu lógica de modal
+        $('#ModalCiudad').modal('hide');
         toastr.success(response.message); // Muestra el mensaje de éxito
 
     }).catch(e => {
@@ -231,13 +231,13 @@ function registerCiudad() {
 
 // Actualizar usuario
 function upCiudad(btn) {
-    myModal.show()
+    $('#ModalCiudad').modal('show');
     $('#exampleModalLabel').html('Editar Vendedor');
     // LIMPIAR CAMPOS
     cleanInput();
     showCustomCiudad(btn);
     // FIN LIMPIAR CAMPOS
-    let u = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>' +
+    let u = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
         '<button id="editar" class="btn btn-primary" onclick="updateCiudad(' + btn + ')">Guardar</button>';
     $(".modal-footer").html(u);
 }
@@ -286,7 +286,7 @@ function updateCiudad(btn) {
     })
     .then(response => {
         Cargar();
-        myModal.toggle();
+        $('#ModalCiudad').modal('hide');
         toastr.success(response.message);
     })
     .catch(e => {
@@ -302,7 +302,7 @@ function updateCiudad(btn) {
             });
         toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.');
         } else if (e.status === 403) {
-            myModal.toggle();
+            myModal.modal('toggle');
             toastr.warning(arr.message);
         }
     });
@@ -329,7 +329,7 @@ function openModalPaisDpto(e){
 
     $('#modalLabelPaisDpto').html('Registrar País o Departamento');
 
-    let r = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>' +
+    let r = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
     '<button type="button" class="btn btn-primary" onclick="registerPais()"><span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="spinnerRegister"></span>Agregar</button>';
     $("#modal_footer").html(r);
 }
@@ -355,7 +355,7 @@ function registerPais(){
         processData: false,
     }).then(response => {
         getPais();
-        myModal.toggle(); // Reemplaza con tu lógica de modal
+       $('#ModalCiudad').modal('hide');
         toastr.success(response.message); // Muestra el mensaje de éxito
 
     }).catch(e => {

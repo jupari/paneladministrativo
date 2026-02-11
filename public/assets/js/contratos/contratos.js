@@ -59,9 +59,12 @@ var myModal = new bootstrap.Modal(document.getElementById('ModalGenerarContrato'
     keyboard: false
 })
 
+
 var myModalContratosEmpleados = new bootstrap.Modal(document.getElementById('ModalGenerarContratosEmpleados'), {
     keyboard: false
 })
+
+
 
 //Variable que almacena el arreglo de empleados
 selectedEmployees=[];
@@ -207,7 +210,7 @@ function showCustomEmpleado(btn) {
 
 // Actualizar usuario
 function upGenerarContrato(btn) {
-    myModal.show()
+    $("#ModalGenerarContrato").modal('show');
     $('#exampleModalLabel').html('Generar Contrato');
     // LIMPIAR CAMPOS
     cleanInput();
@@ -220,7 +223,7 @@ function upGenerarContrato(btn) {
     //     '<button id="editar" class="btn btn-primary" onclick="generarContrato(' + btn + ')">Generar Contrato</button>';
     // $(".modal-footer").html(u);
     let u = `
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
         <button id="editar" class="btn btn-primary" onclick="generarContrato(this, ${btn})">
             <span id="spinner-editar" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
             <span id="text-editar">Generar Contrato...</span>
@@ -292,7 +295,7 @@ function generarContrato(btn,param) {
             });
         toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.');
         } else if (e.status === 403) {
-            myModal.toggle();
+            $("#ModalGenerarContrato").modal('hide');
             toastr.warning(arr.message);
         }
     });
@@ -448,14 +451,14 @@ function generarContratosEmpleados(){
 function openModalGenerarContratosEmpleados(){
     selectEmpleados();
     if(selectedEmployees.length==0) return;
-    myModalContratosEmpleados.show();
+    $("#ModalGenerarContratosEmpleados").modal('show');
 
     $('#exampleModalLabelGE').html('Generar Contrato  números de empleados seleccionados '+ selectedEmployees.length);
     // LIMPIAR CAMPOS
     cleanInput();
     limpiarValidaciones();
     // FIN LIMPIAR CAMPOS
-    let u = `<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+    let u = `<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
         <button id="btnGenerarContratos" class="btn btn-primary" onclick="generarContratosEmpleados()">
            Generar Contrato...
         </button>`;

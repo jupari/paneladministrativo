@@ -169,10 +169,7 @@ function registerPerm()
 // Actualizar usuario
 function upPerm(btn)
 {
-    const myModal = new bootstrap.Modal(document.getElementById('modalpermiso'), {
-        keyboard: false
-      })
-    myModal.show()
+    $('#modalpermiso').modal('show');
     $('#exampleModalLabel').html('Editar permiso');
 
     // LIMPIAR CAMPOS

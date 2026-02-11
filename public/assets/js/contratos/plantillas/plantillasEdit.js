@@ -99,7 +99,7 @@ function showCustomPlantilla(btn) {
 
 //Registrar usuario
 function regPlantilla() {
-    myModal.show()
+    myModal.modal('show')
     $('#exampleModalLabel').html('Registrar Plantilla');
 
     // LIMPIAR CAMPOS
@@ -165,7 +165,7 @@ function registerPlantilla() {
         $('#spinnerRegister').addClass('d-none');
         Cargar();
         $('#plantillaId').val(response.plantilla.id);
-        //myModal.toggle(); // Reemplaza con tu lógica de modal
+        //myModal.modal('toggle'); // Reemplaza con tu lógica de modal
         getDataMapping(response.plantilla.id);
         toastr.success(response.message); // Muestra el mensaje de éxito
 
@@ -192,7 +192,7 @@ function registerPlantilla() {
 
 // Actualizar usuario
 function upPlantilla(btn) {
-    myModal.show()
+    myModal.modal('show')
     $('#exampleModalLabel').html('Editar Plantilla');
     // LIMPIAR CAMPOS
     cleanInput();
@@ -247,7 +247,7 @@ function updatePlantilla(btn) {
     })
     .then(response => {
         Cargar();
-        myModal.toggle();
+        myModal.modal('toggle');
         toastr.success(response.message);
     })
     .catch(e => {
@@ -263,7 +263,7 @@ function updatePlantilla(btn) {
             });
         toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.');
         } else if (e.status === 403) {
-            myModal.toggle();
+            myModal.modal('toggle');
             toastr.warning(arr.message);
         }
     });
@@ -376,7 +376,7 @@ function saveMapping(plantillaId){
         processData: false,
     }).then(response => {
         Cargar();
-        myModal.toggle();
+        myModal.modal('toggle');
         toastr.success(response.message); // Muestra el mensaje de éxito
     }).catch(e => {
         limpiarValidaciones(); // Reemplaza con tu función de limpieza de validaciones

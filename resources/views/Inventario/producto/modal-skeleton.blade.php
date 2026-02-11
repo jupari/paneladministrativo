@@ -6,7 +6,7 @@
         <h5 class="modal-title placeholder-glow">
           <span class="placeholder col-6"></span>
         </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
       </div>
       <div class="modal-body">
         <!-- Fila 1 -->

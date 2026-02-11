@@ -31,4 +31,9 @@ class ItemPropio extends Model
     {
         return $this->belongsTo(UnidadMedida::class, 'unidad_medida', 'sigla');
     }
+
+    public function cotizacionProductos()
+    {
+        return $this->hasMany(CotizacionProducto::class, 'item_propio_id');
+    }
 }

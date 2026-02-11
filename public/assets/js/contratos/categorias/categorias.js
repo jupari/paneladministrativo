@@ -36,13 +36,6 @@ $(function () {
      //carga de la datatable
     Cargar();
 });
-
-//se declara la variable del modal
-var myModal = new bootstrap.Modal(document.getElementById('ModalCargo'), {
-    keyboard: false
-})
-
-
 function Cargar() {
     if ($.fn.DataTable.isDataTable('#categorias-table')) {
         $('#categorias-table').DataTable().destroy();
@@ -132,14 +125,14 @@ function showCustomCargo(btn) {
 
 //Registrar usuario
 function regCargo() {
-    myModal.show()
+    $('#ModalCargo').modal('show');
     $('#exampleModalLabel').html('Registrar Cargo');
 
     // LIMPIAR CAMPOS
     cleanInput();
      // FIN LIMPIAR CAMPOS
     limpiarValidaciones();
-     let r = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>' +
+     let r = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
         '<button type="button" class="btn btn-primary" onclick="registerCategoria()"><span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="spinnerRegister"></span>Agregar</button>';
 
     $(".modal-footer").html(r);
@@ -183,7 +176,7 @@ function registerCategoria() {
         $('#spinnerRegister').addClass('d-none');
         $('#spinnerRegister').removeClass('d-block');
         Cargar();
-        myModal.toggle(); // Reemplaza con tu lógica de modal
+        $('#ModalCargo').modal('hide'); // Cerrar modal
         toastr.success(response.message); // Muestra el mensaje de éxito
 
     }).catch(e => {
@@ -200,7 +193,7 @@ function registerCategoria() {
             toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.'); // Muestra el mensaje de error
         } else if (e.status == 403) {
             // Errores de permisos
-            $('#ModalCliente').modal('toggle');
+            $('#ModalCargo').modal('hide');
             toastr.warning(arr.error);
         }
     });
@@ -208,13 +201,15 @@ function registerCategoria() {
 
 // Actualizar usuario
 function upCargo(btn) {
-    myModal.show()
-    $('#exampleModalLabel').html('Editar Cargo');
+
     // LIMPIAR CAMPOS
     cleanInput();
     showCustomCargo(btn);
     // FIN LIMPIAR CAMPOS
-    let u = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>' +
+    $('#ModalCargo').modal('show');
+    $('#exampleModalLabel').html('Editar Cargo');
+
+    let u = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
         '<button id="editar" class="btn btn-primary" onclick="updateCargo(' + btn + ')">Guardar</button>';
     $(".modal-footer").html(u);
 }
@@ -256,7 +251,7 @@ function updateCargo(btn) {
     })
     .then(response => {
         Cargar();
-        myModal.toggle();
+        $('#ModalCargo').modal('hide');
         toastr.success(response.message);
     })
     .catch(e => {
@@ -266,13 +261,12 @@ function updateCargo(btn) {
 
         if (e.status === 422) {
             // Errores de validación
-            $('#myModal').data('bs.modal')._config.backdrop = 'static';
             $.each(toast, function(key, value) {
                 $('#error_' + key).text(value[0]);
             });
         toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.');
         } else if (e.status === 403) {
-            myModal.toggle();
+            $('#ModalCargo').modal('hide');
             toastr.warning(arr.message);
         }
     });

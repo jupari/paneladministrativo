@@ -194,13 +194,13 @@ async function showCustomEmpleado(btn) {
 
 //Registrar usuario
 function regEmpleado() {
-    myModal.show()
+    $('#ModalEmpleado').modal('show');
     $('#exampleModalLabel').html('Registrar Empleado');
     // LIMPIAR CAMPOS
     cleanInput();
      // FIN LIMPIAR CAMPOS
     limpiarValidaciones();
-     let r = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>' +
+     let r = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
         '<button type="button" class="btn btn-primary" onclick="registerEmpleado()"><span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="spinnerRegister"></span>Agregar</button>';
 
     $(".modal-footer").html(r);
@@ -265,7 +265,7 @@ function registerEmpleado() {
         $('#spinnerRegister').addClass('d-none');
         $('#spinnerRegister').removeClass('d-block');
         Cargar();
-        myModal.toggle(); // Reemplaza con tu lógica de modal
+        $('#ModalEmpleado').modal('hide');// Reemplaza con tu lógica de modal
         toastr.success(response.message); // Muestra el mensaje de éxito
 
     }).catch(e => {
@@ -290,14 +290,14 @@ function registerEmpleado() {
 
 // Actualizar usuario
 function upEmpleado(btn) {
-    myModal.show()
+    $('#ModalEmpleado').modal('show');
     $('#exampleModalLabel').html('Editar Empleado');
     // LIMPIAR CAMPOS
     cleanInput();
     limpiarValidaciones();
     showCustomEmpleado(btn);
     // FIN LIMPIAR CAMPOS
-    let u = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>' +
+    let u = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
         '<button id="editar" class="btn btn-primary" onclick="updateEmpleado(' + btn + ')">Guardar</button>';
     $(".modal-footer").html(u);
 }
@@ -362,7 +362,7 @@ function updateEmpleado(btn) {
     })
     .then(response => {
         Cargar();
-        myModal.toggle();
+        $('#ModalEmpleado').modal('hide');
         toastr.success(response.message);
     })
     .catch(e => {
@@ -378,7 +378,7 @@ function updateEmpleado(btn) {
             });
         toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.');
         } else if (e.status === 403) {
-            myModal.toggle();
+            myModal.modal('toggle');
             toastr.warning(arr.message);
         }
     });

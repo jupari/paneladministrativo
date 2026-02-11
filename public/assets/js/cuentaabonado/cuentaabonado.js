@@ -162,7 +162,7 @@ function showCuenta(btn) {
 //Registrar usuario
 function regCuenta()
 {
-    myModal.show()
+    myModal.modal('show')
     $('#exampleModalLabel').html('Crear Cuenta distribuidor');
 
     // LIMPIAR CAMPOS
@@ -202,7 +202,7 @@ function registerCuenta()
 
         Cargar();
 
-        myModal.toggle();
+        myModal.modal('toggle');
         toastr.success(response.message);
 
     })
@@ -225,7 +225,7 @@ function registerCuenta()
 
         else if(e.status == 403){
 
-            myModal.toggle();
+            myModal.modal('toggle');
             toastr.warning(arr.error);
 
         }
@@ -237,7 +237,7 @@ function registerCuenta()
 // Actualizar usuario
 function upCuenta(btn)
 {
-    myModal.show()
+    myModal.modal('show')
     $('#exampleModalLabel').html('Editar Cuenta distribuidor');
     // LIMPIAR CAMPOS
     cleanInput();
@@ -283,7 +283,7 @@ function updateCuenta(btn)
 
         Cargar();
 
-        myModal.toggle();
+        myModal.modal('toggle');
         toastr.success(response.message);
 
     })
@@ -306,7 +306,7 @@ function updateCuenta(btn)
 
         else if(e.status == 403){
 
-            myModal.toggle();
+            myModal.modal('toggle');
             toastr.warning(arr.message);
 
         }
@@ -381,7 +381,7 @@ function saveFileExcel(){
 function openModalLoadFile(res)
 {
 
-    modalLoadFile.show();
+    modalLoadFile.modal('show');
     $('#modalLabel').html('<b>Carga de Archivo</b>');
     $('#lote').html(res.lote);
 

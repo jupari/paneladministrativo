@@ -1,0 +1,198 @@
+/* Estilos para la navegación por pasos del modal de clientes */
+
+/* Estilos para los pasos de navegación */
+.steps-nav {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 2px solid #dee2e6;
+}
+
+.step {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 10px 5px;
+}
+
+.step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #6c757d;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 5px auto;
+    transition: all 0.3s ease;
+    font-size: 16px;
+}
+
+.step.active .step-circle {
+    background: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+    transform: scale(1.1);
+}
+
+.step.completed .step-circle {
+    background: #28a745;
+}
+
+.step small {
+    color: #6c757d;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.step.active small {
+    color: #007bff;
+    font-weight: 600;
+}
+
+.step.completed small {
+    color: #28a745;
+}
+
+/* Animaciones para el contenido de pasos */
+.step-content {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mejoras en los formularios */
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.form-control.is-valid {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+/* Estilos para las tarjetas */
+.card {
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: 0.5rem;
+    transition: box-shadow 0.15s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: calc(0.5rem - 1px) calc(0.5rem - 1px) 0 0;
+}
+
+/* Estilos para labels con iconos */
+label i {
+    opacity: 0.7;
+}
+
+/* Estilos para campos requeridos */
+.text-danger {
+    font-size: 0.875rem;
+}
+
+/* Estilos para botones */
+.btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para los accordions mejorados */
+.accordion .card {
+    border: none;
+}
+
+.accordion .btn-link {
+    transition: all 0.3s ease;
+}
+
+.accordion .btn-link:hover {
+    text-decoration: none !important;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.accordion .card-header {
+    border-radius: 0.5rem;
+}
+
+.accordion .card-header[aria-expanded="true"] {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+/* Mejoras responsivas */
+@media (max-width: 768px) {
+    .steps-nav .col-3 {
+        flex: 0 0 25%;
+        max-width: 25%;
+    }
+
+    .step small {
+        font-size: 0.75rem;
+    }
+
+    .step-circle {
+        width: 35px;
+        height: 35px;
+        font-size: 14px;
+    }
+}
+
+/* Estilos para el modal */
+.modal-content {
+    border: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header.bg-primary {
+    border-bottom: none;
+}
+
+.modal-footer.bg-light {
+    border-top: 1px solid #dee2e6;
+}
+
+/* Efectos de loading */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Alertas informativas */
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+    border-left: 4px solid #17a2b8;
+}
+
+/* Mejoras en textarea */
+textarea.form-control {
+    resize: vertical;
+    min-height: 60px;
+}

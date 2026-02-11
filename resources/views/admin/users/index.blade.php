@@ -9,12 +9,26 @@
 
 @section('content')
 
+    {{-- Breadcrumbs mejorados usando componente --}}
+    @php
+        $breadcrumbs = [
+            [
+                'title' => 'Administración',
+                'icon' => 'fas fa-shield-alt',
+                'url' => null
+            ]
+        ];
+        $currentTitle = 'Usuarios';
+        $currentIcon = 'fas fa-users';
+    @endphp
+    <x-breadcrumbs :breadcrumbs="$breadcrumbs" :currentTitle="$currentTitle" :currentIcon="$currentIcon" />
+
     <div class="card">
         <div class="card-header">
             <h4>Usuarios</h4>
         </div>
         <div class="card-body" >
-            @if(auth()->user()->hasRole('Administrator'))
+            @if(auth()->user()->hasRole(['Administrator', 'Administrador', 'sysadmin']))
                 <div class="col-md-1">
                 <button type="button" onclick="regUsr()" class="btn btn-primary btn-block mb-1" data-toggle="tooltip" data-placement="top" title="Crear usuario">
                     <i class="fas fa-user-plus"></i>
@@ -56,6 +70,7 @@
                        <th>Nombre(s)</th>
                        <th>Correo electrónico</th>
                        <th>Identificación</th>
+                       <th>Empresa</th>
                        <th>Rol</th>
                        <th>Fecha creación</th>
                        <th class="text-center">Activo</th>
@@ -78,5 +93,20 @@
 @stop
 
 @section('js')
+    <script>
+        // Variables globales - disponibles inmediatamente
+        const permisos =  @json($user ?? auth()->user());
+        const isSysAdmin = {{ auth()->user()->hasRole('sysadmin') ? 'true' : 'false' }};
+        const currentUserCompany = @json(auth()->user()->company);
+
+        // Código que usa jQuery - envuelto en document ready
+        $(document).ready(function() {
+            console.log('📋 Variables globales inicializadas:', {
+                permisos: permisos,
+                isSysAdmin: isSysAdmin,
+                currentUserCompany: currentUserCompany
+            });
+        });
+    </script>
     <script src="{{asset('assets/js/usuario/usuario.js') }}" type="text/javascript"></script>
 @stop

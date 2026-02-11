@@ -37,25 +37,25 @@
         {{-- Nav tabs --}}
         <ul class="nav nav-tabs" id="fichaTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general"
+                <button class="nav-link active" id="general-tab" data-toggle="tab" data-target="#general"
                         type="button" role="tab" aria-controls="general" aria-selected="true">
                     Información General
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="bocetos-tab" data-bs-toggle="tab" data-bs-target="#bocetos"
+                <button class="nav-link" id="bocetos-tab" data-toggle="tab" data-target="#bocetos"
                         type="button" role="tab" aria-controls="bocetos" aria-selected="false">
                     Bocetos
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="materiales-tab" data-bs-toggle="tab" data-bs-target="#materiales"
+                <button class="nav-link" id="materiales-tab" data-toggle="tab" data-target="#materiales"
                         type="button" role="tab" aria-controls="materiales" aria-selected="false">
                     Materiales
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="procesos-tab" data-bs-toggle="tab" data-bs-target="#procesos"
+                <button class="nav-link" id="procesos-tab" data-toggle="tab" data-target="#procesos"
                         type="button" role="tab" aria-controls="procesos" aria-selected="false">
                     Procesos
                 </button>

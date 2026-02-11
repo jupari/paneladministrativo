@@ -30,7 +30,8 @@ class RolePolicy
      */
     public function view(User $user, Role $role)
     {
-        return $user->hasRole('Administrator');
+        return $user->hasRole(['Administrator', 'sysadmin'])
+                    || $user->can('roles.index');
 
         // $this->deny("No tienes permisos para ver esta sección");
         // return true;
@@ -44,8 +45,8 @@ class RolePolicy
      */
     public function create(User $user)
     {
-        return $user->hasRole('Administrator')
-                || $user->can('Crear rol');
+        return $user->hasRole(['Administrator', 'sysadmin'])
+                || $user->can('roles.create');
     }
 
     /**
@@ -57,8 +58,8 @@ class RolePolicy
      */
     public function update(User $user, Role $role)
     {
-        return $user->hasRole('Administrator')
-                || $user->can('Actualizar rol');
+        return $user->hasRole(['Administrator', 'sysadmin'])
+                || $user->can('roles.edit');
     }
 
     /**

@@ -9,6 +9,20 @@
 
 @section('content')
 
+    {{-- Breadcrumbs mejorados usando componente --}}
+    @php
+        $breadcrumbs = [
+            [
+                'title' => 'Contratos',
+                'icon' => 'fas fa-file-contract',
+                'url' => null
+            ]
+        ];
+        $currentTitle = 'Contratos';
+        $currentIcon = 'fas fa-file-contract';
+    @endphp
+    <x-breadcrumbs :breadcrumbs="$breadcrumbs" :currentTitle="$currentTitle" :currentIcon="$currentIcon" />
+
     <div class="card">
         <div class="card-header">
             <h4>Contratos</h4>
@@ -87,11 +101,11 @@
     </div>
 @stop
 
-@push('modals')
+{{-- @push('modals') --}}
 @include('contratos.modal-generar')
 @include('contratos.modal-generar-contratos')
 @include('utilities.load')
-@endpush
+{{-- @endpush --}}
 @section('css')
     {{-- Add here extra stylesheets --}}
     {{-- <link rel="stylesheet" href="/css/admin_custom.css"> --}}

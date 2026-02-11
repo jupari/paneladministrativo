@@ -9,20 +9,20 @@
 
 @section('content')
 
-    {{-- Breadcrumbs --}}
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb bg-light px-3 py-2 rounded">
-            <li class="breadcrumb-item">
-                <a href="{{ url('/dashboard') }}">Inicio</a>
-            </li>
-            <li class="breadcrumb-item">
-                <a href="#">Procesos</a>
-            </li>
-            <li class="breadcrumb-item active" aria-current="page">
-                Listado de Procesos
-            </li>
-        </ol>
-    </nav>
+    {{-- Breadcrumbs mejorados usando componente --}}
+    @php
+        $breadcrumbs = [
+            [
+                'title' => 'Producción',
+                'icon' => 'fas fa-industry',
+                'url' => null
+            ]
+        ];
+        $currentTitle = 'Procesos';
+        $currentIcon = 'fas fa-cogs';
+    @endphp
+    <x-breadcrumbs :breadcrumbs="$breadcrumbs" :currentTitle="$currentTitle" :currentIcon="$currentIcon" />
+
     <div class="card">
         <div class="card-header">
             <h4>Listado de Procesos</h4>

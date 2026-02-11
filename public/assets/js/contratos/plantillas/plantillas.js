@@ -142,14 +142,14 @@ function showCustomPlantilla(btn) {
 }
 
 function regPlantilla() {
-    myModal.show()
+    $('#ModalPlantilla').modal('show');
     $('#exampleModalLabel').html('Registrar Plantilla');
     // LIMPIAR CAMPOS
     cleanInput();
      // FIN LIMPIAR CAMPOS
     limpiarValidaciones();
     setPlantillaAction(false);
-    let r = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>';
+    let r = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>';
     $(".modal-footer").html(r);
     $("#mapping").html('');
     //$("#active").prop("checked",true);
@@ -221,7 +221,7 @@ function registerPlantilla() {
 }
 
 function upPlantilla(btn) {
-    myModal.show()
+    $('#ModalPlantilla').modal('show');
     $('#exampleModalLabel').html('Editar Plantilla');
     // LIMPIAR CAMPOS
     cleanInput();
@@ -229,7 +229,7 @@ function upPlantilla(btn) {
     showCustomPlantilla(btn);
     setPlantillaAction(true);
     // FIN LIMPIAR CAMPOS
-    let u = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>';
+    let u = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>';
     $(".modal-footer").html(u);
 }
 
@@ -300,7 +300,7 @@ function updatePlantilla(btn) {
             });
         toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.');
         } else if (e.status === 403) {
-            myModal.toggle();
+            $('#ModalPlantilla').modal('toggle');
             toastr.warning(arr.message);
         }
     });
@@ -399,7 +399,7 @@ function saveMapping(plantillaId){
         processData: false,
     }).then(response => {
         Cargar();
-        myModal.toggle();
+        $('#ModalPlantilla').modal('toggle');
         toastr.success(response.message); // Muestra el mensaje de éxito
     }).catch(e => {
         limpiarValidaciones(); // Reemplaza con tu función de limpieza de validaciones

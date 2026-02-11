@@ -87,9 +87,9 @@ function abrirModal(titulo)
     const myModal = new bootstrap.Modal(document.getElementById('myModal'), {
         keyboard: false
       })
-    myModal.show()
+    myModal.modal('show')
     $('#exampleModalLabel').html(titulo);
-    $('#spinner-email').show();
+    $('#spinner-email').modal('show');
     let r = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>';
 
     $(".modal-footer").html(r);
@@ -201,7 +201,7 @@ function consultarCorreosCodigoAcceso(cuentaId){
                     listItem.append('<span class="badge badge-danger">Adjuntos</span>');
                 }
 
-                $('#spinner-email').hide();
+                $('#spinner-email').modal('hide');
                 emailList.append(listItem);
 
             // Agregar evento de clic para mostrar el cuerpo del correo electrónico
@@ -239,7 +239,7 @@ function consultarCorreosReestablecimiento(cuentaId){
                     listItem.append('<span class="badge badge-danger">Adjuntos</span>');
                 }
 
-                $('#spinner-email').hide();
+                $('#spinner-email').modal('hide');
                 emailList.append(listItem);
 
             // Agregar evento de clic para mostrar el cuerpo del correo electrónico

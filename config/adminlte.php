@@ -63,12 +63,12 @@ return [
     |
     */
 
-    'logo' => '<b>Sysworks</b>',
-    'logo_img' => 'vendor/adminlte/dist/img/logoappac.png',
+    'logo' => env('APP_LOGO', '<b>Sysworks</b>'),
+    'logo_img' => env('APP_LOGO_IMG', 'vendor/adminlte/dist/img/logoappac.png'),
     'logo_img_class' => 'brand-image img-circle elevation-3',
     'logo_img_xl' => null,
     'logo_img_xl_class' => 'brand-image-xs',
-    'logo_img_alt' => 'Sysworks logo',
+    'logo_img_alt' => env('APP_LOGO_ALT', 'Sysworks logo'),
 
     /*
     |--------------------------------------------------------------------------
@@ -338,49 +338,49 @@ return [
         //         ],
         //     ]
         // ],
-        ['header' => 'Terceros', 'can'=>['users.index','roles.index','permisos.index','clientes.index']],
+        ['header' => 'Terceros', 'can'=>['terceros.index','users.index','configuracion.index']],
         [
             'text' => 'Clientes',
             'route' => 'admin.clientes.index',
             'icon' => 'fas fa-users fa-fw',
-            'can'=>'clientes.index',
+            'can'=>'terceros.index',
         ],
         [
             'text' => 'Vendedores',
             'route' => 'admin.vendedores.index',
             'icon' => 'fas fa-male fa-fw',
-            'can'=>'users.index',
+            'can'=>'terceros.index',
         ],
         [
             'text' => 'Ciudades',
             'route' => 'admin.ubicaciones.index',
             'icon' => 'fas fa-city fa-fw',
-            'can'=>'users.index',
+            'can'=>'configuracion.index',
         ],
-        ['header' => 'Contratos', 'can'=>['users.index','roles.index','permisos.index']],
+        ['header' => 'Contratos', 'can'=>['empleados.index','configuracion.index']],
         [
             'text' => 'Contratos',
             'route' => 'admin.contratos.index',
             'icon' => 'fa fa-archive fa-fw',
-            'can'=>'users.index',
+            'can'=>'empleados.index',
         ],
         [
             'text' => 'Cargos',
             'route' => 'admin.cargos.index',
             'icon' => 'fa fa-folder-open fa-fw',
-            'can'=>'users.index',
+            'can'=>'empleados.index',
         ],
         [
             'text' => 'Empleados',
             'route' => 'admin.empleados.index',
             'icon' => 'fa fa-address-card fa-fw',
-            'can'=>'users.index',
+            'can'=>'empleados.index',
         ],
         [
             'text' => 'Plantillas',
             'route' => 'admin.plantillas.index',
             'icon' => 'fa fa-file fa-fw',
-            'can'=>'permisos.index',
+            'can'=>'configuracion.index',
         ],
         [
             'text' => 'Parametrización',
@@ -410,14 +410,20 @@ return [
                 ]
             ]
         ],
-        ['header' => 'Cotizar', 'can'=>['users.index','roles.index','permisos.index']],
+        ['header' => 'Cotizar', 'can'=>['cotizaciones.index']],
         [
             'text' => 'Cotización',
-            'route' => 'admin.cotizar.index',
+            'route' => 'admin.cotizaciones.index',
             'icon' => 'fa fa-file fa-fw',
-            'can'=>'users.index',
+            'can'=>'cotizaciones.index',
         ],
-        ['header' => 'Configuración', 'can'=>['users.index','roles.index','permisos.index']],
+        [
+            'text' => 'Solicitudes de aprobación',
+            'route' => 'admin.cotizaciones.solicitudes.index',
+            'icon' => 'fa fa-lock fa-fw',
+            'can'=>'cotizaciones.index',
+        ],
+        ['header' => 'Configuración', 'can'=>['users.index','roles.index','configuracion.index','permission.index']],
         [
                 'text' => 'Usuarios',
                 'route' => 'admin.users.index',
@@ -434,83 +440,83 @@ return [
             'text' => 'Permisos',
             'route' => 'admin.permission.index',
             'icon' => 'fas fa-address-card fa-fw',
-            'can'=>'permisos.index',
+            'can'=>'permission.index',
         ],
         [
             'text' => 'Parametros',
             'route' => 'admin.elementos.index',
             'icon' => 'fas fa-address-card fa-fw',
-            'can'=>'permisos.index',
+            'can'=>'configuracion.index',
         ],
-        ['header' => 'Producción', 'can'=>['users.index','roles.index','permisos.index']],
-        [
-                'text' => 'Fichas producción',
-                'route' => 'admin.fichas-tecnicas.index',
-                'icon' => 'fas fa-address-card fa-fw',
-                'can'=>'users.index',
-        ],
-        [
-                'text' => 'Ordenes producción',
-                'route' => 'admin.materiales.index',
-                'icon' => 'fas fa-tasks fa-fw',
-                'can'=>'users.index',
-        ],
-        [
-                'text' => 'Materiales',
-                'route' => 'admin.materiales.index',
-                'icon' => 'fas fa-building fa-fw',
-                'can'=>'users.index',
-        ],
-        [
-                'text' => 'Procesos',
-                'route' => 'admin.procesos.index',
-                'icon' => 'fas fa-cogs fa-fw',
-                'can'=>'users.index',
-        ],
-        ['header' => 'Inventarios', 'can'=>['users.index','roles.index','permisos.index']],
-        [
-                'text' => 'Productos',
-                'route' => 'admin.productos.index',
-                'icon' => 'fas fa-address-card fa-fw',
-                'can'=>'users.index',
-        ],
-        [
-                'text' => 'Bodegas',
-                'route' => 'admin.bodegas.index',
-                'icon' => 'fas fa-warehouse fa-fw',
-                'can'=>'users.index',
-        ],
-        [
-                'text' => 'Movimientos de inventario',
-                'route' => 'admin.movimientos.index',
-                'icon' => 'fas fa-exchange-alt fa-fw',
-                'can'=>'users.index',
-        ],
-        [
-                'text' => 'Saldos de inventario',
-                'route' => 'admin.saldos.index',
-                'icon' => 'fas fa-folder-open fa-fw',
-                'can'=>'users.index',
-        ],
-        ['header' => 'Compras', 'can'=>['users.index','roles.index','permisos.index']],
-        [
-                'text' => 'Ordenes de compra',
-                'route' => 'admin.fichas-tecnicas.index',
-                'icon' => 'fas fa-shopping-cart fa-fw',
-                'can'=>'users.index',
-        ],
-        [
-                'text' => 'Compra generales',
-                'route' => 'admin.materiales.index',
-                'icon' => 'fas fa-money-bill fa-fw',
-                'can'=>'users.index',
-        ],
-        [
-                'text' => 'Proveedores',
-                'route' => 'admin.proveedores.index',
-                'icon' => 'fas fa-money-bill fa-fw',
-                'can'=>'users.index',
-        ],
+        // ['header' => 'Producción', 'can'=>['users.index','roles.index','permisos.index']],
+        // [
+        //         'text' => 'Fichas producción',
+        //         'route' => 'admin.fichas-tecnicas.index',
+        //         'icon' => 'fas fa-address-card fa-fw',
+        //         'can'=>'users.index',
+        // ],
+        // [
+        //         'text' => 'Ordenes producción',
+        //         'route' => 'admin.materiales.index',
+        //         'icon' => 'fas fa-tasks fa-fw',
+        //         'can'=>'users.index',
+        // ],
+        // [
+        //         'text' => 'Materiales',
+        //         'route' => 'admin.materiales.index',
+        //         'icon' => 'fas fa-building fa-fw',
+        //         'can'=>'users.index',
+        // ],
+        // [
+        //         'text' => 'Procesos',
+        //         'route' => 'admin.procesos.index',
+        //         'icon' => 'fas fa-cogs fa-fw',
+        //         'can'=>'users.index',
+        // ],
+        // ['header' => 'Inventarios', 'can'=>['users.index','roles.index','permisos.index']],
+        // [
+        //         'text' => 'Productos',
+        //         'route' => 'admin.productos.index',
+        //         'icon' => 'fas fa-address-card fa-fw',
+        //         'can'=>'users.index',
+        // ],
+        // [
+        //         'text' => 'Bodegas',
+        //         'route' => 'admin.bodegas.index',
+        //         'icon' => 'fas fa-warehouse fa-fw',
+        //         'can'=>'users.index',
+        // ],
+        // [
+        //         'text' => 'Movimientos de inventario',
+        //         'route' => 'admin.movimientos.index',
+        //         'icon' => 'fas fa-exchange-alt fa-fw',
+        //         'can'=>'users.index',
+        // ],
+        // [
+        //         'text' => 'Saldos de inventario',
+        //         'route' => 'admin.saldos.index',
+        //         'icon' => 'fas fa-folder-open fa-fw',
+        //         'can'=>'users.index',
+        // ],
+        // ['header' => 'Compras', 'can'=>['users.index','roles.index','permisos.index']],
+        // [
+        //         'text' => 'Ordenes de compra',
+        //         'route' => 'admin.fichas-tecnicas.index',
+        //         'icon' => 'fas fa-shopping-cart fa-fw',
+        //         'can'=>'users.index',
+        // ],
+        // [
+        //         'text' => 'Compra generales',
+        //         'route' => 'admin.materiales.index',
+        //         'icon' => 'fas fa-money-bill fa-fw',
+        //         'can'=>'users.index',
+        // ],
+        // [
+        //         'text' => 'Proveedores',
+        //         'route' => 'admin.proveedores.index',
+        //         'icon' => 'fas fa-money-bill fa-fw',
+        //         'can'=>'users.index',
+        // ],
         // [
         //         'text' => 'Actividades',
         //         'route' => 'admin.procesosdet.index',
@@ -631,6 +637,13 @@ return [
         //     'icon_color' => 'cyan',
         //     'url' => '#',
         // ],
+        ['header' => 'Empresas', 'can'=>'companies.index'],
+        [
+            'text' => 'Empresa',
+            'route' => 'admin.companies.index',
+            'icon' => 'fa fa-archive fa-fw',
+            'can'=>'companies.index',
+        ],
     ],
 
     /*
@@ -803,6 +816,21 @@ return [
                 ],
             ],
         ],
+        'CompanyBrandingVerify' => [
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'css',
+                    'asset' => true,
+                    'location' => 'assets/css/company-branding.css',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => true,
+                    'location' => 'assets/js/company-branding-verify.js',
+                ],
+            ],
+        ],
         'AutoNumeric' => [
             'active' => true,
             'files' => [
@@ -810,6 +838,26 @@ return [
                     'type' => 'js',
                     'asset' => true,
                     'location' => '//cdn.jsdelivr.net/npm/autonumeric@4.6.0/dist/autoNumeric.min.js',
+                ],
+            ],
+        ],
+        'JqueryValidation' => [
+            'active' => true,
+            'files' => [
+                [
+                    'type' => 'js',
+                    'asset' => false,
+                    'location' => '//cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => false,
+                    'location' => '//cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/additional-methods.min.js',
+                ],
+                [
+                    'type' => 'js',
+                    'asset' => false,
+                    'location' => '//cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/localization/messages_es.min.js',
                 ],
             ],
         ],

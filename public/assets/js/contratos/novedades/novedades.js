@@ -132,7 +132,7 @@ function showCustomCargo(btn) {
 
 //Registrar usuario
 function regCargo() {
-    myModal.show()
+    myModal.modal('show')
     $('#exampleModalLabel').html('Registrar Cargo');
 
     // LIMPIAR CAMPOS
@@ -183,7 +183,7 @@ function registerCargo() {
         $('#spinnerRegister').addClass('d-none');
         $('#spinnerRegister').removeClass('d-block');
         Cargar();
-        myModal.toggle(); // Reemplaza con tu lógica de modal
+        myModal.modal('toggle'); // Reemplaza con tu lógica de modal
         toastr.success(response.message); // Muestra el mensaje de éxito
 
     }).catch(e => {
@@ -208,7 +208,7 @@ function registerCargo() {
 
 // Actualizar usuario
 function upCargo(btn) {
-    myModal.show()
+    myModal.modal('show')
     $('#exampleModalLabel').html('Editar Cargo');
     // LIMPIAR CAMPOS
     cleanInput();
@@ -256,7 +256,7 @@ function updateCargo(btn) {
     })
     .then(response => {
         Cargar();
-        myModal.toggle();
+        myModal.modal('toggle');
         toastr.success(response.message);
     })
     .catch(e => {
@@ -272,7 +272,7 @@ function updateCargo(btn) {
             });
         toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.');
         } else if (e.status === 403) {
-            myModal.toggle();
+            myModal.modal('toggle');
             toastr.warning(arr.message);
         }
     });

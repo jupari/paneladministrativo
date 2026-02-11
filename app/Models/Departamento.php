@@ -14,21 +14,42 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Departamento extends Model
 {
+    use HasFactory;
+
     /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'departamentos';
+
+    /**
+     * Indicates if the model should be timestamped.
+     *
+     * @var bool
+     */
+    public $timestamps = false;
+
+    /**
+     * The attributes that are mass assignable.
+     *
      * @var array
      */
-    use HasFactory;
-    protected $table='departamentos';
-    public $timestamps=false;
-    protected $fillable = ['pais_id', 'nombre', 'created_at', 'updated_at'];
+    protected $fillable = ['pais_id', 'nombre'];
 
+    /**
+     * Get the país that owns the departamento.
+     */
     public function pais()
     {
         return $this->belongsTo(Pais::class, 'pais_id');
     }
 
+    /**
+     * Get the ciudades for the departamento.
+     */
     public function ciudades()
     {
-        return $this->hasMany(Ciudad::class);
+        return $this->hasMany(Ciudad::class, 'departamento_id');
     }
 }

@@ -106,7 +106,7 @@ function showEstado(btn) {
 //Registrar usuario
 function regEstado()
 {
-    myModal.show()
+    myModal.modal('show')
     $('#exampleModalLabel').html('Crear Estado');
 
     // LIMPIAR CAMPOS
@@ -177,7 +177,7 @@ function registerEstado()
 function upEstado(btn)
 {
 
-    myModal.show();
+    myModal.modal('show');
     $('#exampleModalLabel').html('Editar Estado');
 
     // LIMPIAR CAMPOS
@@ -220,8 +220,8 @@ function updateEstado(btn)
         data: ajax_data,
     }).then(response => {
 
-        // myModal.toggle();
-        myModal.toggle();
+        // myModal.modal('toggle');
+        myModal.modal('toggle');
         toastr.success(response.message);
         Cargar();
 
@@ -247,7 +247,7 @@ function updateEstado(btn)
 
         else if(e.status == 403){
 
-            myModal.hide();
+            myModal.modal('hide');
             toastr.warning(arr.message);
 
         }
