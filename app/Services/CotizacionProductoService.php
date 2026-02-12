@@ -305,23 +305,51 @@ class CotizacionProductoService
     }
 
     /**
-     * Obtener totales de cotización incluyendo productos y conceptos adicionales
+     * Obtener totales de cotización incluyendo productos, conceptos adicionales y utilidades
      */
     public function obtenerTotalesCotizacion(int $cotizacionId): array
     {
         try {
-            Log::info('🔍 INICIO - Calculando totales simple', ['cotizacion_id' => $cotizacionId]);
+            Log::info('🔍 INICIO - Obteniendo totales con utilidades aplicadas', ['cotizacion_id' => $cotizacionId]);
 
-            // 1. OBTENER PRODUCTOS
+            // 1. VERIFICAR SI HAY UTILIDADES APLICADAS - Si las hay, usar totales de BD
+            $cotizacion = Cotizacion::with('utilidades')->findOrFail($cotizacionId);
+            
+            if ($cotizacion->utilidades->isNotEmpty()) {
+                Log::info('📊 Utilizando totales de BD (incluyen utilidades)', [
+                    'cotizacion_id' => $cotizacionId,
+                    'utilidades_count' => $cotizacion->utilidades->count()
+                ]);
+                
+                return [
+                    'subtotal' => round($cotizacion->subtotal ?? 0, 2),
+                    'descuento' => round($cotizacion->descuento ?? 0, 2), 
+                    'impuestos' => round($cotizacion->total_impuesto ?? 0, 2),
+                    'total' => round($cotizacion->total ?? 0, 2),
+                    'detalle' => [
+                        'utilidades_aplicadas' => $cotizacion->utilidades->map(function($utilidad) {
+                            return [
+                                'categoria' => $utilidad->categoria->nombre ?? 'N/A',
+                                'item_propio' => $utilidad->itemPropio->nombre ?? str_replace('cargo_', 'Cargo ID: ', $utilidad->item_propio_id),
+                                'tipo' => $utilidad->tipo,
+                                'valor' => $utilidad->valor,
+                                'valor_calculado' => $utilidad->valor_calculado
+                            ];
+                        })
+                    ]
+                ];
+            }
+
+            // 2. SI NO HAY UTILIDADES, CALCULAR DESDE PRODUCTOS
             $productos = CotizacionProducto::where('cotizacion_id', $cotizacionId)
                 ->where('active', true)
                 ->get();
 
-            Log::info('📦 Productos encontrados', [
+            Log::info('📦 Productos encontrados (sin utilidades)', [
                 'cantidad_productos' => $productos->count()
             ]);
 
-            // 2. CALCULAR TOTALES DE PRODUCTOS
+            // 3. CALCULAR TOTALES DE PRODUCTOS
             $subtotalProductos = 0;
             $descuentosProductos = 0;
 

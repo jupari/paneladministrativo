@@ -10,9 +10,10 @@
             </td>
             <td width="30%" class="center">
                 <strong>ELABORADO POR</strong><br>
-                {{ $cotizacion->usuario->nombre ?? 'Administrador' }}<br><br>
-                Página {PAGE_NUM} de {PAGE_COUNT}
+                {{ $cotizacion->usuario->name ?? 'Administrador' }}<br><br>
+                Página <span class="pagenum"></span> de <span class="pagecount"></span>
             </td>
         </tr>
     </table>
 </footer>
+

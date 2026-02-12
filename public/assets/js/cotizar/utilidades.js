@@ -8,6 +8,16 @@ let categoriasDisponibles = [];
 let itemsPropiosDisponibles = [];
 
 /**
+ * Formatea un número para mostrar en la interfaz
+ */
+function formatearNumero(numero) {
+    return parseFloat(numero || 0).toLocaleString('es-CO', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    });
+}
+
+/**
  * Muestra el modal de utilidad
  */
 function mostrarModalUtilidad() {
@@ -38,7 +48,7 @@ function mostrarModalUtilidad() {
 function obtenerCotizacionId() {
     // Intentar obtener desde la URL
     const urlParts = window.location.pathname.split('/');
-    const editIndex = urlParts.indexOf('edit');
+    const editIndex = urlParts.indexOf('admin.cotizaciones.edit');
 
     if (editIndex > -1 && urlParts[editIndex + 1]) {
         return urlParts[editIndex + 1];
@@ -70,10 +80,9 @@ async function cambiarCategoria() {
         $('#item_propio_id').html('<option value="">Primero seleccione una categoría</option>');
         return;
     }
-
     // Cargar items de la categoría seleccionada
     await cargarItemsPorCategoria(categoriaId);
-    
+
     // Actualizar estado del botón
     actualizarEstadoBotonAplicar();
 }
@@ -179,8 +188,6 @@ async function cargarItemsPorCategoria(categoriaId) {
         console.error('Error cargando items propios por categoría:', error);
         toastr.error('Error al cargar los items propios');
         $('#item_propio_id').html('<option value="">Error cargando items propios</option>');
-    }
-}
         toastr.error('Error al cargar los items propios');
         $('#item_propio_id').html('<option value="">Error cargando items propios</option>');
     }
@@ -261,10 +268,21 @@ async function aplicarUtilidad() {
             limpiarFormulario();
             cargarUtilidadesExistentes();
 
-            // Forzar actualización de totales
-            setTimeout(() => {
-                actualizarTotalesEnInterfaz();
-            }, 500);
+            // Forzar actualización de totales múltiple
+            setTimeout(async () => {
+                await actualizarTotalesEnInterfaz();
+                
+                // También actualizar el sticky si existe
+                if (typeof actualizarStickyAhora === 'function') {
+                    actualizarStickyAhora();
+                }
+                
+                // Mostrar mensaje de confirmación detallado
+                toastr.success('💰 Margen de utilidad aplicado<br>📊 Descuentos e impuestos recalculados automáticamente', '', {
+                    timeOut: 4000,
+                    allowHtml: true
+                });
+            }, 1000);
 
         } else {
             toastr.error(result.message);
@@ -282,17 +300,22 @@ async function aplicarUtilidad() {
  */
 async function actualizarTotalesEnInterfaz() {
     try {
-        console.log('Actualizando totales en la interfaz...');
-        
-        // Intentar llamar las funciones existentes de actualización
+        console.log('🔄 Actualizando totales en la interfaz...');
+
+        // Primero intentar llamar las funciones existentes de actualización
         if (typeof actualizarTotalesCotizacion === 'function') {
-            console.log('Llamando actualizarTotalesCotizacion...');
-            actualizarTotalesCotizacion();
+            console.log('📞 Llamando actualizarTotalesCotizacion...');
+            await actualizarTotalesCotizacion();
+        }
+
+        if (typeof actualizarTotalesCompletos === 'function') {
+            console.log('📞 Llamando actualizarTotalesCompletos...');
+            await actualizarTotalesCompletos();
         }
 
         if (typeof cargarProductosGuardados === 'function') {
-            console.log('Llamando cargarProductosGuardados...');
-            cargarProductosGuardados();
+            console.log('📞 Llamando cargarProductosGuardados...');
+            await cargarProductosGuardados();
         }
 
         // Si no existen las funciones, intentar obtener totales directamente
@@ -303,41 +326,31 @@ async function actualizarTotalesEnInterfaz() {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                 }
             });
-            
+
             if (response.ok) {
                 const result = await response.json();
                 console.log('Totales obtenidos:', result);
-                
+
                 if (result.success && result.data) {
                     // Actualizar elementos de la interfaz si existen
                     const totales = result.data;
-                    
+
                     if ($('#sticky-subtotal').length) {
                         $('#sticky-subtotal').text(`$${formatearNumero(totales.subtotal || 0)}`);
                     }
-                    
+
                     if ($('#sticky-total').length) {
                         $('#sticky-total').text(`$${formatearNumero(totales.total || 0)}`);
                     }
-                    
+
                     toastr.success('Totales actualizados correctamente');
                 }
             }
         }
-        
+
     } catch (error) {
         console.error('Error actualizando totales:', error);
     }
-}
-
-/**
- * Formatea un número para mostrar en la interfaz
- */
-function formatearNumero(numero) {
-    return parseFloat(numero || 0).toLocaleString('es-CO', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-    });
 }
 
 /**
@@ -363,10 +376,21 @@ async function eliminarUtilidad(id) {
             toastr.success(result.message);
             cargarUtilidadesExistentes();
 
-            // Forzar actualización de totales
-            setTimeout(() => {
-                actualizarTotalesEnInterfaz();
-            }, 500);
+            // Forzar actualización de totales múltiple
+            setTimeout(async () => {
+                await actualizarTotalesEnInterfaz();
+                
+                // También actualizar el sticky si existe
+                if (typeof actualizarStickyAhora === 'function') {
+                    actualizarStickyAhora();
+                }
+                
+                // Mostrar mensaje de confirmación
+                toastr.success('💰 Utilidad eliminada<br>📊 Descuentos e impuestos recalculados automáticamente', '', {
+                    timeOut: 4000,
+                    allowHtml: true
+                });
+            }, 1000);
 
         } else {
             toastr.error('Error al eliminar la utilidad');
@@ -383,23 +407,23 @@ async function eliminarUtilidad(id) {
 async function cargarUtilidadesExistentes() {
     try {
         console.log('Cargando utilidades para cotización:', cotizacionIdActual);
-        
+
         const response = await fetch(`/admin/admin.cotizaciones.utilidades.obtener/${cotizacionIdActual}`, {
             headers: {
                 'Accept': 'application/json',
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
-        
+
         console.log('Response status:', response.status);
         console.log('Response headers:', response.headers.get('content-type'));
-        
+
         if (!response.ok) {
             const errorText = await response.text();
             console.error('Error response:', errorText);
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-        
+
         const result = await response.json();
         console.log('Response data:', result);
 
@@ -476,29 +500,107 @@ $(document).ready(function() {
     $('#modalUtilidad').on('hidden.bs.modal', function() {
         limpiarFormulario();
     });
-    
-    // Agregar función de debug temporal (remover en producción)
+
+    // Agregar función de debug mejorada (remover en producción)
     window.debugUtilidades = function() {
-        console.log('=== DEBUG UTILIDADES ===');
-        console.log('Cotización ID actual:', cotizacionIdActual);
-        console.log('Categorías disponibles:', categoriasDisponibles);
-        console.log('Items propios disponibles:', itemsPropiosDisponibles);
-        
+        console.log('=== 🔍 DEBUG UTILIDADES COMPLETO ===');
+        console.log('📋 Información básica:');
+        console.log('  - Cotización ID actual:', cotizacionIdActual);
+        console.log('  - Categorías disponibles:', categoriasDisponibles);
+        console.log('  - Items propios disponibles:', itemsPropiosDisponibles);
+
         // Mostrar funciones disponibles
-        console.log('Funciones disponibles:');
-        console.log('- actualizarTotalesCotizacion:', typeof actualizarTotalesCotizacion);
-        console.log('- cargarProductosGuardados:', typeof cargarProductosGuardados);
-        
+        console.log('🔧 Funciones disponibles:');
+        console.log('  - actualizarTotalesCotizacion:', typeof actualizarTotalesCotizacion);
+        console.log('  - actualizarTotalesCompletos:', typeof actualizarTotalesCompletos);
+        console.log('  - cargarProductosGuardados:', typeof cargarProductosGuardados);
+        console.log('  - actualizarStickyAhora:', typeof actualizarStickyAhora);
+
         // Verificar elementos de totales en DOM
-        console.log('Elementos de totales encontrados:');
-        console.log('- sticky-subtotal:', $('#sticky-subtotal').length ? 'SÍ' : 'NO');
-        console.log('- sticky-total:', $('#sticky-total').length ? 'SÍ' : 'NO');
+        console.log('🎯 Elementos de totales encontrados:');
+        const subtotalVal = document.getElementById('subtotal')?.value || 'NO ENCONTRADO';
+        const descuentoVal = document.getElementById('descuento')?.value || 'NO ENCONTRADO';  
+        const impuestoVal = document.getElementById('total_impuesto')?.value || 'NO ENCONTRADO';
+        const totalVal = document.getElementById('total')?.value || 'NO ENCONTRADO';
         
-        // Intentar obtener totales actuales
+        console.log('  - subtotal (hidden):', subtotalVal);
+        console.log('  - descuento (hidden):', descuentoVal);
+        console.log('  - impuesto (hidden):', impuestoVal);
+        console.log('  - total (hidden):', totalVal);
+        console.log('  - sticky-subtotal:', $('#sticky-subtotal').length ? $('#sticky-subtotal').text() : 'NO ENCONTRADO');
+        console.log('  - sticky-total:', $('#sticky-total').length ? $('#sticky-total').text() : 'NO ENCONTRADO');
+
+        // Verificar si hay utilidades aplicadas
+        console.log('💰 Estado de utilidades:');
         if (cotizacionIdActual) {
-            actualizarTotalesEnInterfaz();
+            fetch(`/admin/admin.cotizaciones.utilidades.obtener/${cotizacionIdActual}`, {
+                headers: { 'Accept': 'application/json' }
+            }).then(r => r.json()).then(data => {
+                if (data.success && data.data.length > 0) {
+                    console.log('  ✅ Utilidades aplicadas:', data.data.length);
+                    console.log('  📊 Los descuentos se calculan sobre subtotal + utilidades');
+                    data.data.forEach((ut, i) => {
+                        console.log(`     - Utilidad ${i + 1}: ${ut.tipo} ${ut.valor}% → $${formatearNumero(ut.valor_calculado || 0)}`);
+                    });
+                } else {
+                    console.log('  ❌ Sin utilidades aplicadas');
+                    console.log('  📊 Los descuentos se calculan sobre subtotal base');
+                }
+            }).catch(e => console.log('  ⚠️ Error verificando utilidades:', e));
+        }
+
+        // Test de actualización inmediata
+        if (cotizacionIdActual) {
+            console.log('🚀 Ejecutando actualización de prueba...');
+            actualizarTotalesEnInterfaz().then(() => {
+                console.log('✅ Actualización de prueba completada');
+            });
         }
     };
     
-    console.log('Sistema de utilidades cargado. Usar debugUtilidades() para debug.');
+    window.actualizarTotalesRapido = function() {
+        console.log('⚡ Actualización rápida de totales iniciada...');
+        actualizarTotalesEnInterfaz();
+    };
+
+    window.testDescuentosConUtilidades = async function() {
+        console.log('🧪 TEST: Verificando cálculo de descuentos con utilidades...');
+        
+        if (!cotizacionIdActual) {
+            console.error('❌ No hay cotización ID disponible');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/admin/cotizaciones/totales/obtener?cotizacion_id=${cotizacionIdActual}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('✅ Totales obtenidos exitosamente:');
+                console.log('   - Subtotal (incluye utilidades):', data.data.subtotal);
+                console.log('   - Descuento (sobre subtotal con utilidades):', data.data.descuento);
+                console.log('   - Impuestos (sobre base con descuentos):', data.data.impuestos);
+                console.log('   - Total final:', data.data.total);
+                
+                if (data.data.detalle && data.data.detalle.utilidades_aplicadas) {
+                    console.log('💰 Utilidades detectadas:');
+                    data.data.detalle.utilidades_aplicadas.forEach((ut, i) => {
+                        console.log(`   - ${i + 1}: ${ut.categoria} | ${ut.tipo} ${ut.valor}% → $${formatearNumero(ut.valor_calculado)}`);
+                    });
+                } else {
+                    console.log('ℹ️ Sin utilidades aplicadas');
+                }
+            } else {
+                console.error('❌ Error obteniendo totales:', data.error || 'Error desconocido');
+            }
+        } catch (error) {
+            console.error('❌ Error en la prueba:', error);
+        }
+    };
+
+    console.log('💰 Sistema de utilidades cargado.');
+    console.log('📞 Comandos disponibles: debugUtilidades() | actualizarTotalesRapido() | testDescuentosConUtilidades()');
 });

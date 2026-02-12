@@ -26,7 +26,7 @@
                         <label for="categoria_id">
                             Categoría: <span class="text-danger">*</span>
                         </label>
-                        <select id="categoria_id" name="categoria_id" class="form-control" onchange="cargarItemsPorCategoria()">
+                        <select id="categoria_id" name="categoria_id" class="form-control" onchange="cambiarCategoria()">
                             <option value="">Seleccione una categoría...</option>
                         </select>
                         <small class="form-text text-muted">
@@ -39,11 +39,13 @@
                         <label for="item_propio_id">
                             Item Propio/Cargo: <span class="text-danger">*</span>
                         </label>
-                        <select id="item_propio_id" name="item_propio_id" class="form-control" disabled>
+                        <select id="item_propio_id" name="item_propio_id" class="form-control">
                             <option value="">Primero seleccione una categoría...</option>
                         </select>
                         <small class="form-text text-muted">
                             Seleccione el item propio o cargo específico dentro de la categoría
+                        </small>
+                    </div>
                     <!-- Tipo de utilidad -->
                     <div class="form-group">
                         <label for="utilidad_tipo">Tipo de margen:</label>

@@ -338,7 +338,7 @@ return [
         //         ],
         //     ]
         // ],
-        ['header' => 'Terceros', 'can'=>['terceros.index','users.index','configuracion.index']],
+        ['header' => 'Terceros', 'can'=>['terceros.index','users.index']],
         [
             'text' => 'Clientes',
             'route' => 'admin.clientes.index',
@@ -423,7 +423,7 @@ return [
             'icon' => 'fa fa-lock fa-fw',
             'can'=>'cotizaciones.index',
         ],
-        ['header' => 'Configuración', 'can'=>['users.index','roles.index','configuracion.index','permission.index']],
+        ['header' => 'Configuración', 'can'=>['users.index','roles.index','configuracion.index']],
         [
                 'text' => 'Usuarios',
                 'route' => 'admin.users.index',
@@ -440,7 +440,7 @@ return [
             'text' => 'Permisos',
             'route' => 'admin.permission.index',
             'icon' => 'fas fa-address-card fa-fw',
-            'can'=>'permission.index',
+            'can'=>'configuracion.index',
         ],
         [
             'text' => 'Parametros',

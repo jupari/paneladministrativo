@@ -2201,6 +2201,7 @@ function usarItemSeleccionado() {
 
     // Buscar item seleccionado en el acordeón
     const itemSeleccionado = document.querySelector('input[name="itemSelected"]:checked');
+    console.log("itemSeleccionado>>>>",itemSeleccionado);
 
     if (!itemSeleccionado) {
         Swal.fire({
@@ -2213,6 +2214,8 @@ function usarItemSeleccionado() {
     }
 
     const tipo = itemSeleccionado.dataset.type;
+    const itemId= itemSeleccionado.dataset.item-id;
+    const subitemId= itemSeleccionado.dataset.id;
     const indexData = itemSeleccionado.dataset.index;
 
 
@@ -2220,6 +2223,8 @@ function usarItemSeleccionado() {
     if (tipo === 'item') {
         const itemIndex = parseInt(indexData);
         window.subitemTemporal = {
+            item_id:itemId,
+            subitem_id: subitemId,
             tipo: 'item',
             item: itemsCotizacion[itemIndex],
             index: itemIndex
@@ -2230,6 +2235,8 @@ function usarItemSeleccionado() {
         const subitem = item.subitems[subitemIndex];
 
         window.subitemTemporal = {
+            item_id:itemId,
+            subitem_id: subitemId,
             tipo: 'subitem',
             item: item,
             subitem: subitem,
@@ -2487,7 +2494,6 @@ async function cargarItemsPorCategorias() {
                 // Asegurar que todos los campos son del tipo correcto
                 return {
                     id: String(item.id || ''),
-
                     nombre: String(item.nombre || 'Sin nombre'),
                     codigo: String(item.codigo || 'Sin código'),
                     descripcion: String(item.descripcion || 'Sin descripción'),
@@ -4374,8 +4380,12 @@ function volverASeleccionItemsPropios() {
  * Finalizar configuración de costos y agregar todo a la tabla
  */
 async function finalizarConfiguracionCostos() {
-
     const itemsPropiosSeleccionados = window.itemsPropiosSeleccionadosTemporal;
+
+    console.log('window.itemsPropiosSeleccionadosTemporal><>>><>',window.itemsPropiosSeleccionadosTemporal);
+    console.log('window.subitemTemporal><>>><>',window.subitemTemporal);
+
+
     const errores = [];
     const itemsConCostos = [];
 
@@ -4452,6 +4462,19 @@ async function finalizarConfiguracionCostos() {
                 break;
         }
 
+        item.cotizacion_item_id = window.subitemTemporal.item.id;
+        item.cotizacion_subitem_id = window.subitemTemporal.subitem.id;
+        if(item.categoria.nombre=='NOMINA'){
+            item.item_propio_id = null;
+            item.parametrizacion_id = item.id;
+        }else{
+            item.parametrizacion_id = null;
+            item.item_propio_id = item.id;
+        }
+
+
+
+
         // Recopilar toda la configuración del item
         const itemConCosto = {
             ...item,
@@ -4478,6 +4501,7 @@ async function finalizarConfiguracionCostos() {
         itemsConCostos.push(itemConCosto);
     }
 
+    console.log('xxx>>>>>>><<<<<<:',itemsConCostos);
     // Mostrar errores si los hay
     if (errores.length > 0) {
         Swal.fire({
@@ -4539,6 +4563,7 @@ async function finalizarConfiguracionCostos() {
  */
 function sincronizarItemsTablaConProductosSeleccionados(itemsConCostos) {
 
+    console.log("itemsConCostos>>>>",itemsConCostos);
     console.log('🔄 Sincronizando items con productos seleccionados');
     console.log('📋 Productos seleccionados antes:', productosSeleccionados.length);
     console.log('➕ Items con costos a agregar:', itemsConCostos?.length || 0);
@@ -4559,11 +4584,14 @@ function sincronizarItemsTablaConProductosSeleccionados(itemsConCostos) {
             const unidad = subitem.configuracionCosto ?
                 subitem.configuracionCosto.unidadMedida : 'Unidad';
 
-            //const id = `item_${subitem.nombre.replace(/\s+/g, '_').toLowerCase()}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             const id = subitem.id;
 
             const nuevoProducto = {
                 id: id,
+                cotizacion_item_id: subitem.cotizacion_item_id,
+                cotizacion_subitem_id: subitem.cotizacion_subitem_id,
+                item_propio_id: subitem.item_propio_id,
+                parametrizacion_id: subitem.parametrizacion_id,
                 nombre: subitem.nombre,
                 codigo: subitem.codigo || '',
                 precio: subitem.configuracionCosto ? precio : 50.0,
@@ -4598,7 +4626,6 @@ function sincronizarItemsTablaConProductosSeleccionados(itemsConCostos) {
         console.log('✅ Sincronización completada');
         console.log('📋 Total productos seleccionados después:', productosSeleccionados.length);
         console.log('📦 Lista actual de productos:', productosSeleccionados.map(p => ({
-            id: p.id,
             nombre: p.nombre,
             precio: p.precio,
             categoria: p.categoria
@@ -5744,6 +5771,7 @@ function toggleSubitems(itemId) {
         button.innerHTML = `<i class="fas fa-eye" id="icon_${itemId}"></i> Ver subitems (${count})`;
     }
 }
+
 function limpiarFormularioItem() {
     document.getElementById('item_nombre').value = '';
     limpiarErroresItems();
@@ -6589,6 +6617,8 @@ function seleccionarProductoDesdeItem(itemElement) {
 
         productosSeleccionados.push(producto);
 
+        console.log('productosSeleccionados seleccionarProductoDesdeItem(6597)', productosSeleccionados);
+
         // Actualizar UI
         actualizarTablaProductosSeleccionados();
         calcularTotales();
@@ -6626,6 +6656,7 @@ function configurarSeleccionManualItems() {
     });
 
 }
+
 
 function actualizarSelectAllProductos() {
     const selectAllCheckbox = document.getElementById('selectAllProductos');
@@ -6804,6 +6835,8 @@ function abrirModalQuitarProductos() {
  */
 function usarItemsSeleccionados() {
     const itemsSeleccionados = obtenerItemsSeleccionados();
+
+    console.log('itemsSeleccionados usarItemsSeleccionados(6816)', itemsSeleccionados);
 
     if (itemsSeleccionados.length === 0) {
         Swal.fire({
@@ -7531,7 +7564,11 @@ async function enviarProductosTablaABaseDatos(productosEnTabla) {
             // Mapear a estructura CotizacionProductoRequest usando datos ya capturados
             const productoMapeado = {
                 cotizacion_id: parseInt(cotizacionId),
-                producto_id: null,
+                cotizacion_item_id: producto.cotizacion_item_id,
+                cotizacion_subitem_id: producto.cotizacion_subitem_id,
+                item_propio_id: producto.item_propio_id,
+                parametrizacion_id: producto.parametrizacion_id,
+                producto_id: producto.id,
                 nombre: producto.nombre || `Producto ${index + 1}`,
                 descripcion: producto.descripcion || producto.observaciones || `${producto.categoria || ''} - ${producto.source || 'manual'}`,
                 codigo: producto.codigo || `PROD-${Date.now()}-${index}`,

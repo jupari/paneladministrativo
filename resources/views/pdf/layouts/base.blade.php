@@ -49,15 +49,34 @@
         .mt-15 { margin-top: 15px; }
 
         th {
-            font-size: 8px;
-            padding: 5px;
-            border: 1px solid #000;
+            font-size: 9px;
+            padding: 6px 6px;
+            line-height: 1.4;
+            vertical-align: middle;
         }
 
         td {
-            font-size: 8px;
-            padding: 5px;
-            border: 1px solid #000;
+            font-size: 9px;
+            padding: 6px 6px;
+            line-height: 1.4;
+            vertical-align: middle;
+        }
+
+        .item-parent {
+            background-color: #cfe2f3;
+            font-weight: bold;
+        }
+
+        .item-child {
+            padding-left: 14px;
+        }
+
+        .pagenum:before {
+            content: counter(page);
+        }
+
+        .pagecount:before {
+            content: counter(pages);
         }
 
         /* Hook para estilos específicos */

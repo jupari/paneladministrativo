@@ -24,11 +24,14 @@ class CotizacionProductoRequest extends FormRequest
     {
         return [
             'cotizacion_id' => 'required|exists:ord_cotizacion,id',
-            'producto_id' => [
+            'cotizacion_item_id'=>'nullable',
+            'cotizacion_subitem_id' => [
                 'nullable',
-                Rule::unique('ord_cotizacion_productos', 'producto_id')
-                    ->where(fn ($query) => $query->where('cotizacion_id', $this->cotizacion_id))
+                Rule::unique('ord_cotizacion_productos', 'cotizacion_subitem_id')
+                    ->where(fn ($query) => $query->where('cotizacion_subitem_id', $this->cotizacion_id))
                 ],
+            'item_propio_id'=>'nullable',
+            'parametrizacion_id'=>'nullable',
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string|max:1000',
             'codigo' => 'nullable|string|max:50',

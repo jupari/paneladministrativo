@@ -9,12 +9,126 @@ const ITEMS_STORE_URL = 'admin.items-propios' // crea ítem
 const SAVE_COSTOS_URL = 'admin.parametrizacion.storecostos' // guarda {tablaCostos:[]}
 
 // =============================== Helpers ====================================
-const CSRF = document.querySelector('meta[name="csrf-token"]').content
+// Obtener CSRF token de forma segura
+let CSRF = '';
+try {
+    const csrfElement = document.querySelector('meta[name="csrf-token"]');
+    CSRF = csrfElement ? csrfElement.content : '';
+    if (!CSRF) {
+        console.warn('⚠️  Token CSRF no encontrado');
+    }
+} catch (error) {
+    console.error('❌ Error al obtener token CSRF:', error);
+}
 
 const upperEs = v => {
     if (v == null) return v
     return String(v).normalize('NFC').trim().toUpperCase()
 }
+
+// Función de debugging para verificar elementos requeridos
+const verificarElementosDOM = () => {
+    const elementosRequeridos = [
+        'btn-nuevo',
+        'tabla-costos', // si existe una tabla
+        'tabla-novedades' // si existe
+    ];
+
+    const elementosFaltantes = elementosRequeridos.filter(id => {
+        const elemento = document.getElementById(id);
+        if (!elemento) {
+            console.warn(`⚠️  Elemento faltante: ${id}`);
+            return true;
+        }
+        return false;
+    });
+
+    if (elementosFaltantes.length > 0) {
+        console.warn('🔍 Elementos faltantes detectados:', elementosFaltantes);
+    } else {
+        console.log('✅ Todos los elementos del DOM están disponibles');
+    }
+
+    return elementosFaltantes.length === 0;
+};
+
+// Verificar variables globales requeridas
+const verificarVariablesGlobales = () => {
+    console.log('🔍 Verificando variables globales...');
+
+    // Verificación alternativa - acceso directo a las variables
+    const verificaciones = [
+        { nombre: 'categorias', valor: typeof categorias !== 'undefined' ? categorias : undefined },
+        { nombre: 'unidades', valor: typeof unidades !== 'undefined' ? unidades : undefined },
+        { nombre: 'itemsPropios', valor: typeof itemsPropios !== 'undefined' ? itemsPropios : undefined }
+    ];
+
+    const variablesFaltantes = [];
+
+    verificaciones.forEach(({ nombre, valor }) => {
+        if (valor === undefined) {
+            console.error(`❌ Variable global faltante: ${nombre}`);
+            variablesFaltantes.push(nombre);
+        } else {
+            console.log(`✅ Variable '${nombre}' disponible:`, Array.isArray(valor) ? `Array(${valor.length})` : typeof valor);
+        }
+    });
+
+    if (variablesFaltantes.length > 0) {
+        console.error('🚨 Variables globales faltantes:', variablesFaltantes);
+        return false;
+    }
+
+    console.log('✅ Variables globales disponibles');
+    return true;
+};
+
+// Función de debug para diagnóstico de variables
+const debugVariablesGlobales = () => {
+    console.log('🔧 DEBUG: Estado de variables globales');
+    console.log('  - typeof categorias:', typeof categorias);
+    console.log('  - categorias:', categorias);
+    console.log('  - typeof unidades:', typeof unidades);
+    console.log('  - unidades:', unidades);
+    console.log('  - typeof itemsPropios:', typeof itemsPropios);
+    console.log('  - itemsPropios:', itemsPropios);
+
+    console.log('🔧 DEBUG: Verificación window object');
+    console.log('  - window.categorias:', window.categorias);
+    console.log('  - window.unidades:', window.unidades);
+    console.log('  - window.itemsPropios:', window.itemsPropios);
+
+    console.log('💰 DEBUG: Costo unitario');
+    console.log('  - Categorías con costo unitario:', categoriasConCostoUnitario);
+
+    if (tablaCostos) {
+        const datos = tablaCostos.getData();
+        const categoriasUsadas = [...new Set(datos.map(d => d.categoria_id).filter(Boolean))];
+        console.log('  - Categorías usadas en tabla:', categoriasUsadas);
+
+        const necesitaCostoUnitario = datos.some(fila => esCategoriaConCostoUnitario(fila.categoria_id));
+        console.log('  - ¿Necesita costo unitario?:', necesitaCostoUnitario);
+
+        const columna = tablaCostos.getColumn('costo_unitario');
+        console.log('  - Columna costo unitario visible:', columna ? columna.isVisible() : 'No encontrada');
+    } else {
+        console.log('  - Tabla no inicializada aún');
+    }
+};
+
+// Hacer disponible las funciones de debug globalmente
+window.debugParametrizacion = debugVariablesGlobales;
+window.testCostoUnitario = () => {
+    console.log('🧪 TEST: Costo Unitario');
+    actualizarVisibilidadCostoUnitario();
+    if (tablaCostos) {
+        const datos = tablaCostos.getData();
+        console.log('📋 Datos actuales:', datos);
+        console.log('💰 Filas que necesitan costo unitario:',
+            datos.filter(fila => esCategoriaConCostoUnitario(fila.categoria_id))
+        );
+    }
+};
 
 const unidadesArr = Object.entries(unidades).map(([sigla, nombre]) => ({
     sigla,
@@ -28,6 +142,41 @@ const categoriasMap = (Array.isArray(categorias) ? categorias : [])
     acc[c.id] = c.nombre;
     return acc;
   }, {});
+
+// Función helper para determinar si una categoría permite costo unitario
+const esCategoriaConCostoUnitario = (categoriaId) => {
+    if (!categoriaId) return false;
+    const categoria = categorias.find(c => c.id === categoriaId);
+    if (!categoria) return false;
+
+    const nombreCategoria = categoria.nombre.toLowerCase();
+    return nombreCategoria.includes('tarifa') || nombreCategoria.includes('otros');
+};
+
+// Obtener todas las categorías que permiten costo unitario para debugging
+const categoriasConCostoUnitario = categorias.filter(c =>
+    c.nombre.toLowerCase().includes('tarifa') || c.nombre.toLowerCase().includes('otros')
+);
+console.log('📊 Categorías con costo unitario habilitado:', categoriasConCostoUnitario.map(c => c.nombre));
+
+// Función para actualizar la visibilidad de la columna costo unitario
+const actualizarVisibilidadCostoUnitario = () => {
+    if (!tablaCostos) return;
+
+    const datos = tablaCostos.getData();
+    const necesitaCostoUnitario = datos.some(fila => esCategoriaConCostoUnitario(fila.categoria_id));
+
+    const columna = tablaCostos.getColumn('costo_unitario');
+    if (columna) {
+        if (necesitaCostoUnitario) {
+            columna.show();
+            console.log('✅ Columna costo unitario mostrada');
+        } else {
+            columna.hide();
+            console.log('❌ Columna costo unitario ocultada');
+        }
+    }
+};
 
 
 // Para editor list en unidad: usamos SIGLA como value y mostramos “SIGLA - Nombre”
@@ -88,7 +237,9 @@ const columnasCategoriasCostos = [
                 item: '',
                 item_nombre: '',
                 unidad_medida: ''
-            })
+            });
+            // Verificar visibilidad de columna costo unitario
+            actualizarVisibilidadCostoUnitario();
         }
     }
 ]
@@ -161,17 +312,23 @@ const columnasMaquinaria = [
           </select>`,
                 showCancelButton: true,
                 confirmButtonText: 'Crear',
-                preConfirm: () => ({
-                    codigo: upperEs(
-                        document.getElementById('new_codigo').value
-                    ),
-                    nombre: upperEs(
-                        document.getElementById('new_nombre').value
-                    ),
-                    unidad_medida:
-                        document.getElementById('unidad_medida').value, // SIGLA
-                    categoria_id: Number(catId)
-                })
+                preConfirm: () => {
+                    const codigoEl = document.getElementById('new_codigo');
+                    const nombreEl = document.getElementById('new_nombre');
+                    const unidadEl = document.getElementById('unidad_medida');
+
+                    if (!codigoEl || !nombreEl || !unidadEl) {
+                        Swal.showValidationMessage('Error: Elementos del formulario no encontrados');
+                        return false;
+                    }
+
+                    return {
+                        codigo: upperEs(codigoEl.value),
+                        nombre: upperEs(nombreEl.value),
+                        unidad_medida: unidadEl.value, // SIGLA
+                        categoria_id: Number(catId)
+                    };
+                }
             })
 
             if (!result.value) {
@@ -332,6 +489,36 @@ const columnasMaquinaria = [
             const v = toNumber(cell.getValue())
             return Number.isFinite(v) ? fmtMiles.format(v) : ''
         }
+    },
+
+    // COSTO UNITARIO (solo para categorías tarifas y otros)
+    {
+        title: 'Costo Unitario',
+        field: 'costo_unitario',
+        hozAlign: 'right',
+        headerHozAlign: 'right',
+        editor: 'input',
+        editorParams: {
+            elementAttributes: {
+                inputmode: 'decimal',
+                pattern: '[0-9.]*',
+                style: 'text-align:right;'
+            }
+        },
+        validator: ['numeric'],
+        visible: true,
+        cellEdited: cell => {
+            // Validación adicional si es necesaria
+            const valor = toNumber(cell.getValue());
+            if (valor !== null && valor < 0) {
+                cell.setValue(0);
+                toastr.warning('El costo unitario no puede ser negativo');
+            }
+        },
+        formatter: cell => {
+            const v = toNumber(cell.getValue())
+            return Number.isFinite(v) ? fmtMiles.format(v) : ''
+        }
     }
 ]
 
@@ -416,7 +603,11 @@ async function CargarCostos (primeraCargac) {
             ...columnasMaquinaria,
             columnaAccionesCostos
         ],
-        placeholder: 'No hay ninguna parametrización...'
+        placeholder: 'No hay ninguna parametrización...',
+        // Callbacks para actualizar visibilidad de columnas
+        rowAdded: () => actualizarVisibilidadCostoUnitario(),
+        rowDeleted: () => actualizarVisibilidadCostoUnitario(),
+        dataLoaded: () => actualizarVisibilidadCostoUnitario()
     })
 }
 
@@ -522,6 +713,20 @@ const withRowId = (arr = []) =>
     }))
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // Verificaciones de debug
+    console.log('📊 Parametrización Costos - Iniciando verificaciones...');
+
+    if (!verificarVariablesGlobales()) {
+        console.error('🚨 Error crítico: Variables globales faltantes. El módulo no puede inicializar correctamente.');
+        console.log('💡 Tip: Ejecuta debugParametrizacion() en la consola para más detalles');
+        return;
+    }
+
+    verificarElementosDOM();
+
+    console.log('✅ Todas las verificaciones pasaron correctamente');
+    console.log('💰 Campo costo_unitario disponible para categorías:', categoriasConCostoUnitario.map(c => c.nombre));
+
     // Toast
     toastr.options = {
         closeButton: true,
@@ -546,21 +751,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         opcionesNovedad[item.id] = item.nombre
     })
 
-    document.getElementById('btn-nuevo').addEventListener('click', () => {
-        tablaCostos.addRow(
-            {
-                __rid: genRid(), // id local único
-                categoria_id: categorias[0]?.id ?? null,
-                item: '',
-                item_nombre: '',
-                unidad_medida: unidades[0]?.sigla ?? '',
-                costo_dia: null,
-                costo_hora: null,
-                active: 1
-            },
-            false
-        )
-    })
+    // Verificar que el botón existe antes de agregar el event listener
+    const btnNuevo = document.getElementById('btn-nuevo');
+    if (btnNuevo) {
+        btnNuevo.addEventListener('click', () => {
+            tablaCostos.addRow(
+                {
+                    __rid: genRid(), // id local único
+                    categoria_id: categorias[0]?.id ?? null,
+                    item: '',
+                    item_nombre: '',
+                    unidad_medida: unidades[0]?.sigla ?? '',
+                    costo_dia: null,
+                    costo_hora: null,
+                    costo_unitario: null,
+                    active: 1
+                },
+                false
+            )
+        })
+    } else {
+        console.warn('⚠️  Elemento btn-nuevo no encontrado en el DOM');
+    }
 
     //carga de la datatable
     await CargarNovedades(primeraCarga)
