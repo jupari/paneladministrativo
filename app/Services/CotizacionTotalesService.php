@@ -7,6 +7,7 @@ use App\Models\CotizacionProducto;
 use App\Models\CotizacionConcepto;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CotizacionTotalesService
 {
@@ -24,7 +25,7 @@ class CotizacionTotalesService
 
         $subtotalBase = $productos->sum('valor_total');
 
-        \Log::info('Recalculando totales', [
+        Log::info('Recalculando totales', [
             'cotizacion_id' => $cotizacion->id,
             'subtotal_base' => $subtotalBase,
             'utilidades_count' => $cotizacion->utilidades->count()
@@ -51,7 +52,7 @@ class CotizacionTotalesService
             - $totalDescuentosRecalculados
             + $totalImpuestosRecalculados;
 
-        \Log::info('Actualizando totales de cotización con conceptos recalculados', [
+        Log::info('Actualizando totales de cotización con conceptos recalculados', [
             'cotizacion_id' => $cotizacion->id,
             'subtotal_base' => $subtotalBase,
             'utilidad_total' => $utilidadTotal,
@@ -76,7 +77,7 @@ class CotizacionTotalesService
     {
         $utilidadTotal = 0;
 
-        \Log::info('Iniciando cálculo de utilidades', [
+        Log::info('Iniciando cálculo de utilidades', [
             'cotizacion_id' => $cotizacion->id,
             'utilidades_disponibles' => $cotizacion->utilidades->count()
         ]);
@@ -84,16 +85,55 @@ class CotizacionTotalesService
         foreach ($cotizacion->utilidades as $utilidad) {
             $valorUtilidad = 0;
 
-            \Log::info('Procesando utilidad', [
+            Log::info('Procesando utilidad', [
                 'utilidad_id' => $utilidad->id,
                 'categoria_id' => $utilidad->categoria_id,
                 'item_propio_id' => $utilidad->item_propio_id,
+                'cargo_id' => $utilidad->cargo_id,
                 'tipo' => $utilidad->tipo,
                 'valor' => $utilidad->valor
             ]);
 
-            // Ahora siempre se requieren ambos: categoria_id e item_propio_id
-            if ($utilidad->categoria_id && $utilidad->item_propio_id) {
+            // Manejar utilidades por categoría + cargo_id
+            if ($utilidad->categoria_id && $utilidad->cargo_id) {
+                Log::info('Procesando utilidad con cargo_id', [
+                    'categoria_id' => $utilidad->categoria_id,
+                    'cargo_id' => $utilidad->cargo_id
+                ]);
+
+                // Filtrar productos por categoría Y cargo (parametrización)
+                $productosUtilidad = $productos->filter(function($producto) use ($utilidad) {
+                    // Verificar que coincida la categoría
+                    if ($producto->categoria_id != $utilidad->categoria_id) {
+                        return false;
+                    }
+
+                    // Verificar parametrización si existe
+                    if (!$producto->parametrizacion_id) {
+                        return false;
+                    }
+
+                    // Obtener cargo de la parametrización
+                    $parametrizacion = DB::table('parametrizacion')
+                        ->where('id', $producto->parametrizacion_id)
+                        ->first();
+
+                    $coincide = $parametrizacion && $parametrizacion->cargo_id == $utilidad->cargo_id;
+
+                    Log::info('Verificando producto', [
+                        'producto_id' => $producto->id,
+                        'parametrizacion_id' => $producto->parametrizacion_id,
+                        'cargo_en_parametrizacion' => $parametrizacion ? $parametrizacion->cargo_id : null,
+                        'cargo_utilidad' => $utilidad->cargo_id,
+                        'coincide' => $coincide
+                    ]);
+
+                    return $coincide;
+                });
+
+            }
+            // Manejar utilidades por categoría + item_propio_id
+            else if ($utilidad->categoria_id && $utilidad->item_propio_id) {
 
                 // Verificar si es un cargo (con prefijo cargo_)
                 if (strpos($utilidad->item_propio_id, 'cargo_') === 0) {
@@ -113,7 +153,7 @@ class CotizacionTotalesService
                         }
 
                         // Obtener cargo de la parametrización
-                        $parametrizacion = \DB::table('parametrizacion')
+                        $parametrizacion = DB::table('parametrizacion')
                             ->where('id', $producto->parametrizacion_id)
                             ->first();
 
@@ -127,27 +167,37 @@ class CotizacionTotalesService
                             && $producto->item_propio_id == $utilidad->item_propio_id;
                     });
                 }
-
-                $subtotalUtilidad = $productosUtilidad->sum('valor_total');
-
-                \Log::info('Utilidad por categoría e item propio', [
+            } else {
+                // Caso no válido
+                Log::warning('Utilidad sin criterios válidos', [
+                    'utilidad_id' => $utilidad->id,
                     'categoria_id' => $utilidad->categoria_id,
                     'item_propio_id' => $utilidad->item_propio_id,
-                    'productos_encontrados' => $productosUtilidad->count(),
-                    'subtotal_utilidad' => $subtotalUtilidad
+                    'cargo_id' => $utilidad->cargo_id
                 ]);
-
-                $valorUtilidad = $this->calcularValorUtilidad($utilidad, $subtotalUtilidad);
-
-                // Actualizar cada producto con su proporción de utilidad
-                $this->aplicarUtilidadAProductos($productosUtilidad, $valorUtilidad, $subtotalUtilidad);
+                continue;
             }
+
+            $subtotalUtilidad = $productosUtilidad->sum('valor_total');
+
+            Log::info('Utilidad por categoría e item/cargo', [
+                'categoria_id' => $utilidad->categoria_id,
+                'item_propio_id' => $utilidad->item_propio_id,
+                'cargo_id' => $utilidad->cargo_id,
+                'productos_encontrados' => $productosUtilidad->count(),
+                'subtotal_utilidad' => $subtotalUtilidad
+            ]);
+
+            $valorUtilidad = $this->calcularValorUtilidad($utilidad, $subtotalUtilidad);
+
+            // Actualizar cada producto con su proporción de utilidad
+            $this->aplicarUtilidadAProductos($productosUtilidad, $valorUtilidad, $subtotalUtilidad);
 
             // Actualizar el valor calculado de la utilidad
             $utilidad->update(['valor_calculado' => $valorUtilidad]);
             $utilidadTotal += $valorUtilidad;
 
-            \Log::info('Utilidad calculada', [
+            Log::info('Utilidad calculada', [
                 'categoria_id' => $utilidad->categoria_id,
                 'item_propio_id' => $utilidad->item_propio_id,
                 'valor_utilidad' => $valorUtilidad,
@@ -155,7 +205,7 @@ class CotizacionTotalesService
             ]);
         }
 
-        \Log::info('Total de utilidades calculado', [
+        Log::info('Total de utilidades calculado', [
             'cotizacion_id' => $cotizacion->id,
             'utilidad_total_final' => $utilidadTotal
         ]);
@@ -205,7 +255,7 @@ class CotizacionTotalesService
         $totalDescuentos = 0;
         $totalImpuestos = 0;
 
-        \Log::info('Recalculando conceptos con nueva base', [
+        Log::info('Recalculando conceptos con nueva base', [
             'subtotal_con_utilidad' => $subtotalConUtilidad,
             'conceptos_count' => $conceptos->count()
         ]);
@@ -229,7 +279,7 @@ class CotizacionTotalesService
 
                 $totalDescuentos += $valorConcepto;
 
-                \Log::info('Descuento recalculado sobre base con utilidades', [
+                Log::info('Descuento recalculado sobre base con utilidades', [
                     'concepto' => $concepto->nombre,
                     'porcentaje' => $cotizacionConcepto->porcentaje,
                     'nueva_base' => $subtotalConUtilidad,
@@ -259,7 +309,7 @@ class CotizacionTotalesService
 
                 $totalImpuestos += $valorConcepto;
 
-                \Log::info('Impuesto recalculado sobre nueva base', [
+                Log::info('Impuesto recalculado sobre nueva base', [
                     'concepto' => $concepto->nombre,
                     'porcentaje' => $cotizacionConcepto->porcentaje,
                     'base_con_descuentos' => $baseParaImpuestos,
@@ -268,7 +318,7 @@ class CotizacionTotalesService
             }
         }
 
-        \Log::info('Conceptos recalculados finales', [
+        Log::info('Conceptos recalculados finales', [
             'total_descuentos' => $totalDescuentos,
             'total_impuestos' => $totalImpuestos
         ]);

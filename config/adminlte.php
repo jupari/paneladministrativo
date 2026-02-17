@@ -310,340 +310,302 @@ return [
             'type' => 'fullscreen-widget',
             'topnav_right' => true,
         ],
-        [
-            'text'=>'Dashboard',
-            'route'=>'dashboard',
-            'icon'=>' fas fa-tachometer-alt',
-            'can'=>'admin.dashboard'
-        ],
-        // [
-        //     'text' => 'Cuentas',
-        //     'icon' => 'fas fa-fw fa-lock',
 
-        //     'submenu' => [
-        //         [
-        //             'text' => 'Cuentas principal',
-        //             'route' => 'admin.cuentappal.index',
-        //             'can'=>'cuentappal.index',
-        //         ],
-        //         [
-        //             'text' => 'Cuentas distribuidores',
-        //             'route' => 'admin.cuenta.index',
-        //             'can'=>'cuentaabonado.index'
-        //         ],
-        //         [
-        //             'text' => 'Estados(cuentas)',
-        //             'route' => 'admin.estado.index',
-        //             'can'=>'estados.index'
-        //         ],
-        //     ]
-        // ],
-        ['header' => 'Terceros', 'can'=>['terceros.index','users.index']],
+        // ========================================
+        // MENÚ PRINCIPAL
+        // ========================================
+
+        // Dashboard - Elemento destacado
         [
-            'text' => 'Clientes',
-            'route' => 'admin.clientes.index',
-            'icon' => 'fas fa-users fa-fw',
-            'can'=>'terceros.index',
+            'text' => 'Dashboard',
+            'route' => 'dashboard',
+            'icon' => 'fas fa-tachometer-alt text-primary',
+            'can' => 'admin.dashboard'
         ],
+
+        // ========================================
+        // GESTIÓN DE TERCEROS - SUBMENÚ
+        // ========================================
         [
-            'text' => 'Vendedores',
-            'route' => 'admin.vendedores.index',
-            'icon' => 'fas fa-male fa-fw',
-            'can'=>'terceros.index',
-        ],
-        [
-            'text' => 'Ciudades',
-            'route' => 'admin.ubicaciones.index',
-            'icon' => 'fas fa-city fa-fw',
-            'can'=>'configuracion.index',
-        ],
-        ['header' => 'Contratos', 'can'=>['empleados.index','configuracion.index']],
-        [
-            'text' => 'Contratos',
-            'route' => 'admin.contratos.index',
-            'icon' => 'fa fa-archive fa-fw',
-            'can'=>'empleados.index',
-        ],
-        [
-            'text' => 'Cargos',
-            'route' => 'admin.cargos.index',
-            'icon' => 'fa fa-folder-open fa-fw',
-            'can'=>'empleados.index',
-        ],
-        [
-            'text' => 'Empleados',
-            'route' => 'admin.empleados.index',
-            'icon' => 'fa fa-address-card fa-fw',
-            'can'=>'empleados.index',
-        ],
-        [
-            'text' => 'Plantillas',
-            'route' => 'admin.plantillas.index',
-            'icon' => 'fa fa-file fa-fw',
-            'can'=>'configuracion.index',
-        ],
-        [
-            'text' => 'Parametrización',
-            // 'route' => 'admin.parametrizacion.index',
-            'icon' => 'fa fa-cog fa-fw',
-            // 'can'=>'permisos.index',
+            'text' => 'Terceros',
+            'icon' => 'fas fa-handshake text-success',
+            'can' => ['terceros.index','users.index'],
             'submenu' => [
                 [
-                    'text' => 'Parametros Liqui.',
-                    'icon' => 'fa fa-check fa-fw',
-                    'route' => 'admin.parametrizacion.index',
+                    'text' => 'Clientes',
+                    'route' => 'admin.clientes.index',
+                    'icon' => 'fas fa-users text-success',
+                    'can' => 'terceros.index',
                 ],
                 [
-                    'text' => 'Categorias',
-                    'icon' => 'fa fa-check fa-fw',
-                    'route' => 'admin.categoria.index',
+                    'text' => 'Vendedores',
+                    'route' => 'admin.vendedores.index',
+                    'icon' => 'fas fa-user-tie text-info',
+                    'can' => 'terceros.index',
                 ],
                 [
-                    'text' => 'Novedades',
-                    'icon' => 'fa fa-check fa-fw',
-                    'route' => 'admin.novedad.index',
+                    'text' => 'Ciudades',
+                    'route' => 'admin.ubicaciones.index',
+                    'icon' => 'fas fa-map-marker-alt text-warning',
+                    'can' => 'configuracion.index',
                 ],
-                [
-                    'text' => 'Items',
-                    'icon' => 'fa fa-check fa-fw',
-                    'route' => 'admin.items-propios.index',
-                ]
             ]
         ],
-        ['header' => 'Cotizar', 'can'=>['cotizaciones.index']],
+
+        // ========================================
+        // RECURSOS HUMANOS - SUBMENÚ
+        // ========================================
         [
-            'text' => 'Cotización',
-            'route' => 'admin.cotizaciones.index',
-            'icon' => 'fa fa-file fa-fw',
-            'can'=>'cotizaciones.index',
+            'text' => 'Recursos Humanos',
+            'icon' => 'fas fa-user-friends text-primary',
+            'can' => ['empleados.index','configuracion.index'],
+            'submenu' => [
+                [
+                    'text' => 'Empleados',
+                    'route' => 'admin.empleados.index',
+                    'icon' => 'fas fa-user-friends text-primary',
+                    'can' => 'empleados.index',
+                ],
+                [
+                    'text' => 'Cargos',
+                    'route' => 'admin.cargos.index',
+                    'icon' => 'fas fa-user-graduate text-success',
+                    'can' => 'empleados.index',
+                ],
+                [
+                    'text' => 'Contratos',
+                    'route' => 'admin.contratos.index',
+                    'icon' => 'fas fa-file-contract text-info',
+                    'can' => 'empleados.index',
+                ],
+                [
+                    'text' => 'Plantillas',
+                    'route' => 'admin.plantillas.index',
+                    'icon' => 'fas fa-file-alt text-secondary',
+                    'can' => 'configuracion.index',
+                ],
+            ]
         ],
+
+        // ========================================
+        // COTIZACIONES - SUBMENÚ
+        // ========================================
         [
-            'text' => 'Solicitudes de aprobación',
-            'route' => 'admin.cotizaciones.solicitudes.index',
-            'icon' => 'fa fa-lock fa-fw',
-            'can'=>'cotizaciones.index',
+            'text' => 'Cotizaciones',
+            'icon' => 'fas fa-calculator text-warning',
+            'can' => ['cotizaciones.index'],
+            'submenu' => [
+                [
+                    'text' => 'Nueva Cotización',
+                    'route' => 'admin.cotizaciones.index',
+                    'icon' => 'fas fa-plus-circle text-success',
+                    'can' => 'cotizaciones.index',
+                ],
+                [
+                    'text' => 'Solicitudes Pendientes',
+                    'route' => 'admin.cotizaciones.solicitudes.index',
+                    'icon' => 'fas fa-clock text-warning',
+                    'can' => 'cotizaciones.index',
+                ],
+            ]
         ],
-        ['header' => 'Configuración', 'can'=>['users.index','roles.index','configuracion.index']],
+
+        // ========================================
+        // CONFIGURACIÓN DEL SISTEMA - SUBMENÚ UNIFICADO
+        // ========================================
         [
-                'text' => 'Usuarios',
-                'route' => 'admin.users.index',
-                'icon' => 'fas fa-users fa-fw',
-                'can'=>'users.index',
+            'text' => 'Configuración',
+            'icon' => 'fas fa-cogs text-secondary',
+            'can' => ['users.index','roles.index','configuracion.index'],
+            'submenu' => [
+                // Subgrupo: Parametrización
+                [
+                    'text' => 'Parametrización',
+                    'icon' => 'fas fa-cogs text-primary',
+                    'submenu' => [
+                        [
+                            'text' => 'Parámetros de Liquidación',
+                            'icon' => 'fas fa-calculator text-info',
+                            'route' => 'admin.parametrizacion.index',
+                        ],
+                        [
+                            'text' => 'Categorías',
+                            'icon' => 'fas fa-tags text-success',
+                            'route' => 'admin.categoria.index',
+                        ],
+                        [
+                            'text' => 'Novedades',
+                            'icon' => 'fas fa-exclamation-triangle text-warning',
+                            'route' => 'admin.novedad.index',
+                        ],
+                        [
+                            'text' => 'Items Propios',
+                            'icon' => 'fas fa-boxes text-secondary',
+                            'route' => 'admin.items-propios.index',
+                        ]
+                    ]
+                ],
+                // Gestión de usuarios
+                [
+                    'text' => 'Usuarios',
+                    'route' => 'admin.users.index',
+                    'icon' => 'fas fa-users text-primary',
+                    'can' => 'users.index',
+                ],
+                // Roles y permisos
+                [
+                    'text' => 'Roles y Permisos',
+                    'icon' => 'fas fa-shield-alt text-danger',
+                    'submenu' => [
+                        [
+                            'text' => 'Roles',
+                            'route' => 'admin.roles.index',
+                            'icon' => 'fas fa-user-tag text-info',
+                            'can' => 'roles.index'
+                        ],
+                        [
+                            'text' => 'Permisos',
+                            'route' => 'admin.permission.index',
+                            'icon' => 'fas fa-key text-warning',
+                            'can' => 'configuracion.index',
+                        ],
+                    ]
+                ],
+                // Parámetros generales
+                [
+                    'text' => 'Parámetros Generales',
+                    'route' => 'admin.elementos.index',
+                    'icon' => 'fas fa-sliders-h text-secondary',
+                    'can' => 'configuracion.index',
+                ],
+            ]
         ],
+
+        // ========================================
+        // GESTIÓN EMPRESARIAL - SUBMENÚ
+        // ========================================
         [
-            'text' => 'Roles',
-            'route' => 'admin.roles.index',
-            'icon' => 'fas fa-object-group fa-fw',
-            'can'=>'roles.index'
-        ],
-        [
-            'text' => 'Permisos',
-            'route' => 'admin.permission.index',
-            'icon' => 'fas fa-address-card fa-fw',
-            'can'=>'configuracion.index',
-        ],
-        [
-            'text' => 'Parametros',
-            'route' => 'admin.elementos.index',
-            'icon' => 'fas fa-address-card fa-fw',
-            'can'=>'configuracion.index',
+            'text' => 'Empresas',
+            'icon' => 'fas fa-building text-primary',
+            'can' => 'companies.index',
+            'submenu' => [
+                [
+                    'text' => 'Gestión de Empresas',
+                    'route' => 'admin.companies.index',
+                    'icon' => 'fas fa-building text-primary',
+                    'can' => 'companies.index',
+                ],
+            ]
         ],
         // ['header' => 'Producción', 'can'=>['users.index','roles.index','permisos.index']],
+        // ========================================
+        // MÓDULOS EN DESARROLLO (COMENTADOS)
+        // ========================================
+        // Los siguientes módulos están preparados para activación futura
+
+        // ['header' => '🏭 PRODUCCIÓN', 'can'=>['users.index','roles.index','permisos.index']],
         // [
-        //         'text' => 'Fichas producción',
-        //         'route' => 'admin.fichas-tecnicas.index',
-        //         'icon' => 'fas fa-address-card fa-fw',
-        //         'can'=>'users.index',
-        // ],
-        // [
-        //         'text' => 'Ordenes producción',
-        //         'route' => 'admin.materiales.index',
-        //         'icon' => 'fas fa-tasks fa-fw',
-        //         'can'=>'users.index',
-        // ],
-        // [
-        //         'text' => 'Materiales',
-        //         'route' => 'admin.materiales.index',
-        //         'icon' => 'fas fa-building fa-fw',
-        //         'can'=>'users.index',
-        // ],
-        // [
-        //         'text' => 'Procesos',
-        //         'route' => 'admin.procesos.index',
-        //         'icon' => 'fas fa-cogs fa-fw',
-        //         'can'=>'users.index',
-        // ],
-        // ['header' => 'Inventarios', 'can'=>['users.index','roles.index','permisos.index']],
-        // [
-        //         'text' => 'Productos',
-        //         'route' => 'admin.productos.index',
-        //         'icon' => 'fas fa-address-card fa-fw',
-        //         'can'=>'users.index',
-        // ],
-        // [
-        //         'text' => 'Bodegas',
-        //         'route' => 'admin.bodegas.index',
-        //         'icon' => 'fas fa-warehouse fa-fw',
-        //         'can'=>'users.index',
-        // ],
-        // [
-        //         'text' => 'Movimientos de inventario',
-        //         'route' => 'admin.movimientos.index',
-        //         'icon' => 'fas fa-exchange-alt fa-fw',
-        //         'can'=>'users.index',
-        // ],
-        // [
-        //         'text' => 'Saldos de inventario',
-        //         'route' => 'admin.saldos.index',
-        //         'icon' => 'fas fa-folder-open fa-fw',
-        //         'can'=>'users.index',
-        // ],
-        // ['header' => 'Compras', 'can'=>['users.index','roles.index','permisos.index']],
-        // [
-        //         'text' => 'Ordenes de compra',
-        //         'route' => 'admin.fichas-tecnicas.index',
-        //         'icon' => 'fas fa-shopping-cart fa-fw',
-        //         'can'=>'users.index',
-        // ],
-        // [
-        //         'text' => 'Compra generales',
-        //         'route' => 'admin.materiales.index',
-        //         'icon' => 'fas fa-money-bill fa-fw',
-        //         'can'=>'users.index',
-        // ],
-        // [
-        //         'text' => 'Proveedores',
-        //         'route' => 'admin.proveedores.index',
-        //         'icon' => 'fas fa-money-bill fa-fw',
-        //         'can'=>'users.index',
-        // ],
-        // [
-        //         'text' => 'Actividades',
-        //         'route' => 'admin.procesosdet.index',
-        //         'icon' => 'fas fa-tasks fa-fw',
-        //         'can'=>'users.index',
-        // ],
-        // [
-        //         'text' => 'Maquinas',
-        //         'route' => 'admin.maquinas.index',
-        //         'icon' => 'fas fa-industry fa-fw',
-        //         'can'=>'users.index',
-        // ],
-        // [
-        //         'text' => 'Insumos',
-        //         'route' => 'admin.insumos.index',
-        //         'icon' => 'fas fa-boxes fa-fw',
-        //         'can'=>'users.index',
-        // ],
-        // [
-        //     'text' => 'Reportes',
-        //     'route' => 'admin.reportes.index',
-        //     'icon' => 'fas fa-chart-bar fa-fw',
+        //     'text' => 'Fichas de Producción',
+        //     'route' => 'admin.fichas-tecnicas.index',
+        //     'icon' => 'fas fa-clipboard-list text-primary',
         //     'can'=>'users.index',
         // ],
-        // ['header' => 'Emails', 'can'=>['configEmail.index']],
         // [
-        //     'text' => 'Configuración correos',
+        //     'text' => 'Órdenes de Producción',
+        //     'route' => 'admin.materiales.index',
+        //     'icon' => 'fas fa-tasks text-info',
+        //     'can'=>'users.index',
+        // ],
+        // [
+        //     'text' => 'Materiales',
+        //     'route' => 'admin.materiales.index',
+        //     'icon' => 'fas fa-boxes text-success',
+        //     'can'=>'users.index',
+        // ],
+        // [
+        //     'text' => 'Procesos',
+        //     'route' => 'admin.procesos.index',
+        //     'icon' => 'fas fa-cogs text-warning',
+        //     'can'=>'users.index',
+        // ],
+
+        // ['header' => '📦 INVENTARIOS', 'can'=>['users.index','roles.index','permisos.index']],
+        // [
+        //     'text' => 'Productos',
+        //     'route' => 'admin.productos.index',
+        //     'icon' => 'fas fa-cubes text-primary',
+        //     'can'=>'users.index',
+        // ],
+        // [
+        //     'text' => 'Bodegas',
+        //     'route' => 'admin.bodegas.index',
+        //     'icon' => 'fas fa-warehouse text-info',
+        //     'can'=>'users.index',
+        // ],
+        // [
+        //     'text' => 'Movimientos',
+        //     'route' => 'admin.movimientos.index',
+        //     'icon' => 'fas fa-exchange-alt text-success',
+        //     'can'=>'users.index',
+        // ],
+        // [
+        //     'text' => 'Saldos',
+        //     'route' => 'admin.saldos.index',
+        //     'icon' => 'fas fa-balance-scale text-warning',
+        //     'can'=>'users.index',
+        // ],
+
+        // ['header' => '🛒 COMPRAS', 'can'=>['users.index','roles.index','permisos.index']],
+        // [
+        //     'text' => 'Órdenes de Compra',
+        //     'route' => 'admin.fichas-tecnicas.index',
+        //     'icon' => 'fas fa-shopping-cart text-primary',
+        //     'can'=>'users.index',
+        // ],
+        // [
+        //     'text' => 'Proveedores',
+        //     'route' => 'admin.proveedores.index',
+        //     'icon' => 'fas fa-truck text-info',
+        //     'can'=>'users.index',
+        // ],
+        // [
+        //     'text' => 'Compras Generales',
+        //     'route' => 'admin.materiales.index',
+        //     'icon' => 'fas fa-money-bill-wave text-success',
+        //     'can'=>'users.index',
+        // ],
+
+        // ['header' => '📊 REPORTES', 'can'=>['users.index']],
+        // [
+        //     'text' => 'Dashboard Ejecutivo',
+        //     'route' => 'admin.reportes.index',
+        //     'icon' => 'fas fa-chart-line text-primary',
+        //     'can'=>'users.index',
+        // ],
+        // [
+        //     'text' => 'Reportes Financieros',
+        //     'route' => 'admin.reportes.financieros',
+        //     'icon' => 'fas fa-chart-bar text-success',
+        //     'can'=>'users.index',
+        // ],
+
+        // ['header' => '📧 COMUNICACIONES', 'can'=>['configEmail.index']],
+        // [
+        //     'text' => 'Configuración de Correos',
         //     'route' => 'admin.configemail.index',
-        //     'icon' => 'fas fa-cogs fa-fw',
+        //     'icon' => 'fas fa-cog text-primary',
         //     'can'=>'configEmail.index',
         // ],
         // [
-        //     'text' => 'Email',
+        //     'text' => 'Gestión de Emails',
         //     'route' => 'admin.emails.index',
-        //     'icon' => 'fas fa-envelope fa-fw',
+        //     'icon' => 'fas fa-envelope text-info',
         // ],
 
-
-        // Sidebar items:
-        // [
-        //     'type' => 'sidebar-menu-search',
-        //     'text' => 'search',
-        // ],
-        // [
-        //     'text' => 'blog',
-        //     'url' => 'admin/blog',
-        //     'can' => 'manage-blog',
-        // ],
-        // [
-        //     'text' => 'pages',
-        //     'url' => 'admin/pages',
-        //     'icon' => 'far fa-fw fa-file',
-        //     'label' => 4,
-        //     'label_color' => 'success',
-        // ],
-        // ['header' => 'account_settings'],
-        // [
-        //     'text' => 'profile',
-        //     'url' => 'admin/settings',
-        //     'icon' => 'fas fa-fw fa-user',
-        // ],
-        // [
-        //     'text' => 'change_password',
-        //     'url' => 'admin/settings',
-        //     'icon' => 'fas fa-fw fa-lock',
-        // ],
-        // [
-        //     'text' => 'multilevel',
-        //     'icon' => 'fas fa-fw fa-share',
-        //     'submenu' => [
-        //         [
-        //             'text' => 'level_one',
-        //             'url' => '#',
-        //         ],
-        //         [
-        //             'text' => 'level_one',
-        //             'url' => '#',
-        //             'submenu' => [
-        //                 [
-        //                     'text' => 'level_two',
-        //                     'url' => '#',
-        //                 ],
-        //                 [
-        //                     'text' => 'level_two',
-        //                     'url' => '#',
-        //                     'submenu' => [
-        //                         [
-        //                             'text' => 'level_three',
-        //                             'url' => '#',
-        //                         ],
-        //                         [
-        //                             'text' => 'level_three',
-        //                             'url' => '#',
-        //                         ],
-        //                     ],
-        //                 ],
-        //             ],
-        //         ],
-        //         [
-        //             'text' => 'level_one',
-        //             'url' => '#',
-        //         ],
-        //     ],
-        // ],
-        // ['header' => 'labels'],
-        // [
-        //     'text' => 'important',
-        //     'icon_color' => 'red',
-        //     'url' => '#',
-        // ],
-        // [
-        //     'text' => 'warning',
-        //     'icon_color' => 'yellow',
-        //     'url' => '#',
-        // ],
-        // [
-        //     'text' => 'information',
-        //     'icon_color' => 'cyan',
-        //     'url' => '#',
-        // ],
-        ['header' => 'Empresas', 'can'=>'companies.index'],
-        [
-            'text' => 'Empresa',
-            'route' => 'admin.companies.index',
-            'icon' => 'fa fa-archive fa-fw',
-            'can'=>'companies.index',
-        ],
+        // ========================================
+        // SEPARADOR FINAL
+        // ========================================
+        ['type' => 'sidebar-custom', 'content' => '<hr class="sidebar-divider">']
     ],
 
     /*

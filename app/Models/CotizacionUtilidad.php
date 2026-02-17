@@ -17,6 +17,7 @@ class CotizacionUtilidad extends Model
         'cotizacion_id',
         'categoria_id',
         'item_propio_id',
+        'cargo_id',
         'tipo',
         'valor',
         'valor_calculado',
@@ -42,6 +43,10 @@ class CotizacionUtilidad extends Model
         return $this->belongsTo(ItemPropio::class, 'item_propio_id');
     }
 
+    public function cargo()
+    {
+        return $this->belongsTo(Cargo::class, 'cargo_id');
+    }
     /**
      * Scope para filtrar por tipo de aplicación
      */

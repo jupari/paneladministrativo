@@ -341,145 +341,9 @@
                         </div>
 
                         <!-- Resumen Financiero Detallado -->
-                        <div class="card shadow-lg border-0 mb-4" id="resumen-totales-cotizacion" style="position: sticky; top: 20px; z-index: 100;">
-                            <div class="card-header bg-gradient-primary text-white border-0">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0 d-flex align-items-center">
-                                        <i class="fas fa-calculator me-2"></i>💰 Resumen Financiero de la Cotización
-                                    </h5>
-                                    <div class="d-flex gap-2">
-                                        <button type="button" class="btn btn-sm btn-outline-light" onclick="actualizarTotalesManualmente()" title="Recalcular">
-                                            <i class="fas fa-sync-alt"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-light" onclick="toggleResumenDetalle()" id="btn-toggle-resumen">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body p-4" id="resumen-detalle-content">
-                                <!-- Campos ocultos para el formulario -->
-                                <input type="hidden" id="subtotal" name="subtotal" value="0.00">
-                                <input type="hidden" id="descuento" name="descuento" value="0.00">
-                                <input type="hidden" id="total_impuesto" name="total_impuesto" value="0.00">
-                                <input type="hidden" id="total" name="total" value="0.00">
 
-                                <!-- Totales informativos con diseño mejorado -->
-                                <div class="row g-3 mb-4">
-                                    <div class="col-md-3">
-                                        <div class="card border-0 shadow-sm h-100">
-                                            <div class="card-body text-center p-3">
-                                                <div class="d-flex align-items-center justify-content-center mb-2">
-                                                    <div class="bg-success bg-opacity-10 rounded-circle p-2 me-2">
-                                                        <i class="fas fa-chart-bar text-success"></i>
-                                                    </div>
-                                                    <h6 class="card-title text-success mb-0">Subtotal</h6>
-                                                </div>
-                                                <div class="h4 fw-bold text-success mb-1" id="display-subtotal-valor">$0.00</div>
-                                                <small class="text-muted">Suma de productos</small>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-3">
-                                        <div class="card border-0 shadow-sm h-100">
-                                            <div class="card-body text-center p-3">
-                                                <div class="d-flex align-items-center justify-content-center mb-2">
-                                                    <div class="bg-warning bg-opacity-10 rounded-circle p-2 me-2">
-                                                        <i class="fas fa-percentage text-warning"></i>
-                                                    </div>
-                                                    <h6 class="card-title text-warning mb-0">Descuentos</h6>
-                                                </div>
-                                                <div class="h4 fw-bold text-warning mb-1" id="display-descuento-valor">$0.00</div>
-                                                <small class="text-muted">Total descuentos</small>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-3">
-                                        <div class="card border-0 shadow-sm h-100">
-                                            <div class="card-body text-center p-3">
-                                                <div class="d-flex align-items-center justify-content-center mb-2">
-                                                    <div class="bg-info bg-opacity-10 rounded-circle p-2 me-2">
-                                                        <i class="fas fa-receipt text-info"></i>
-                                                    </div>
-                                                    <h6 class="card-title text-info mb-0">Impuestos</h6>
-                                                </div>
-                                                <div class="h4 fw-bold text-info mb-1" id="display-impuesto-valor">$0.00</div>
-                                                <small class="text-muted">IVA y otros</small>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-3">
-                                        <div class="card border-0 shadow-lg bg-gradient-primary text-white h-100">
-                                            <div class="card-body text-center p-3">
-                                                <div class="d-flex align-items-center justify-content-center mb-2">
-                                                    <div class="bg-white bg-opacity-20 rounded-circle p-2 me-2">
-                                                        <i class="fas fa-money-bill-wave text-dark"></i>
-                                                    </div>
-                                                    <h6 class="card-title mb-0">Total Final</h6>
-                                                </div>
-                                                <div class="h3 fw-bold mb-1" id="display-total-valor">$0.00</div>
-                                                <small class="opacity-75">Valor a pagar</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Fórmula visual mejorada -->
-                                <div class="row">
-                                    <div class="col-12">
-                                        <div class="alert alert-light border-0 bg-light bg-opacity-50">
-                                            <div class="d-flex align-items-center justify-content-center flex-wrap gap-2">
-                                                <div class="d-flex align-items-center">
-                                                    <span class="badge bg-success me-1">Subtotal</span>
-                                                </div>
-                                                <i class="fas fa-minus text-muted"></i>
-                                                <div class="d-flex align-items-center">
-                                                    <span class="badge bg-warning">Descuentos</span>
-                                                </div>
-                                                <i class="fas fa-plus text-muted"></i>
-                                                <div class="d-flex align-items-center">
-                                                    <span class="badge bg-info">Impuestos</span>
-                                                </div>
-                                                <i class="fas fa-equals text-muted"></i>
-                                                <div class="d-flex align-items-center">
-                                                    <span class="badge bg-primary fs-6">Total Final</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </form>
-                    <div class="d-flex justify-content-between align-items-center my-4" id="botones">
-                        <div class="">
-                            <a class="btn btn-secondary" href="javascript:history.back()">
-                                <i class="fas fa-arrow-left mr-1"></i>
-                                Atras
-                            </a>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <!-- Botones de PDF -->
-                            <div class="btn-group" role="group" style="" id="pdf-buttons">
-                                <button type="button" class="btn btn-outline-danger" onclick="previewPdf()" title="Vista previa PDF">
-                                    <i class="fas fa-eye me-1"></i>
-                                    <span class="d-none d-md-inline">Vista Previa</span>
-                                </button>
-                                <button type="button" class="btn btn-danger" onclick="downloadPdf()" title="Descargar PDF">
-                                    <i class="fas fa-file-pdf me-1"></i>
-                                    <span class="d-none d-md-inline">Descargar PDF</span>
-                                </button>
-                            </div>
-
-                            <button class="btn btn-primary" id="agregarCotizacion">
-                                <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="spinnerRegister"></span>
-                                Guardar Cotización
-                            </button>
-                        </div>
-                    </div>
+                    <!--botones anterior-->
 
                     <!-- Sistema de Pasos Progresivos -->
                     <div class="row mt-4" id="sistemaProgresivo">
@@ -1034,6 +898,150 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                    <!-- Totales de la Cotización -->
+                                    <div class="card shadow-lg border-0 my-3" id="resumen-totales-cotizacion" style="position: sticky; top: 20px; z-index: 100;">
+                                        <div class="card-header bg-gradient-primary text-white border-0">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h5 class="mb-0 d-flex align-items-center">
+                                                    <i class="fas fa-calculator me-2"></i>💰 Resumen Financiero de la Cotización
+                                                </h5>
+                                                <div class="d-flex gap-2">
+                                                    <button type="button" class="btn btn-sm btn-outline-light" onclick="actualizarTotalesManualmente()" title="Recalcular">
+                                                        <i class="fas fa-sync-alt"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-light" onclick="toggleResumenDetalle()" id="btn-toggle-resumen">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-body p-4" id="resumen-detalle-content">
+                                            <!-- Campos ocultos para el formulario -->
+                                            <input type="hidden" id="subtotal" name="subtotal" value="0.00">
+                                            <input type="hidden" id="descuento" name="descuento" value="0.00">
+                                            <input type="hidden" id="total_impuesto" name="total_impuesto" value="0.00">
+                                            <input type="hidden" id="total" name="total" value="0.00">
+
+                                            <!-- Totales informativos con diseño mejorado -->
+                                            <div class="row g-3 mb-4">
+                                                <div class="col-md-3">
+                                                    <div class="card border-0 shadow-sm h-100">
+                                                        <div class="card-body text-center p-3">
+                                                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                                                <div class="bg-success bg-opacity-10 rounded-circle p-2 me-2">
+                                                                    <i class="fas fa-chart-bar text-success"></i>
+                                                                </div>
+                                                                <h6 class="card-title text-success mb-0">Subtotal</h6>
+                                                            </div>
+                                                            <div class="h4 fw-bold text-success mb-1" id="display-subtotal-valor">$0.00</div>
+                                                            <small class="text-muted">Suma de productos</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-3">
+                                                    <div class="card border-0 shadow-sm h-100">
+                                                        <div class="card-body text-center p-3">
+                                                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                                                <div class="bg-warning bg-opacity-10 rounded-circle p-2 me-2">
+                                                                    <i class="fas fa-percentage text-warning"></i>
+                                                                </div>
+                                                                <h6 class="card-title text-warning mb-0">Descuentos</h6>
+                                                            </div>
+                                                            <div class="h4 fw-bold text-warning mb-1" id="display-descuento-valor">$0.00</div>
+                                                            <small class="text-muted">Total descuentos</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-3">
+                                                    <div class="card border-0 shadow-sm h-100">
+                                                        <div class="card-body text-center p-3">
+                                                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                                                <div class="bg-info bg-opacity-10 rounded-circle p-2 me-2">
+                                                                    <i class="fas fa-receipt text-info"></i>
+                                                                </div>
+                                                                <h6 class="card-title text-info mb-0">Impuestos</h6>
+                                                            </div>
+                                                            <div class="h4 fw-bold text-info mb-1" id="display-impuesto-valor">$0.00</div>
+                                                            <small class="text-muted">IVA y otros</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-3">
+                                                    <div class="card border-0 shadow-lg bg-gradient-primary text-white h-100">
+                                                        <div class="card-body text-center p-3">
+                                                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                                                <div class="bg-white bg-opacity-20 rounded-circle p-2 me-2">
+                                                                    <i class="fas fa-money-bill-wave text-dark"></i>
+                                                                </div>
+                                                                <h6 class="card-title mb-0">Total Final</h6>
+                                                            </div>
+                                                            <div class="h3 fw-bold mb-1" id="display-total-valor">$0.00</div>
+                                                            <small class="opacity-75">Valor a pagar</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Fórmula visual mejorada -->
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <div class="alert alert-light border-0 bg-light bg-opacity-50">
+                                                        <div class="d-flex align-items-center justify-content-center flex-wrap gap-2">
+                                                            <div class="d-flex align-items-center">
+                                                                <span class="badge bg-success me-1">Subtotal</span>
+                                                            </div>
+                                                            <i class="fas fa-minus text-muted"></i>
+                                                            <div class="d-flex align-items-center">
+                                                                <span class="badge bg-warning">Descuentos</span>
+                                                            </div>
+                                                            <i class="fas fa-plus text-muted"></i>
+                                                            <div class="d-flex align-items-center">
+                                                                <span class="badge bg-info">Impuestos</span>
+                                                            </div>
+                                                            <i class="fas fa-equals text-muted"></i>
+                                                            <div class="d-flex align-items-center">
+                                                                <span class="badge bg-primary fs-6">Total Final</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- FINNNNN -->
+
+                                    <!--botones -->
+                                     <div class="d-flex justify-content-between align-items-center my-4" id="botones">
+                                        <div class="">
+                                            <a class="btn btn-secondary" href="javascript:history.back()">
+                                                <i class="fas fa-arrow-left mr-1"></i>
+                                                Atras
+                                            </a>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <!-- Botones de PDF -->
+                                            <div class="btn-group" role="group" style="" id="pdf-buttons">
+                                                <button type="button" class="btn btn-outline-danger" onclick="previewPdf()" title="Vista previa PDF">
+                                                    <i class="fas fa-eye me-1"></i>
+                                                    <span class="d-none d-md-inline">Vista Previa</span>
+                                                </button>
+                                                <button type="button" class="btn btn-danger" onclick="downloadPdf()" title="Descargar PDF">
+                                                    <i class="fas fa-file-pdf me-1"></i>
+                                                    <span class="d-none d-md-inline">Descargar PDF</span>
+                                                </button>
+                                            </div>
+
+                                            <button class="btn btn-primary" id="agregarCotizacion">
+                                                <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="spinnerRegister"></span>
+                                                Guardar Cotización
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <!--fin botones-->
                                 </div>
                             </div>
                         </div>
@@ -2048,13 +2056,44 @@
         });
     </script>
 
-    <script src="{{ asset('assets/js/cotizar/documento-protection.js') }}" type="text/javascript"></script>
-    <script src="{{ asset('assets/js/cotizar/documento-base.js') }}" type="text/javascript"></script>
-    <script src="{{ asset('assets/js/cotizar/sticky-summary.js') }}" type="text/javascript"></script>
-    <script src="{{ asset('assets/js/cotizar/documento-progressive.js') }}" type="text/javascript"></script>
-    <script src="{{ asset('assets/js/cotizar/documento.js') }}" type="text/javascript"></script>
-    <script src="{{ asset('assets/js/cotizar/documento-coordinator.js') }}" type="text/javascript"></script>
-    <script src="{{ asset('assets/js/cotizar/utilidades.js') }}" type="text/javascript"></script>
+    <!--<script src="{{ asset('assets/js/cotizar/documento-protection.js') }}" type="text/javascript"></script>-->
+    <script
+        src="{{ asset('assets/js/cotizar/documento-protection.js') }}?v={{ time() }}"
+        type="text/javascript">
+    </script>
+    <!--<script src="{{ asset('assets/js/cotizar/documento-base.js') }}" type="text/javascript"></script>-->
+    <script
+        src="{{ asset('assets/js/cotizar/documento-base.js') }}?v={{ time() }}"
+        type="text/javascript">
+    </script>
+    <!--<script src="{{ asset('assets/js/cotizar/sticky-summary.js') }}" type="text/javascript"></script>-->
+    <script
+        src="{{ asset('assets/js/cotizar/sticky-summary.js') }}?v={{ time() }}"
+        type="text/javascript">
+    </script>
+
+    <!--<script src="{{ asset('assets/js/cotizar/documento-progressive.js') }}" type="text/javascript"></script>-->
+    <script
+        src="{{ asset('assets/js/cotizar/documento-progressive.js') }}?v={{ time() }}"
+        type="text/javascript">
+    </script>
+
+    <!--<script src="{{ asset('assets/js/cotizar/documento.js') }}" type="text/javascript"></script>-->
+    <script
+        src="{{ asset('assets/js/cotizar/documento.js') }}?v={{ time() }}"
+        type="text/javascript">
+    </script>
+
+    <!--<script src="{{ asset('assets/js/cotizar/documento-coordinator.js') }}" type="text/javascript"></script>-->
+    <script
+        src="{{ asset('assets/js/cotizar/documento-coordinator.js') }}?v={{ time() }}"
+        type="text/javascript">
+    </script>
+
+    <script
+        src="{{ asset('assets/js/cotizar/utilidades.js') }}?v={{ time() }}"
+        type="text/javascript">
+    </script>
 
 @stop
 
