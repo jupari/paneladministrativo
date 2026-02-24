@@ -109,10 +109,8 @@ function showRol(btn) {
 //Registrar usuario
 function regRol()
 {
-    const myModal = new bootstrap.Modal(document.getElementById('myModal'), {
-        keyboard: false
-      })
-    myModal.show()
+
+    $('#myModal').modal('show')
     $('#exampleModalLabel').html('Crear rol');
 
     // LIMPIAR CAMPOS
@@ -193,10 +191,7 @@ function registerRol()
 // Actualizar usuario
 function upRol(btn)
 {
-    const myModal = new bootstrap.Modal(document.getElementById('myModal'), {
-        keyboard: false
-      })
-    myModal.show()
+    $('#myModal').modal('show')
     $('#exampleModalLabel').html('Asignar o quitar permisos');
 
     // LIMPIAR CAMPOS
@@ -214,11 +209,7 @@ function upRol(btn)
 
 function updateRol(btn)
 {
-    const myModal = new bootstrap.Modal(document.getElementById('myModal'), {
-        keyboard: false
-      })
-    myModal.show()
-
+    $('#myModal').modal('show');
     const route = "/admin/admin.roles/"+btn;
 
     const selectedPermissions = [];

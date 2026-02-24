@@ -4,7 +4,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title" id="exampleModalLabel">Registrar Cliente</h4>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
             </div>
             <div class="modal-body">
                 <form autocomplete="off">
@@ -195,11 +195,11 @@
                 <div class="accordion" id="accordionExample">
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="headingOne">
-                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                            <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
                                 Contactos
                             </button>
                         </h2>
-                        <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+                        <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-parent="#accordionExample">
                             <div class="accordion-body">
                                 <div id="contactos-container">
                                     <div class="sucursal-item border p-3 mb-3">
@@ -273,11 +273,11 @@
                 <div class="accordion" id="accordionExample2">
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="headingOne1">
-                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne1" aria-expanded="false" aria-controls="collapseOne1">
+                            <button class="accordion-button" type="button" data-toggle="collapse" data-target="#collapseOne1" aria-expanded="false" aria-controls="collapseOne1">
                                 Sucursales
                             </button>
                         </h2>
-                        <div id="collapseOne1" class="accordion-collapse collapse" aria-labelledby="headingOne1" data-bs-parent="#accordionExample2">
+                        <div id="collapseOne1" class="accordion-collapse collapse" aria-labelledby="headingOne1" data-parent="#accordionExample2">
                             <div class="accordion-body">
                                 <div id="sucursales-container">
                                     <div class="sucursal-item border p-3 mb-3">

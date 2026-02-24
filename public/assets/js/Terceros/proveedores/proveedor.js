@@ -436,7 +436,7 @@ function registerProv() {
         $('#spinnerRegister').addClass('d-none');
         $('#spinnerRegister').removeClass('d-block');
         Cargar();
-        //myModal.toggle(); // Reemplaza con tu lógica de modal
+        //myModal.modal('toggle'); // Reemplaza con tu lógica de modal
         toastr.success(response.message); // Muestra el mensaje de éxito
 
     }).catch(e => {
@@ -461,7 +461,7 @@ function registerProv() {
 
 // Actualizar usuario
 function upProv(btn) {
-    myModal.show()
+    myModal.modal('show')
     $('#exampleModalLabel').html('Editar Proveedor');
     // LIMPIAR CAMPOS
     cleanInput();
@@ -537,7 +537,7 @@ function updateProv(btn) {
     .then(response => {
         // Acción después de una respuesta exitosa
         Cargar(); // Reemplaza con tu función para recargar la lista o tabla
-        myModal.toggle(); // Cierra el modal
+        myModal.modal('toggle'); // Cierra el modal
         toastr.success(response.message); // Mensaje de éxito
     })
     .catch(e => {
@@ -557,7 +557,7 @@ function updateProv(btn) {
         toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.');
         } else if (e.status === 403) {
             // Errores de permisos
-            myModal.toggle();
+            myModal.modal('toggle');
             toastr.warning(arr.message);
         }
     });
@@ -690,7 +690,7 @@ function saveSucursal(){
             const tercero_id=$('#id').val();
             CargarSucursales(tercero_id);
             limpiarValidacionesSucursal();
-            //myModal.toggle(); // Reemplaza con tu lógica de modal
+            //myModal.modal('toggle'); // Reemplaza con tu lógica de modal
             //toastr.success(response.message); // Muestra el mensaje de éxito
         }).catch(e => {
             // Manejo de errores
@@ -749,7 +749,7 @@ function saveContacto(){
             const tercero_id=$('#id').val();
             CargarContactos(tercero_id);
             limpiarValidacionesContacto();
-            //myModal.toggle(); // Reemplaza con tu lógica de modal
+            //myModal.modal('toggle'); // Reemplaza con tu lógica de modal
             //toastr.success(response.message); // Muestra el mensaje de éxito
         }).catch(e => {
             // Manejo de errores
@@ -894,7 +894,7 @@ function updateSucursal(btn){
             toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.');  // Muestra el mensaje de error
         } else if (e.status === 403) {
             // Errores de permisos
-            myModal.toggle();
+            myModal.modal('toggle');
             toastr.warning(arr.message);
         }
     });
@@ -954,7 +954,7 @@ function updateContacto(btn){
             toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.');  // Muestra el mensaje de error
         } else if (e.status === 403) {
             // Errores de permisos
-            myModal.toggle();
+            myModal.modal('toggle');
             toastr.warning(arr.message);
         }
     });

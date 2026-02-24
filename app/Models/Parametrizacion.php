@@ -34,6 +34,22 @@ class Parametrizacion extends Model
         'created_at' => 'datetime', // Esto asegura que Laravel trate el campo como un objeto Carbon.
         'updated_at' => 'datetime',
     ];
+
+    /**
+     * Relación con el modelo Categoria
+     */
+    public function categoria()
+    {
+        return $this->belongsTo(Categoria::class, 'categoria_id');
+    }
+
+    /**
+     * Relación con el modelo Cargo
+     */
+    public function cargo()
+    {
+        return $this->belongsTo(Cargo::class, 'cargo_id');
+    }
 }
 
 

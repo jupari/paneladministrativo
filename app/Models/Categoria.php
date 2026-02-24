@@ -18,4 +18,14 @@ class Categoria extends Model
         'created_at',
         'updated_at'
     ];
+
+    public function itemsPropios()
+    {
+        return $this->hasMany(ItemPropio::class, 'categoria_id');
+    }
+
+    public function cotizacionProductos()
+    {
+        return $this->hasMany(CotizacionProducto::class, 'categoria_id');
+    }
 }

@@ -1,0 +1,145 @@
+/* Forzar tema claro SOLO para el modal de clientes y área de contenido */
+
+/* Área de contenido principal - fondo blanco */
+.content-wrapper,
+.main-content,
+.card,
+.card-body {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+}
+
+/* Tabla y elementos del contenido principal */
+.table {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+}
+
+.table thead th {
+    background-color: #f8f9fa !important;
+    color: #495057 !important;
+    border-bottom: 2px solid #dee2e6 !important;
+}
+
+.table tbody tr {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+}
+
+.table tbody tr:nth-child(even) {
+    background-color: #f8f9fa !important;
+}
+
+/* Modal específico - forzar tema claro */
+#ModalCliente .modal-content {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+#ModalCliente .modal-body {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+}
+
+#ModalCliente .modal-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+    color: #ffffff !important;
+    border-bottom: 1px solid #dee2e6 !important;
+}
+
+#ModalCliente .modal-footer {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+    border-top: 1px solid #dee2e6 !important;
+}
+
+/* Formularios dentro del modal */
+#ModalCliente .form-control {
+    background-color: #ffffff !important;
+    color: #495057 !important;
+    border: 1px solid #ced4da !important;
+}
+
+#ModalCliente .form-control:focus {
+    background-color: #ffffff !important;
+    border-color: #80bdff !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+}
+
+#ModalCliente .form-label,
+#ModalCliente label,
+#ModalCliente .col-form-label {
+    color: #495057 !important;
+    font-weight: 500;
+}
+
+/* Sobreescribir cualquier estilo oscuro heredado */
+#ModalCliente .bg-dark,
+#ModalCliente .text-light,
+#ModalCliente .navbar-dark {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+}
+
+/* Botones del modal */
+#ModalCliente .btn-outline-secondary {
+    color: #6c757d !important;
+    border-color: #6c757d !important;
+    background-color: transparent !important;
+}
+
+#ModalCliente .btn-outline-secondary:hover {
+    color: #ffffff !important;
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+}
+
+/* Pasos del modal */
+#ModalCliente .step-number {
+    background-color: #e9ecef !important;
+    color: #6c757d !important;
+}
+
+#ModalCliente .step-number.active {
+    background-color: #007bff !important;
+    color: #ffffff !important;
+}
+
+#ModalCliente .step-label {
+    color: #6c757d !important;
+}
+
+#ModalCliente .step-label.active {
+    color: #007bff !important;
+    font-weight: 600;
+}
+
+/* Alertas dentro del modal */
+#ModalCliente .alert {
+    border: 1px solid;
+}
+
+#ModalCliente .alert-success {
+    background-color: #d1eddb !important;
+    border-color: #c3e6cb !important;
+    color: #155724 !important;
+}
+
+#ModalCliente .alert-danger {
+    background-color: #f8d7da !important;
+    border-color: #f5c6cb !important;
+    color: #721c24 !important;
+}
+
+#ModalCliente .alert-warning {
+    background-color: #fff3cd !important;
+    border-color: #ffeaa7 !important;
+    color: #856404 !important;
+}
+
+#ModalCliente .alert-info {
+    background-color: #d1ecf1 !important;
+    border-color: #bee5eb !important;
+    color: #0c5460 !important;
+}

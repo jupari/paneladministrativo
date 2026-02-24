@@ -22,7 +22,11 @@ class DashboardController extends Controller
     }
 
     public function index() {
-
+        // dd(
+        //     auth()->check(),
+        //     auth()->user()->getRoleNames(),
+        //     auth()->user()->getAllPermissions()->pluck('name')
+        // );
 
         $usuarioLogeado= Auth::user()->id;
 

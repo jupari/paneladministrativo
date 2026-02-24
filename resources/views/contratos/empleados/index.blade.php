@@ -9,6 +9,20 @@
 
 @section('content')
 
+    {{-- Breadcrumbs mejorados usando componente --}}
+    @php
+        $breadcrumbs = [
+            [
+                'title' => 'Recursos Humanos',
+                'icon' => 'fas fa-users',
+                'url' => null
+            ]
+        ];
+        $currentTitle = 'Empleados';
+        $currentIcon = 'fas fa-user';
+    @endphp
+    <x-breadcrumbs :breadcrumbs="$breadcrumbs" :currentTitle="$currentTitle" :currentIcon="$currentIcon" />
+
     <div class="card">
         <div class="card-header">
             <h4>Empleados</h4>
@@ -47,9 +61,9 @@
     </div>
 @stop
 
-@push('modals')
+
 @include('contratos.empleados.modal')
-@endpush
+
 
 @section('css')
     {{-- Add here extra stylesheets --}}

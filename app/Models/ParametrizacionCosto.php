@@ -19,7 +19,8 @@ class ParametrizacionCosto extends Model
         'costo_dia',
         'active',
         'created_at',
-        'updated_at'
+        'updated_at',
+        'costo_unitario',
     ];
 
     protected $casts = [

@@ -39,6 +39,7 @@ class ClienteController extends Controller
     {
         try {
             $clientes = $this->clienteRepo->obtenerClientes();
+
             if ($request->ajax()) {
                 return DataTables::of($clientes)
                     ->addIndexColumn()
@@ -106,7 +107,13 @@ class ClienteController extends Controller
     {
         try {
             $cliente = $this->clienteRepo->obtenerClientePorId($id);
-            return response()->json(['success' => true, 'data' => $cliente, 'user_id' => auth()->id(), 'tercerotipo_id' => 1]);
+            // En modo edición, usar el user_id del cliente original, no del usuario logueado
+            return response()->json([
+                'success' => true,
+                'data' => $cliente,
+                'user_id' => $cliente->user_id ?? auth()->id(), // Usar el del cliente o fallback al logueado
+                'tercerotipo_id' => $cliente->tercerotipo_id ?? 1
+            ]);
         } catch (\Exception $e) {
             Log::error("Error en ClienteController@edit: " . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Cliente no encontrado.'], 404);

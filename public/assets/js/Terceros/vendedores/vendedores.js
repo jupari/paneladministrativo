@@ -25,15 +25,7 @@ $(function () {
     // Formatear la fecha al formato "2009-04-19"
     let fechaFormateada = '2009-' + ('0' + (fechaActual.getMonth() + 1)).slice(-2) + '-' + ('0' + fechaActual.getDate()).slice(-2);
 
-
-    // Escucha el evento de cierre de la ventana modal
-    $('#myModal').on('hidden.bs.modal', function () {
-        // Activa la primera pestaña al cerrar la ventana modal
-        $('#custom-content-below-home-tab').tab('show');
-    });
-
-
-     //carga de la datatable
+    //carga de la datatable
     Cargar();
 });
 
@@ -146,7 +138,7 @@ function regVend() {
     cleanInput();
      // FIN LIMPIAR CAMPOS
     limpiarValidaciones();
-     let r = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>' +
+     let r = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
         '<button type="button" class="btn btn-primary" onclick="registerVend()"><span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="spinnerRegister"></span>Agregar</button>';
 
     $(".modal-footer").html(r);
@@ -191,7 +183,7 @@ function registerVend() {
         $('#spinnerRegister').addClass('d-none');
         $('#spinnerRegister').removeClass('d-block');
         Cargar();
-        myModal.toggle(); // Reemplaza con tu lógica de modal
+        $('#ModalVendedor').modal('hide');
         toastr.success(response.message); // Muestra el mensaje de éxito
 
     }).catch(e => {
@@ -216,13 +208,13 @@ function registerVend() {
 
 // Actualizar usuario
 function upVend(btn) {
-    myModal.show()
+    $('#ModalVendedor').modal('show');
     $('#exampleModalLabel').html('Editar Vendedor');
     // LIMPIAR CAMPOS
     cleanInput();
     showCustomVend(btn);
     // FIN LIMPIAR CAMPOS
-    let u = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>' +
+    let u = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
         '<button id="editar" class="btn btn-primary" onclick="updateVend(' + btn + ')">Guardar</button>';
     $(".modal-footer").html(u);
 }
@@ -265,7 +257,7 @@ function updateVend(btn) {
     })
     .then(response => {
         Cargar();
-        myModal.toggle();
+        $('#ModalVendedor').modal('hide');
         toastr.success(response.message);
     })
     .catch(e => {
@@ -281,7 +273,7 @@ function updateVend(btn) {
             });
         toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.');
         } else if (e.status === 403) {
-            myModal.toggle();
+            myModal.modal('toggle');
             toastr.warning(arr.message);
         }
     });

@@ -35,7 +35,7 @@
 
                 <h5>Detalles</h5>
                 <div class="col-12 col-md-3 my-3">
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalDetalle">
+                    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalDetalle">
                         Agregar Detalle
                     </button>
                 </div>

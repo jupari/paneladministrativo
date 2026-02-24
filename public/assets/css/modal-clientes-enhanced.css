@@ -1,0 +1,588 @@
+/* Estilos mejorados para el modal de clientes con UX avanzado */
+
+/* Forzar tema claro para el modal */
+#ModalCliente .modal-content {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+}
+
+#ModalCliente .modal-body {
+    background-color: #ffffff !important;
+    color: #212529 !important;
+}
+
+#ModalCliente .modal-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+    color: #ffffff !important;
+    border-bottom: 1px solid #dee2e6 !important;
+}
+
+#ModalCliente .modal-footer {
+    background-color: #f8f9fa !important;
+    color: #212529 !important;
+    border-top: 1px solid #dee2e6 !important;
+}
+
+/* Asegurar que todos los elementos dentro del modal tengan tema claro */
+#ModalCliente * {
+    color: inherit;
+}
+
+#ModalCliente .form-control {
+    background-color: #ffffff !important;
+    color: #495057 !important;
+    border: 1px solid #ced4da !important;
+}
+
+#ModalCliente .form-control:focus {
+    background-color: #ffffff !important;
+    border-color: #80bdff !important;
+    color: #495057 !important;
+}
+
+#ModalCliente .form-label,
+#ModalCliente label {
+    color: #495057 !important;
+}
+
+/* Animaciones suaves */
+.modal.fade .modal-dialog {
+    transform: translate(0, -50px);
+    transition: all 0.3s ease-out;
+}
+
+.modal.show .modal-dialog {
+    transform: none;
+}
+
+/* Gradiente mejorado para header - SOLO en el modal */
+#ModalCliente .bg-gradient-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+}
+
+/* Botones con tema claro */
+#ModalCliente .btn-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+    border: none !important;
+    color: #ffffff !important;
+}
+
+#ModalCliente .btn-secondary {
+    background-color: #6c757d !important;
+    border: 1px solid #6c757d !important;
+    color: #ffffff !important;
+}
+
+#ModalCliente .btn-success {
+    background-color: #28a745 !important;
+    border: 1px solid #28a745 !important;
+    color: #ffffff !important;
+}
+
+/* Esto se maneja en force-light-theme.css específicamente para el modal */
+
+/* Estilos para los pasos */
+.step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.step-item:hover .step-number {
+    transform: scale(1.1);
+}
+
+.step-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 15px;
+    right: -50%;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(to right, #dee2e6 0%, #dee2e6 100%);
+    border-radius: 1.5px;
+    z-index: 0;
+    transition: all 0.5s ease;
+}
+
+.step-item.active:not(:last-child)::after,
+.step-item.completed:not(:last-child)::after {
+    background: linear-gradient(to right, #28a745 0%, #20c997 100%);
+    box-shadow: 0 1px 3px rgba(40, 167, 69, 0.3);
+}
+
+.step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f8f9fa;
+    border: 2px solid #dee2e6;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s ease;
+}
+
+.step-item.active .step-number {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    border-color: #007bff;
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+    transform: scale(1.05);
+}
+
+.step-item.completed .step-number {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    border-color: #28a745;
+    color: white;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.step-item.completed .step-number::before {
+    content: '\f00c';
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    font-size: 12px;
+}
+
+.step-label {
+    font-size: 13px;
+    text-align: center;
+    color: #6c757d;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    max-width: 80px;
+    line-height: 1.3;
+}
+
+.step-item.active .step-label {
+    color: #007bff;
+    font-weight: 600;
+    transform: translateY(-2px);
+}
+
+.step-item.completed .step-label {
+    color: #28a745;
+    font-weight: 600;
+}
+
+/* Progreso mejorado */
+.progress {
+    background-color: #f8f9fa;
+    border-radius: 0;
+    overflow: hidden;
+}
+
+.progress-bar {
+    transition: width 0.8s ease;
+    background: linear-gradient(90deg, #28a745 0%, #20c997 50%, #007bff 100%);
+}
+
+/* Estilos para formularios */
+.form-control {
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    border: 1px solid #ced4da;
+}
+
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+.form-control.is-valid {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.15);
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.15);
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* Labels mejorados */
+.form-group label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+.required::after {
+    content: "*";
+    color: #dc3545;
+    margin-left: 4px;
+    font-weight: bold;
+}
+
+/* Input groups mejorados */
+.input-group-text {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border: 1px solid #ced4da;
+    color: #495057;
+    font-weight: 500;
+}
+
+.input-group:focus-within .input-group-text {
+    border-color: #80bdff;
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    color: #007bff;
+}
+
+/* Cards mejoradas */
+.card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+    padding: 1rem 1.25rem;
+}
+
+.card-header h5 {
+    margin: 0;
+    color: #495057;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.card-header h5 i {
+    color: #007bff;
+    margin-right: 8px;
+}
+
+/* Botones mejorados */
+.btn {
+    border-radius: 6px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    padding: 8px 16px;
+    pointer-events: auto !important; /* Forzar que los botones sean clickeables */
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745, #20c997);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+}
+
+.btn-outline-secondary {
+    border: 2px solid #6c757d;
+    color: #6c757d;
+    background: transparent;
+}
+
+.btn-outline-secondary:hover {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-outline-primary {
+    border: 2px solid #007bff;
+    color: #007bff;
+    background: transparent;
+}
+
+.btn-outline-primary:hover {
+    background: #007bff;
+    color: white;
+}
+
+/* Tablas mejoradas */
+.table {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.table thead th {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border: none;
+    font-weight: 600;
+    color: #495057;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    padding: 12px 8px;
+}
+
+.table tbody td {
+    border: none;
+    border-top: 1px solid #f1f3f4;
+    padding: 12px 8px;
+    vertical-align: middle;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.01);
+    transition: all 0.2s ease;
+}
+
+/* Animaciones de entrada */
+.fade-in {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Toasts mejorados */
+.toast {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+
+.toast-header {
+    background: linear-gradient(135deg, #ffffff, #f8f9fa);
+    border-bottom: 1px solid #e9ecef;
+    font-weight: 600;
+}
+
+.toast-body {
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+/* Estados de carga */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}
+
+/* Modal footer mejorado */
+.modal-footer {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-top: 1px solid #e9ecef;
+    padding: 1rem 1.25rem;
+}
+
+.step-navigation {
+    display: flex;
+    gap: 10px;
+}
+
+/* Alertas mejoradas */
+.alert {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+    color: #0c5460;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .step-item {
+        margin-bottom: 10px;
+    }
+
+    .step-item:not(:last-child)::after {
+        display: none;
+    }
+
+    .step-label {
+        font-size: 11px;
+        max-width: 60px;
+    }
+
+    .step-number {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+
+    .modal-dialog {
+        margin: 10px;
+    }
+
+    .card-body {
+        padding: 15px;
+        background-color: white !important;
+    }
+
+    .step-navigation {
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+
+/* Utilidades adicionales */
+.text-gradient {
+    background: linear-gradient(135deg, #007bff, #28a745);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: bold;
+}
+
+.shadow-soft {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08) !important;
+}
+
+.border-gradient {
+    border: 2px solid;
+    border-image: linear-gradient(135deg, #007bff, #28a745) 1;
+}
+
+/* Estados de validación mejorados */
+.valid-feedback {
+    display: block;
+    font-size: 12px;
+    color: #28a745;
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+.invalid-feedback {
+    display: block;
+    font-size: 12px;
+    color: #dc3545;
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+/* Mejoras para campos de selección */
+.form-control option {
+    padding: 8px 12px;
+}
+
+.form-control option:checked {
+    background-color: #007bff;
+    color: white;
+}
+
+/* Indicador de progreso mejorado */
+.progress-indicator {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
+}
+
+.progress-step {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 10px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.progress-step.active {
+    background: #007bff;
+    color: white;
+    transform: scale(1.1);
+}
+
+.progress-step.completed {
+    background: #28a745;
+    color: white;
+}
+
+/* Mejoras de accesibilidad */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Focus mejorado para accesibilidad */
+.btn:focus,
+.form-control:focus,
+.step-item:focus {
+    outline: 2px solid #80bdff;
+    outline-offset: 2px;
+}
+
+/* Dark mode support (opcional) */
+@media (prefers-color-scheme: dark) {
+    .modal-content {
+        background-color: #2d3748;
+        color: #e2e8f0;
+    }
+
+    .card {
+        background-color: #2d3748;
+        color: #e2e8f0;
+    }
+
+    .form-control {
+        background-color: #4a5568;
+        border-color: #718096;
+        color: #e2e8f0;
+    }
+
+    .form-control:focus {
+        background-color: #4a5568;
+        border-color: #63b3ed;
+        color: #e2e8f0;
+    }
+}

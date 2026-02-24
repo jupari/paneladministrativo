@@ -24,9 +24,9 @@ Route::get('/errors-500', function () {
     return view('errors');
 });
 
-Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified', 'company.license'])->name('dashboard');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'company.license'])->group(function () {
     Route::get('user/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('user/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('user/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

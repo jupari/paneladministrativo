@@ -139,7 +139,7 @@ function showParametro (btn) {
 
 //Registrar usuario
 function regParametro () {
-    myModal.show()
+    $('#ModalParametros').modal('show')
     $('#exampleModalLabel').html('Crear Parámetro')
 
     // LIMPIAR CAMPOS
@@ -150,7 +150,7 @@ function regParametro () {
     $('#btnGuardarElemento').attr('onclick', 'registerParametro()')
 
     let r =
-        '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>'
+        '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>'
 
     $('.modal-footer').html(r)
 }
@@ -200,7 +200,7 @@ function registerParametro () {
 
 // Actualizar usuario
 function upParametro (btn) {
-    myModal.show()
+    $('#ModalParametros').modal('show');
     $('#exampleModalLabel').html('Editar Parámetro')
     // LIMPIAR CAMPOS
     cleanInput()
@@ -211,7 +211,7 @@ function upParametro (btn) {
     $('#btnGuardarElemento').attr('onclick', 'updateParametro(' + btn + ')')
 
     let u =
-        '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>'
+        '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>'
     $('.modal-footer').html(u)
 }
 
@@ -253,7 +253,7 @@ function updateParametro (btn) {
                 //     }
                 // }
             } else if (e.status == 403) {
-                myModal.toggle()
+                $('#ModalParametros').modal('toggle')
                 toastr.warning(arr.message)
             }
         })
@@ -420,7 +420,6 @@ const columnaAccionesTabulatorParametrosDet = [
 
 let tableParamsDet = null
 function confTablaDet (datos) {
-    console.log(datos)
 
     if (window.tableParamsDet) window.tableParamsDet.destroy() // Destruye la tabla existente si ya está creada
     const data = Array.isArray(datos.sub_elementos)
@@ -565,7 +564,6 @@ async function saveDataParametrosDet (row = null) {
 async function deleteDataParametrosDet (row = null) {
     if (!row) return false
     const id = row.getData().__rid;
-    console.log(id);
 
     if (!id) {
         row.delete()

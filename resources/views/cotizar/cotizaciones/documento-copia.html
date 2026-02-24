@@ -1,0 +1,1926 @@
+@extends('adminlte::page')
+
+@section('title', 'Cotizaciones')
+
+@section('content_header')
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+@stop
+
+@section('plugin.Datatables')
+
+@section('plugin.Sweetalert2')
+
+@push('head')
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+@endpush
+
+
+@section('content')
+    {{-- Breadcrumbs --}}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb bg-light px-3 py-2 rounded">
+            <li class="breadcrumb-item">
+                <a href="{{ url('/dashboard') }}">Inicio</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="#">Cotizaciones</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{{ route('admin.cotizaciones.index') }}">Cotizar</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                Elaboración de la Cotización
+            </li>
+        </ol>
+    </nav>
+    <div class="card">
+        <div class="card-header">
+            <h4>Documento de cotización</h4><label id="document-label"></label>
+        </div>
+        <div class="card-body" >
+            <!-- Skeleton Loader -->
+            <div id="skeleton-loader" style="display: none;">
+                <div class="container">
+                    <div class="skeleton-text mb-3" style="height: 16px; width: 70%;"></div>
+
+                    <!-- Header Section Skeleton -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="skeleton-text mb-2" style="height: 14px; width: 30%;"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="skeleton-text mb-2" style="height: 14px; width: 40%;"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="skeleton-text mb-2" style="height: 14px; width: 25%;"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="skeleton-text mb-2" style="height: 14px; width: 30%;"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="skeleton-text mb-2" style="height: 14px; width: 45%;"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="skeleton-text mb-2" style="height: 14px; width: 50%;"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="skeleton-text mb-2" style="height: 14px; width: 20%;"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                    </div>
+
+                    <!-- Client Section Skeleton -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="skeleton-text mb-2" style="height: 14px; width: 40%;"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="skeleton-text mb-2" style="height: 14px; width: 20%;"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="skeleton-text mb-2" style="height: 14px; width: 25%;"></div>
+                            <div class="skeleton-input"></div>
+                        </div>
+                    </div>
+
+                    <!-- Observations Skeleton -->
+                    <div class="row my-2">
+                        <div class="col-12">
+                            <div class="skeleton-text mb-2" style="height: 14px; width: 30%;"></div>
+                            <div class="skeleton-textarea"></div>
+                        </div>
+                    </div>
+
+                    <!-- Totals Card Skeleton -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <div class="skeleton-text" style="height: 18px; width: 40%;"></div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <div class="skeleton-text mb-2" style="height: 14px; width: 30%;"></div>
+                                    <div class="skeleton-input"></div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="skeleton-text mb-2" style="height: 14px; width: 30%;"></div>
+                                    <div class="skeleton-input"></div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="skeleton-text mb-2" style="height: 14px; width: 40%;"></div>
+                                    <div class="skeleton-input"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Accordion Skeleton -->
+                    <div class="mt-4">
+                        <div class="skeleton-accordion mb-2"></div>
+                        <div class="skeleton-accordion mb-2"></div>
+                        <div class="skeleton-accordion mb-2"></div>
+                    </div>
+
+                    <!-- Action Buttons Skeleton -->
+                    <div class="d-flex gap-3 mt-4">
+                        <div class="skeleton-button"></div>
+                        <div class="skeleton-button"></div>
+                        <div class="skeleton-button"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contenido principal -->
+            <div id="main-content">
+            <div class="container">
+                <p class="text-muted">Permite crear nuevo documento de cotización, agrega datos de la cabecera primero guarda y luego agrega los detalles al documento.</p>
+
+                <form id="cotizacionForm" novalidate>
+                    @csrf
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="estado_id" class="form-label">Estado: <span class="text-danger">*</span></label>
+                            <select id="estado_id" name="estado_id" class="form-select">
+                            </select>
+                            <div class="invalid-feedback" id="error_estado_id"></div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="tipo" id="tipo" value="COT">
+                    <input type="hidden" name="id" id="id">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="num_documento" class="form-label">Número de Documento: <span class="text-danger">*</span></label>
+                            <input type="text" id="num_documento" name="num_documento" class="form-control" readonly>
+                            <div class="invalid-feedback" id="error_num_documento"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="proyecto" class="form-label">Proyecto:</label>
+                            <input type="text" id="proyecto" name="proyecto" class="form-control">
+                            <div class="invalid-feedback" id="error_proyecto"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="autorizacion_id" class="form-label">Autorización:</label>
+                            <input type="text" id="autorizacion_id" name="autorizacion_id" class="form-control" readonly>
+                            <div class="invalid-feedback" id="error_autorizacion_id"></div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="doc_origen" class="form-label">Origen de la Cotización:</label>
+                            <input type="text" class="form-control" id="doc_origen" name="doc_origen" readonly>
+                            <div class="invalid-feedback" id="error_doc_origen"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="version" class="form-label">Versión de la Cotización:</label>
+                            <input type="number" class="form-control" id="version" name="version" readonly>
+                            <div class="invalid-feedback" id="error_version"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="fecha" class="form-label">Fecha:</label>
+                            <input type="date" class="form-control" id="fecha" name="fecha" value="{{ date('Y-m-d') }}">
+                            <div class="invalid-feedback" id="error_fecha"></div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label for="cliente_id" class="form-label">Nombre del cliente <span class="text-danger">*</span></label>
+                            <select id="cliente_id" name="cliente_id" class="form-select" onchange="fetchSucursales(this.value)"></select>
+                            <div class="invalid-feedback" id="error_cliente_id"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="tercero_sucursal_id" class="form-label">Sede:</label>
+                            <select class="form-select" id="tercero_sucursal_id" name="tercero_sucursal_id"></select>
+                            <div class="invalid-feedback" id="error_tercero_sucursal_id"></div>
+                        </div>
+                    </div>
+
+                     <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="tercero_contacto_id" class="form-label">Contacto</label>
+                            <select id="tercero_contacto_id" name="tercero_contacto_id" class="form-select"></select>
+                            <div class="invalid-feedback" id="error_tercero_contacto_id"></div>
+                        </div>
+                    </div>
+
+                    <div class="row my-2">
+                        <div class="col-12">
+                            <label for="observacion" class="form-label">Observaciones:</label>
+                            <textarea class="form-control" name="observacion" id="observacion" rows="3" maxlength="1000" placeholder="Ingrese observaciones adicionales..."></textarea>
+                            <div class="form-text">
+                                <span id="observacion_count">0</span>/1000 caracteres
+                            </div>
+                            <div class="invalid-feedback" id="error_observacion"></div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Totales RENOVADA -->
+                    <div class="card mt-4" id="resumen-totales-cotizacion">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">💰 Resumen Financiero de la Cotización</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Campos ocultos para el formulario -->
+                            <input type="hidden" id="subtotal" name="subtotal" value="0.00">
+                            <input type="hidden" id="descuento" name="descuento" value="0.00">
+                            <input type="hidden" id="total_impuesto" name="total_impuesto" value="0.00">
+                            <input type="hidden" id="total" name="total" value="0.00">
+
+                            <!-- Totales informativos -->
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <div class="card border-success">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title text-success">📊 Subtotal</h6>
+                                            <div class="display-6 fw-bold text-success" id="display-subtotal-valor">$0.00</div>
+                                            <small class="text-muted">Suma de productos</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="card border-warning">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title text-warning">💸 Descuentos</h6>
+                                            <div class="display-6 fw-bold text-warning" id="display-descuento-valor">$0.00</div>
+                                            <small class="text-muted">Total descuentos</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="card border-info">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title text-info">🏛️ Impuestos</h6>
+                                            <div class="display-6 fw-bold text-info" id="display-impuesto-valor">$0.00</div>
+                                            <small class="text-muted">IVA y otros</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="card border-primary bg-primary text-white">
+                                        <div class="card-body text-center">
+                                            <h6 class="card-title">🎯 Total Final</h6>
+                                            <div class="display-5 fw-bold" id="display-total-valor">$0.00</div>
+                                            <small>Valor a pagar</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Fórmula y botón de actualización -->
+                            <div class="row mt-3">
+                                <div class="col-md-8">
+                                    <div class="alert alert-light border">
+                                        <strong>📐 Fórmula:</strong>
+                                        <span class="text-success">Subtotal</span> -
+                                        <span class="text-warning">Descuentos</span> +
+                                        <span class="text-info">Impuestos</span> =
+                                        <span class="text-primary fw-bold">Total</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <button type="button" class="btn btn-outline-primary" onclick="actualizarTotalesManualmente()">
+                                        <i class="fas fa-sync-alt"></i> Recalcular Totales
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <div class="d-flex justify-content-between align-items-center my-4" id="botones">
+                    <div class="">
+                        <a class="btn btn-secondary" href="javascript:history.back()">
+                            <i class="fas fa-arrow-left mr-1"></i>
+                            Atras
+                        </a>
+                    </div>
+                    <div class="">
+                        <button class="btn btn-primary" id="agregarCotizacion">
+                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="spinnerRegister"></span>
+                            Guardar Cotización
+                        </button>
+                    </div>
+                </div>
+                <div class="accordion" id="accordionCotizacionDetails">
+                    <div class="card">
+                        <div class="card-header" id="headingOne">
+                        <h2 class="mb-0">
+                            <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#impuestos" aria-expanded="true" aria-controls="impuestos">
+                                Ingreso de Impuestos y Descuentos
+                            </button>
+                        </h2>
+                        </div>
+
+                        <div id="impuestos" class="collapse" aria-labelledby="headingOne" data-parent="#accordionCotizacionDetails">
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <p class="text-muted mb-3">Configure los impuestos y descuentos aplicables a esta cotización</p>
+                                </div>
+                            </div>
+
+                            <!-- Sección de Descuentos -->
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0 text-primary"><i class="fas fa-tags mr-2"></i>Descuentos</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label for="concepto_descuento" class="form-label">Concepto de Descuento:</label>
+                                            <select class="form-select" id="concepto_descuento"></select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="tipo_descuento" class="form-label">Tipo:</label>
+                                            <select class="form-select" id="tipo_descuento">
+                                                <option value="porcentaje">Porcentaje (%)</option>
+                                                <option value="valor">Valor Fijo ($)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="valor_descuento" class="form-label">Valor/Porcentaje:</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text" id="simbolo_descuento">%</span>
+                                                <input type="number" class="form-control" id="valor_descuento" min="0" step="0.01" placeholder="0.00">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2 d-flex align-items-end">
+                                            <button type="button" class="btn btn-primary btn-sm w-100" id="agregar_descuento">
+                                                <i class="fas fa-plus"></i> Agregar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sección de Impuestos -->
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0 text-success"><i class="fas fa-percent mr-2"></i>Impuestos</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label for="concepto_impuesto" class="form-label">Concepto de Impuesto:</label>
+                                            <select class="form-select" id="concepto_impuesto"></select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="tipo_impuesto" class="form-label">Tipo:</label>
+                                            <select class="form-select" id="tipo_impuesto">
+                                                <option value="porcentaje">Porcentaje (%)</option>
+                                                <option value="valor">Valor Fijo ($)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="valor_impuesto" class="form-label">Valor/Porcentaje:</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text" id="simbolo_impuesto">%</span>
+                                                <input type="number" class="form-control" id="valor_impuesto" min="0" step="0.01" placeholder="0.00">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2 d-flex align-items-end">
+                                            <button type="button" class="btn btn-success btn-sm w-100" id="agregar_impuesto">
+                                                <i class="fas fa-plus"></i> Agregar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tabla de Impuestos y Descuentos Agregados -->
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="fas fa-list mr-2"></i>Impuestos y Descuentos Aplicados</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-hover" id="tabla_impuestos_descuentos">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th width="5%">
+                                                        <input type="checkbox" id="select_all_impuestos" title="Seleccionar todos">
+                                                    </th>
+                                                    <th width="15%">Registro</th>
+                                                    <th width="25%">Concepto</th>
+                                                    <th width="15%">Tipo</th>
+                                                    <th width="15%">Porcentaje/Valor</th>
+                                                    <th width="10%">Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tbody_impuestos_descuentos">
+                                                <tr id="no_items_row">
+                                                    <td colspan="7" class="text-center text-muted py-3">
+                                                        <i class="fas fa-info-circle mr-2"></i>
+                                                        No hay impuestos o descuentos agregados
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    {{-- <div class="row mt-3">
+                                        <div class="col-md-12">
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-outline-danger btn-sm" id="eliminar_seleccionados" disabled>
+                                                    <i class="fas fa-trash mr-1"></i> Eliminar Seleccionados
+                                                </button>
+                                                <button type="button" class="btn btn-outline-warning btn-sm" id="limpiar_todo">
+                                                    <i class="fas fa-broom mr-1"></i> Limpiar Todo
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div> --}}
+                                </div>
+                            </div>
+
+                            <div class="alert alert-info mt-3">
+                                <small>
+                                    <strong>Nota:</strong> Los impuestos y descuentos se aplicarán automáticamente al subtotal de la cotización.
+                                    Los valores calculados se actualizarán en tiempo real en la sección de totales.
+                                </small>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header" id="headingTwo">
+                        <h2 class="mb-0">
+                            <button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#conitems" aria-expanded="false" aria-controls="conitems">
+                            Ingrese Consecutivo de Items
+                            </button>
+                        </h2>
+                        </div>
+                        <div id="conitems" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionCotizacionDetails">
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-12">
+                                        <p class="text-muted mb-3">Gestione los items y subitems de la cotización</p>
+                                    </div>
+                                </div>
+
+                                <!-- Formulario para agregar item -->
+                                <div class="card mb-4">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0 text-primary"><i class="fas fa-plus mr-2"></i>Agregar Nuevo Item</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <form id="formAgregarItem">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group">
+                                                        <label for="item_nombre" class="form-label">Nombre del Item <span class="text-danger">*</span></label>
+                                                        <input type="text" class="form-control" id="item_nombre" placeholder="Ingrese el nombre del item" maxlength="255">
+                                                        <div class="invalid-feedback" id="error_item_nombre"></div>
+                                                    </div>
+                                                </div>
+                                                {{-- <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label for="item_subitem" class="form-label">Subitem (Opcional)</label>
+                                                        <select class="form-control" id="item_subitem">
+                                                            <option value="">Seleccione subitem...</option>
+                                                        </select>
+                                                        <div class="invalid-feedback" id="error_item_subitem"></div>
+                                                    </div>
+                                                </div> --}}
+                                                {{-- <div class="col-md-3">
+                                                    <div class="form-group">
+                                                        <label>&nbsp;</label>
+                                                        <button type="button" class="btn btn-outline-secondary btn-block" id="btn_crear_subitem" onclick="abrirModalCrearSubitem()" title="Crear nuevo subitem">
+                                                            <i class="fas fa-plus"></i> Crear Subitem
+                                                        </button>
+                                                    </div>
+                                                </div> --}}
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-12">
+                                                    <button type="button" class="btn btn-success" id="btn_agregar_item">
+                                                        <i class="fas fa-plus"></i> Agregar Item
+                                                    </button>
+                                                    <button type="button" class="btn btn-secondary ml-2" id="btn_limpiar_item">
+                                                        <i class="fas fa-broom"></i> Limpiar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <!-- Tabla de items -->
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0 text-dark"><i class="fas fa-list mr-2"></i>Items de la Cotización</h6>
+                                            <div>
+                                                <button type="button" class="btn btn-danger btn-sm" id="btn_eliminar_items_seleccionados" disabled>
+                                                    <i class="fas fa-trash"></i> Eliminar Seleccionados
+                                                </button>
+                                                <button type="button" class="btn btn-warning btn-sm ml-2" id="btn_limpiar_todos_items">
+                                                    <i class="fas fa-broom"></i> Limpiar Todo
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover table-bordered mb-0" id="tabla_items">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th width="40">
+                                                            <input type="checkbox" id="select_all_items" onchange="toggleSelectAllItems()" title="Seleccionar todos">
+                                                        </th>
+                                                        <th width="60">#</th>
+                                                        <th width="200">Nombre del Item</th>
+                                                        <th>Subitems</th>
+                                                        <th width="100">Estado</th>
+                                                        <th width="150">Acciones</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="tbody_items">
+                                                    <tr class="" id="no_items_row_items">
+                                                        <td colspan="6" class="text-center text-muted py-3">
+                                                            <i class="fas fa-inbox fa-2x mb-2"></i>
+                                                            No hay items agregados
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Información adicional -->
+                                <div class="row mt-3">
+                                    <div class="col-md-12">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle mr-2"></i>
+                                            <strong>Información:</strong> Los items representan categorías principales de la cotización.
+                                            Para agregar detalles específicos como cantidades y precios, cree subitems asociados a cada item.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header" id="headingThree">
+                        <h2 class="mb-0">
+                            <button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#observaciones" aria-expanded="false" aria-controls="observaciones">
+                            Ingrese Observaciones Adicionales
+                            </button>
+                        </h2>
+                        </div>
+                        <div id="observaciones" class="collapse" aria-labelledby="headingThree" data-parent="#accordionCotizacionDetails">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <form id="formObservacion">
+                                        <div class="row">
+                                            <div class="col-md-10">
+                                                <div class="form-group">
+                                                    <label for="observacionSelect">Seleccione una observación</label>
+                                                    <select class="form-control" id="observacionSelect">
+                                                        <option value="">Seleccione una observación...</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <div class="form-group">
+                                                    <label>&nbsp;</label>
+                                                    <button type="button" class="btn btn-success btn-block" id="agregar_observacion" onclick="agregarObservacion()">
+                                                        <i class="fas fa-plus"></i> Agregar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+
+                                    <!-- Lista de observaciones agregadas -->
+                                    <div class="mt-3">
+                                        <h6>Observaciones Seleccionadas</h6>
+                                        <div class="table-responsive">
+                                            <table id="tablaObservaciones" class="table table-bordered table-striped" style="display: none;">
+                                                <thead class="table-dark">
+                                                    <tr>
+                                                        <th width="5%">#</th>
+                                                        <th width="85%">Observación</th>
+                                                        <th width="10%">Acciones</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="observacionesTableBody">
+                                                </tbody>
+                                            </table>
+                                            <div id="noObservacionesMessage" class="alert alert-info" style="display: block;">
+                                                No se han seleccionado observaciones.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                     <div class="card">
+                        <div class="card-header" id="headingThree">
+                        <h2 class="mb-0">
+                            <button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#condicionescomerciales" aria-expanded="false" aria-controls="condicionescomerciales">
+                            Ingrese Condiciones Comerciales
+                            </button>
+                        </h2>
+                        </div>
+                        <div id="condicionescomerciales" class="collapse" aria-labelledby="headingThree" data-parent="#accordionCotizacionDetails">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <form id="formCondicionesComerciales">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="tiempo_entrega">Tiempo de Entrega</label>
+                                                    <input type="text" class="form-control" id="tiempo_entrega" name="tiempo_entrega" placeholder="Ej: 15 días hábiles" maxlength="255">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="duracion_oferta">Duración de la Oferta</label>
+                                                    <input type="text" class="form-control" id="duracion_oferta" name="duracion_oferta" placeholder="Ej: 30 días calendario" maxlength="255">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label for="lugar_obra">Lugar de Obra</label>
+                                                    <textarea class="form-control" id="lugar_obra" name="lugar_obra" rows="2" placeholder="Dirección completa del lugar donde se realizará la obra" maxlength="500"></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label for="garantia">Garantía</label>
+                                                    <textarea class="form-control" id="garantia" name="garantia" rows="3" placeholder="Describa las condiciones de garantía ofrecidas" maxlength="500"></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label for="forma_pago">Forma de Pago</label>
+                                                    <textarea class="form-control" id="forma_pago" name="forma_pago" rows="3" placeholder="Especifique las condiciones y modalidades de pago" maxlength="500"></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="form-group text-end">
+                                                    <button type="button" class="btn btn-secondary" onclick="limpiarCondicionesComerciales()">
+                                                        <i class="fas fa-eraser"></i> Limpiar
+                                                    </button>
+                                                    <button type="button" class="btn btn-success ml-2" id="btnGuardarCondiciones"  onclick="guardarCondicionesComerciales()">
+                                                        <i class="fas fa-save"></i> Guardar Condiciones
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </form>
+
+                                    <!-- Resumen de condiciones guardadas -->
+                                    <div id="resumenCondiciones" class="mt-3" style="display: none;">
+                                        <div class="alert alert-success">
+                                            <h6><i class="fas fa-check-circle"></i> Condiciones Comerciales Guardadas</h6>
+                                            <div id="resumenContenido"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+
+                <!-- Sección de Productos Guardados -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card border-info">
+                            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-box-open"></i> Productos en la Cotización
+                                </h6>
+                                <div>
+                                    <span class="badge badge-light" id="contadorProductosGuardados">0</span>
+                                    <button class="btn btn-sm btn-outline-light ml-2" id="btnRefrescarProductos" onclick="cargarProductosGuardados()">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <!-- Loading state -->
+                                <div id="loadingProductosGuardados" class="text-center p-4 d-none">
+                                    <div class="spinner-border text-info" role="status">
+                                        <span class="sr-only">Cargando productos...</span>
+                                    </div>
+                                    <p class="mt-2 text-muted">Cargando productos guardados...</p>
+                                </div>
+
+                                <!-- Empty state -->
+                                <div id="emptyProductosGuardados" class="text-center p-5">
+                                    <i class="fas fa-box text-muted" style="font-size: 3rem; opacity: 0.3;"></i>
+                                    <h6 class="text-muted mt-3">No hay productos agregados</h6>
+                                    <p class="text-muted small">Los productos que agregues aparecerán aquí</p>
+                                </div>
+
+                                <!-- Products table -->
+                                <div class="table-responsive" id="tablaProductosGuardados" style="display: none;">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="thead-light">
+                                            <tr>
+                                                <th width="5%">
+                                                    <div class="custom-control custom-checkbox">
+                                                        <input type="checkbox" class="custom-control-input" id="selectAllProductosGuardados" onchange="toggleSelectAllProductosGuardados()">
+                                                        <label class="custom-control-label" for="selectAllProductosGuardados"></label>
+                                                    </div>
+                                                </th>
+                                                <th width="35%">Producto</th>
+                                                <th width="10%">Cantidad</th>
+                                                <th width="15%">Valor Unit.</th>
+                                                <th width="10%">Descuento</th>
+                                                <th width="15%">Total</th>
+                                                <th width="10%">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tbodyProductosGuardados">
+                                            <!-- Los productos se cargarán aquí dinámicamente -->
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Actions footer -->
+                                <div class="card-footer bg-light d-none" id="footerProductosGuardados">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <span class="text-muted small">Productos seleccionados: <span id="contadorSeleccionadosGuardados">0</span></span>
+                                        </div>
+                                        <div>
+                                            <button class="btn btn-sm btn-outline-danger" id="btnEliminarSeleccionados" onclick="eliminarProductosSeleccionados()" disabled>
+                                                <i class="fas fa-trash"></i> Eliminar Seleccionados
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mb-3" id="botonesAgregarProductos">
+                    <button class="btn btn-primary" id="agregarProductos">Agregar Productos</button>
+                    {{-- <button class="btn btn-danger" id="quitarProductos">Quitar Productos</button> --}}
+                </div>
+            </div>
+            <!-- Fin del contenido principal -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Agregar Productos/Salarios -->
+    <div class="modal fade" id="modalAgregarProductos" tabindex="-1" aria-labelledby="modalAgregarProductosLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalAgregarProductosLabel">
+                        <i class="fas fa-plus-circle"></i> Agregar Productos y Salarios
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Nav tabs -->
+                    <ul class="nav nav-tabs mb-3" id="tabsAgregarProductos" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="productos-tab" data-toggle="tab" data-target="#productos" type="button" role="tab">
+                                <i class="fas fa-box"></i> Productos
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="salarios-tab" data-toggle="tab" data-target="#salarios" type="button" role="tab">
+                                <i class="fas fa-users"></i> Categorias
+                            </button>
+                        </li>
+                    </ul>
+                    <!-- Tab content -->
+                    <div class="tab-content" id="tabsContent">
+                        <!-- Tab Productos -->
+                        <div class="tab-pane fade show active" id="productos" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="text-primary"><i class="fas fa-list"></i> Items del Acordeón</h6>
+                                    <p class="text-muted">Items y subitems agregados en la sección "Ingresar consecutivo de items"</p>
+
+                                    <!-- Campo de búsqueda para filtrar items -->
+                                    <div class="form-group">
+                                        <div class="input-group input-group-sm">
+                                            <input type="text" class="form-control" id="buscarItemsAcordeon" placeholder="Filtrar items y subitems..." oninput="filtrarItemsAcordeon()">
+                                            <div class="input-group-append">
+                                                <button class="btn btn-outline-secondary" type="button" onclick="limpiarFiltroItems()" title="Limpiar filtro">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="table-responsive" style="max-height: 400px;">
+                                        <table class="table table-sm table-hover" id="tablaItemsAcordeon">
+                                            <thead class="table-light sticky-top">
+                                                <tr>
+                                                    <th width="40">
+                                                        <i class="fas fa-check-circle"></i>
+                                                    </th>
+                                                    <th>Item/Subitem</th>
+                                                    <th>Descripción</th>
+                                                    <th>Tipo</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tbodyItemsAcordeon">
+                                                <tr>
+                                                    <td colspan="4" class="text-center text-muted">
+                                                        No hay items agregados en el acordeón
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <!-- Botón para usar items seleccionados -->
+                                    <div class="mt-2 mb-3">
+                                        <button type="button" class="btn btn-success btn-sm" id="btnUsarItemsSeleccionados" onclick="usarItemSeleccionado()">
+                                            <i class="fas fa-plus"></i> Agregar Item Seleccionado
+                                        </button>
+                                        <small class="form-text text-muted">Seleccione un item del acordeón para cargar sus productos por categoría.</small>
+                                    </div>
+
+                                    <hr>
+
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-success"><i class="fas fa-shopping-cart"></i> Productos Seleccionados</h6>
+                                    <div class="table-responsive" style="max-height: 400px;">
+                                        <table class="table table-sm table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Productos</th>
+                                                    <th width="80">Acción</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tbodyProductosSeleccionados">
+                                                <tr id="noProductosSeleccionados">
+                                                    <td colspan="2" class="text-center text-muted">
+                                                        No hay productos seleccionados
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">Los productos se cargan automáticamente según la categoría del producto seleccionado</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab Salarios -->
+                        <div class="tab-pane fade" id="salarios" role="tabpanel">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0"><i class="fas fa-user-plus"></i> Agregar Personal</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <form id="formAgregarPersonal">
+                                                <!-- Selección de Categorías -->
+                                                <div class="form-group">
+                                                    <label>Selección de Categorías <span class="text-danger">*</span></label>
+                                                    <div class="border p-2" style="max-height: 150px; overflow-y: auto;">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" id="selectAllCategorias" onchange="toggleAllCategorias()">
+                                                            <label class="form-check-label font-weight-bold" for="selectAllCategorias">
+                                                                Seleccionar Todas
+                                                            </label>
+                                                        </div>
+                                                        <hr class="my-2">
+                                                        <div id="listaCategorias">
+                                                            <!-- Categorías se cargan dinámicamente -->
+                                                        </div>
+                                                    </div>
+                                                    <small class="form-text text-muted">Seleccione una o múltiples categorías para calcular el costo total</small>
+                                                </div>
+
+                                                <!-- Items Propios basados en categorías seleccionadas -->
+                                                <div class="form-group" id="grupoItemsPropios" style="display: none;">
+                                                    <label>Items Propios de las Categorías Seleccionadas</label>
+                                                    <select class="form-control" id="itemPropio" disabled>
+                                                        <option value="">Seleccione un item propio...</option>
+                                                    </select>
+                                                    <small class="form-text text-muted">Los items se cargan automáticamente al seleccionar categorías</small>
+                                                </div>
+
+                                                <!-- Tipo de Costo -->
+                                                <div class="form-group">
+                                                    <label>Tipo de Costo <span class="text-danger">*</span></label>
+                                                    <select class="form-control" id="tipoCosto" onchange="cambiarTipoCosto()">
+                                                        <option value="">Seleccione tipo de costo...</option>
+                                                        <option value="COSTO_DIA">COSTO DIA</option>
+                                                        <option value="COSTO_HORA">COSTO HORA</option>
+                                                        <option value="COSTO_MES">COSTO MES</option>
+                                                    </select>
+                                                </div>
+                                                <!-- Cantidad de Personal -->
+                                                <div class="form-group">
+                                                    <label>Cantidad de Personal <span class="text-danger">*</span></label>
+                                                    <input type="number" class="form-control" id="cantidadPersonal" min="1" value="1">
+                                                </div>
+
+                                                <!-- Campo específico para COSTO HORA -->
+                                                <div id="campoHoras" class="form-group" style="display: none;">
+                                                    <label>Cantidad de Horas (Máximo 7) <span class="text-danger">*</span></label>
+                                                    <input type="number" class="form-control" id="cantidadHoras" min="1" max="7" value="8">
+                                                    <small class="form-text text-muted">Máximo 7 horas permitidas para costo por hora</small>
+                                                </div>
+
+                                                <!-- Campos para COSTO DIA y COSTO MES -->
+                                                <div id="camposDiurnosNocturnos">
+                                                    <!-- Días Diurnos -->
+                                                    <div class="form-group">
+                                                        <label>Cantidad de Días Diurnos</label>
+                                                        <input type="number" class="form-control" id="diasDiurnos" min="0" value="0" onchange="mostrarCampoRemunerados('diurnos')">
+                                                    </div>
+
+                                                    <div id="campoDiasRemuneradosD" class="form-group" style="display: none;">
+                                                        <label>Ingrese la cantidad de días remunerados (Diurnos)</label>
+                                                        <input type="number" class="form-control" id="diasRemuneradosDiurnos" min="0">
+                                                    </div>
+
+                                                    <!-- Días Nocturnos -->
+                                                    <div class="form-group">
+                                                        <label>Cantidad de Días Nocturnos</label>
+                                                        <input type="number" class="form-control" id="diasNocturnos" min="0" value="0" onchange="mostrarCampoRemunerados('nocturnos')">
+                                                    </div>
+
+                                                    <div id="campoDiasRemuneradosN" class="form-group" style="display: none;">
+                                                        <label>Ingrese la cantidad de días remunerados (Nocturnos)</label>
+                                                        <input type="number" class="form-control" id="diasRemuneradosNocturnos" min="0">
+                                                    </div>
+
+                                                    <!-- Días Dominicales -->
+                                                    <div class="form-group">
+                                                        <label>¿Desea ingresar días dominicales?</label>
+                                                        <div>
+                                                            <div class="form-check form-check-inline">
+                                                                <input class="form-check-input" type="radio" name="dominicales" id="dominicalesSi" value="si" onchange="mostrarCamposDominicales()">
+                                                                <label class="form-check-label" for="dominicalesSi">Sí</label>
+                                                            </div>
+                                                            <div class="form-check form-check-inline">
+                                                                <input class="form-check-input" type="radio" name="dominicales" id="dominicalesNo" value="no" onchange="ocultarCamposDominicales()" checked>
+                                                                <label class="form-check-label" for="dominicalesNo">No</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Campos Dominicales -->
+                                                    <div id="camposDominicales" style="display: none;">
+                                                        <div id="dominicalDiurno" class="form-group" style="display: none;">
+                                                            <label>Días Dominicales Diurnos</label>
+                                                            <input type="number" class="form-control" id="dominicalesDiurnos" min="0">
+                                                        </div>
+
+                                                        <div id="dominicalNocturno" class="form-group" style="display: none;">
+                                                            <label>Días Dominicales Nocturnos</label>
+                                                            <input type="number" class="form-control" id="dominicalesNocturnos" min="0">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <!-- Campos específicos de la última sección de salarios -->
+                                                <div class="card mt-3">
+                                                    <div class="card-header bg-light">
+                                                        <h6 class="mb-0">Ingresa el margen de cada categoría</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="form-group">
+                                                            <label>Margen de Utilidad (%)</label>
+                                                            <input type="number" class="form-control" id="margenUtilidad" step="0.01" value="0" onchange="calcularTotalConMargen()">
+                                                        </div>
+
+                                                        <div class="form-group">
+                                                            <label>Administración (%)</label>
+                                                            <input type="number" class="form-control" id="porcentajeAdministracion" step="0.01" value="0" onchange="calcularTotalConMargen()">
+                                                        </div>
+
+                                                        <div class="form-group">
+                                                            <label>Imprevistos (%)</label>
+                                                            <input type="number" class="form-control" id="porcentajeImprevistos" step="0.01" value="0" onchange="calcularTotalConMargen()">
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Total Principal -->
+                                                <div class="form-group">
+                                                    <label class="font-weight-bold">TOTAL COSTO</label>
+                                                    <input type="number" class="form-control font-weight-bold text-center" id="totalCosto" readonly style="font-size: 1.2em; background-color: #f8f9fa;">
+                                                </div>
+
+                                                <!-- Botón Ver Detalles -->
+                                                <div class="form-group">
+                                                    <button type="button" class="btn btn-info btn-sm" id="verDetalles" onclick="mostrarTablaDetalles()">
+                                                        <i class="fas fa-eye"></i> Vista Detalles
+                                                    </button>
+                                                </div>
+                                                <button type="submit" class="btn btn-success btn-block">
+                                                    <i class="fas fa-user-plus"></i> Agregar Personal
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6 class="mb-0"><i class="fas fa-users"></i> Personal Asignado</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive" style="max-height: 400px;">
+                                                <table class="table table-sm">
+                                                    <thead class="table-light sticky-top">
+                                                        <tr>
+                                                            <th>Categoría</th>
+                                                            <th>Tipo Costo</th>
+                                                            <th>Cantidad</th>
+                                                            <th>Total</th>
+                                                            <th>Acción</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="tbodyPersonalAsignado">
+                                                        <tr id="noPersonalAsignado">
+                                                            <td colspan="5" class="text-center text-muted">
+                                                                No hay personal asignado
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div class="mt-2">
+                                                <strong>Total Salarios: $<span id="totalSalarios">0.00</span></strong>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Modal Tabla de Detalles -->
+                                    <div class="modal fade" id="modalDetallesPrecios" tabindex="-1">
+                                        <div class="modal-dialog modal-lg">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title"><i class="fas fa-table"></i> Tabla de Precios Detallada</h5>
+                                                    <button type="button" class="close" data-dismiss="modal">
+                                                        <span>&times;</span>
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="table-responsive">
+                                                        <table class="table table-bordered table-sm">
+                                                            <thead class="table-dark">
+                                                                <tr>
+                                                                    <th>Categoría</th>
+                                                                    <th>Tipo Costo</th>
+                                                                    <th>Costo Base</th>
+                                                                    <th>Cantidad</th>
+                                                                    <th>Días/Horas</th>
+                                                                    <th>Subtotal</th>
+                                                                    <th>Margen (%)</th>
+                                                                    <th>Total Final</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody id="tablaDetallesPrecios">
+                                                                <tr>
+                                                                    <td colspan="8" class="text-center text-muted">
+                                                                        No hay datos para mostrar
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="mr-auto">
+                        <strong>Total General: $<span id="totalGeneral">0.00</span></strong>
+                    </div>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="confirmarAgregarProductos">
+                        <i class="fas fa-check"></i> Confirmar y Agregar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Quitar Productos/Salarios -->
+    <div class="modal fade" id="modalQuitarProductos" tabindex="-1" aria-labelledby="modalQuitarProductosLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="modalQuitarProductosLabel">
+                        <i class="fas fa-minus-circle"></i> Quitar Productos y Salarios
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Advertencia:</strong> Seleccione los elementos que desea quitar de la cotización.
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="40">
+                                        <input type="checkbox" id="selectAllElementos">
+                                    </th>
+                                    <th>Tipo</th>
+                                    <th>Descripción</th>
+                                    <th>Cantidad/Personal</th>
+                                    <th>Costo Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyElementosAQuitar">
+                                <tr id="noElementosAQuitar">
+                                    <td colspan="5" class="text-center text-muted">
+                                        No hay elementos para quitar
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-3">
+                        <strong>Total a Quitar: $<span id="totalAQuitar">0.00</span></strong>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-danger" id="confirmarQuitarProductos" disabled>
+                        <i class="fas fa-trash"></i> Confirmar y Quitar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para crear subitem -->
+    <div class="modal fade" id="modalCrearSubitem" tabindex="-1" aria-labelledby="modalCrearSubitemLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalCrearSubitemLabel">
+                        <i class="fas fa-plus"></i> Crear Nuevo Subitem
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="formCrearSubitem" onsubmit="guardarSubitem(event)">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <input type="hidden" name="cotizacion_item_id" id="cotizacion_item_id">
+                                <input type="hidden" name="subitem_id_edit" id="subitem_id_edit">
+                                <div class="form-group">
+                                    <label for="subitem_codigo" class="form-label">Código <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="subitem_codigo" maxlength="50" placeholder="Ej: SUB-001">
+                                    <div class="invalid-feedback" id="error_subitem_codigo"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="subitem_nombre" class="form-label">Nombre <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="subitem_nombre" maxlength="255" placeholder="Nombre del subitem">
+                                    <div class="invalid-feedback" id="error_subitem_nombre"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="subitem_unidad_medida" class="form-label">Unidad de Medida <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="subitem_unidad_medida">
+                                        <option value="">Seleccione unidad...</option>
+                                    </select>
+                                    <div class="invalid-feedback" id="error_subitem_unidad_medida"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="subitem_cantidad" class="form-label">Cantidad Base</label>
+                                    <input type="number" class="form-control" id="subitem_cantidad" min="0" step="0.01" value="1">
+                                    <div class="invalid-feedback" id="error_subitem_cantidad"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="subitem_observacion" class="form-label">Observación</label>
+                                    <textarea class="form-control" id="subitem_observacion" rows="3" maxlength="500" placeholder="Descripción adicional del subitem" oninput="actualizarContadorObservacion()"></textarea>
+                                    <div class="form-text">
+                                        <span id="subitem_observacion_count">0</span>/500 caracteres
+                                    </div>
+                                    <div class="invalid-feedback" id="error_subitem_observacion"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="btn_guardar_subitem">
+                            <i class="fas fa-save"></i> Guardar Subitem
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@stop
+
+
+@section('css')
+    <style>
+        /* Skeleton Loader Styles */
+        .skeleton-text, .skeleton-input, .skeleton-textarea, .skeleton-button, .skeleton-accordion {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        .skeleton-text {
+            height: 14px;
+            margin-bottom: 8px;
+        }
+
+        .skeleton-input {
+            height: 38px;
+            width: 100%;
+            border-radius: 6px;
+        }
+
+        .skeleton-textarea {
+            height: 80px;
+            width: 100%;
+            border-radius: 6px;
+        }
+
+        .skeleton-button {
+            height: 38px;
+            width: 120px;
+            border-radius: 6px;
+        }
+
+        .skeleton-accordion {
+            height: 48px;
+            width: 100%;
+            border-radius: 6px;
+        }
+
+        @keyframes skeleton-loading {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* Fade transition for skeleton */
+        #skeleton-loader, #main-content {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        /* Rest of existing styles */
+        .is-invalid {
+            border-color: #dc3545;
+        }
+
+        .invalid-feedback {
+            display: block;
+            width: 100%;
+            margin-top: 0.25rem;
+            font-size: 0.875em;
+            color: #dc3545;
+        }
+
+        .text-danger {
+            color: #dc3545 !important;
+        }
+
+        .form-control.is-invalid,
+        .form-select.is-invalid {
+            border-color: #dc3545;
+            padding-right: calc(1.5em + 0.75rem);
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        /* Estilos para la sección de totales */
+        .card-header h5 {
+            color: #495057;
+            font-weight: 600;
+        }
+
+        .input-group-text {
+            background-color: #e9ecef;
+            border-color: #ced4da;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        #subtotal_menos_descuento {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        #total {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            font-weight: 700;
+            color: #0c5460;
+            font-size: 1.1em;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+
+        /* Animación para campos calculados */
+        .total-field {
+            transition: all 0.3s ease;
+        }
+
+        .total-field:focus {
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .accordion .btn-link {
+            color: #000; /* o el color que quieras */
+            text-decoration: none !important;
+        }
+
+        .accordion .btn-link:hover {
+            color: #000;
+            text-decoration: none !important;
+        }
+
+        /* Estilos responsivos */
+        @media (max-width: 768px) {
+            .input-group-text {
+                font-size: 0.875rem;
+            }
+
+            .alert-info {
+                font-size: 0.8rem;
+            }
+        }
+
+        /* Estilos para el accordion de impuestos y descuentos */
+        .badge.bg-success {
+            background-color: #28a745 !important;
+        }
+
+        .badge.bg-primary {
+            background-color: #007bff !important;
+        }
+
+        #tabla_impuestos_descuentos {
+            font-size: 0.9rem;
+        }
+
+        #tabla_impuestos_descuentos th {
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            background-color: #f8f9fa;
+        }
+
+        #tabla_impuestos_descuentos .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .text-success {
+            color: #28a745 !important;
+        }
+
+        .text-primary {
+            color: #007bff !important;
+        }
+
+        .btn-outline-danger:hover {
+            color: #fff;
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .card .card-header h6 {
+            margin-bottom: 0;
+            font-weight: 600;
+        }
+
+        .input-group-text {
+            min-width: 40px;
+            justify-content: center;
+        }
+
+        /* Estilo para badges */
+        .badge {
+            font-size: 0.7rem;
+            margin-right: 0.5rem;
+        }
+
+        /* Estilos para la sección de items */
+        #tabla_items {
+            font-size: 0.9rem;
+        }
+
+        #tabla_items th {
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            background-color: #f8f9fa;
+            vertical-align: middle;
+        }
+
+        #tabla_items .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        #formAgregarItem .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(0, 123, 255, 0.05);
+        }
+
+        /* Modal de subitem */
+        #modalCrearSubitem .modal-header {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        /* Botones de items */
+        #btn_agregar_item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        /* Total de items */
+        #total_items_valor {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        /* Estilos para contenedor de subitems */
+        .subitems-container {
+            min-width: 150px;
+        }
+
+        .subitems-table-container {
+            margin-top: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            background-color: #f8f9fa;
+            padding: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Estilos para modales de productos y salarios */
+        #modalAgregarProductos .modal-xl {
+            max-width: 1200px;
+        }
+
+        #modalAgregarProductos .nav-tabs .nav-link {
+            font-weight: 500;
+            border: none;
+            border-bottom: 3px solid transparent;
+            background: none;
+            color: #6c757d;
+        }
+
+        #modalAgregarProductos .nav-tabs .nav-link.active {
+            color: #495057;
+            border-bottom-color: #007bff;
+            background-color: #f8f9fa;
+        }
+
+        #modalAgregarProductos .table-responsive {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+        }
+
+        #modalAgregarProductos .sticky-top {
+            top: 0;
+            z-index: 1020;
+        }
+
+        .producto-seleccionado {
+            background-color: #e3f2fd !important;
+        }
+
+        .personal-item {
+            background-color: #f8f9fa;
+            border-left: 4px solid #28a745;
+        }
+
+        /* Botones de productos y salarios */
+        #botonesAgregarProductos .btn {
+            min-width: 150px;
+            font-weight: 500;
+        }
+
+        #botonesAgregarProductos .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        /* Total displays */
+        #totalProductos, #totalSalarios, #totalGeneral, #totalAQuitar {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        /* Input de búsqueda */
+        #buscarProducto:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .subitems-table-container .table {
+            margin-bottom: 0;
+            background-color: white;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .subitems-table-container .table th {
+            background-color: #e9ecef;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+            font-size: 0.8rem;
+            padding: 8px;
+        }
+
+        .subitems-table-container .table td {
+            padding: 8px;
+            font-size: 0.85rem;
+            vertical-align: middle;
+        }
+
+        .subitems-table-container code {
+            background-color: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+        }
+
+        /* Botón toggle mejorado */
+        .toggle-subitems {
+            transition: all 0.3s ease;
+            min-width: 140px;
+            text-align: left;
+        }
+
+        .toggle-subitems:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,123,255,0.3);
+        }
+
+        /* Animación para mostrar/ocultar */
+        .subitems-table-container {
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive para tabla de subitems */
+        @media (max-width: 768px) {
+            .subitems-table-container .table th,
+            .subitems-table-container .table td {
+                padding: 4px;
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Mejoras visuales */
+        .table-bordered th,
+        .table-bordered td {
+            border: 1px solid #dee2e6;
+        }
+
+        .text-primary {
+            color: #007bff !important;
+        }
+    </style>
+@stop
+
+@section('js')
+    <script>
+        let variable = @json($variable);
+        let clientes = [];
+        let estados = [];
+        let consecutivo = '';
+        let cotizacion = null;
+
+        if (variable === 'crear') {
+            document.title = 'Crear Cotización';
+            clientes = @json($clientes);
+            estados = @json($estados);
+            consecutivo = @json($consecutivo);
+        } else if (variable === 'editar') {
+            document.title = 'Editar Cotización';
+            clientes = @json($clientes);
+            estados = @json($estados);
+            cotizacion = @json($cotizacion);
+            consecutivo = cotizacion.num_documento;
+            showSkeleton();
+        } else if (variable === 'ver') {
+            document.title = 'Ver Cotización';
+            clientes = @json($clientes);
+            estados = @json($estados);
+            cotizacion = @json($cotizacion);
+            consecutivo = cotizacion.num_documento;
+            showSkeleton();
+        }
+
+        // Funciones básicas para items si no están disponibles en documento.js
+        function calcularTotalItems() {
+            // Solo contar la cantidad de items, no calcular valores monetarios
+            const tabla = document.getElementById('tbody_items');
+            const rows = tabla.querySelectorAll('tr:not(#no_items_row)');
+            const contador = document.getElementById('total_items_count');
+            if (contador) {
+                contador.textContent = rows.length;
+            }
+        }
+
+        function actualizarContadorObservacion() {
+            const textarea = document.getElementById('subitem_observacion');
+            const contador = document.getElementById('subitem_observacion_count');
+            if (textarea && contador) {
+                contador.textContent = textarea.value.length;
+            }
+        }
+
+        function limpiarTodosItems() {
+            if (confirm('¿Está seguro de que desea eliminar todos los items?')) {
+                // Esta función debería estar en documento.js
+                if (typeof limpiarTodosItemsCompleto === 'function') {
+                    limpiarTodosItemsCompleto();
+                } else {
+                    console.log('Función limpiarTodosItemsCompleto no encontrada en documento.js');
+                }
+            }
+        }
+
+        function toggleSelectAllItems() {
+            const selectAll = document.getElementById('select_all_items');
+            const checkboxes = document.querySelectorAll('.item-checkbox');
+
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+
+            // Actualizar estado del botón eliminar
+            if (typeof toggleEliminarItemsSeleccionados === 'function') {
+                toggleEliminarItemsSeleccionados();
+            }
+        }
+
+        // Funciones para controlar el skeleton loader
+        function showSkeleton() {
+            document.getElementById('skeleton-loader').style.display = 'block';
+            document.getElementById('main-content').style.display = 'none';
+        }
+
+        function hideSkeleton() {
+            document.getElementById('skeleton-loader').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+        }
+
+        function showLoadingState() {
+            document.getElementById('main-content').classList.add('loading');
+        }
+
+        function hideLoadingState() {
+            document.getElementById('main-content').classList.remove('loading');
+        }
+
+        // Mostrar skeleton al cargar la página
+        // document.addEventListener('DOMContentLoaded', function() {
+        //     // Simular carga inicial
+        //     setTimeout(() => {
+
+        //     }, 4000); // 4 segundos
+        // });
+
+    </script>
+
+    <!-- Estilos específicos para productos guardados -->
+    <style>
+        .product-icon {
+            width: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .producto-guardado-checkbox:checked + .custom-control-label::before {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .btn-group-sm .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.775rem;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+        }
+
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .table-responsive {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            z-index: 10;
+        }
+
+        .card-header .badge {
+            font-size: 0.875rem;
+            padding: 0.375rem 0.75rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .table tbody tr {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        /* Estilos personalizados para el modal de edición */
+        .swal2-popup {
+            font-size: 0.875rem !important;
+        }
+
+        .swal2-title {
+            font-size: 1.5rem !important;
+            margin-bottom: 1rem !important;
+        }
+
+        .swal2-html-container {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .form-label {
+            margin-bottom: 0.5rem !important;
+            font-weight: 600 !important;
+        }
+
+        .input-group-text {
+            background-color: #f8f9fa;
+            border-color: #ced4da;
+            color: #6c757d;
+        }
+
+        .card.bg-light {
+            background-color: #f8f9fa !important;
+            border: 1px solid #dee2e6 !important;
+        }
+
+        .card-body {
+            padding: 1rem !important;
+        }
+
+        .text-sm {
+            font-size: 0.875rem !important;
+        }
+
+        .swal2-confirm {
+            margin-right: 0.5rem !important;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+
+        /* Mejoras para los inputs del modal */
+        .swal2-popup input.form-control {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        .swal2-popup input.form-control:focus {
+            border-color: #80bdff;
+            outline: 0;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        .swal2-validation-message {
+            background: #f8d7da !important;
+            color: #721c24 !important;
+            border: 1px solid #f5c6cb !important;
+        }
+    </style>
+
+    <script src="{{ asset('assets/js/cotizar/documento.js') }}" type="text/javascript"></script>
+@stop

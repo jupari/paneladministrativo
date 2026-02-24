@@ -11,6 +11,7 @@ class Producto extends Model
     protected $table = 'inv_productos';
     public $timestamps = false;
     protected $fillable = [
+        'company_id',
         'tipo_producto',
         'codigo',
         'nombre',
@@ -30,8 +31,19 @@ class Producto extends Model
         'active' => 'boolean',
     ];
 
+    public function company()
+    {
+        return $this->belongsTo(Company::class, 'company_id');
+    }
+
     public function productosPropiedades()
     {
         return $this->hasMany(ProductoPropiedad::class, 'producto_id');
+    }
+
+    // Scope para filtrar por empresa
+    public function scopeByCompany($query, $companyId)
+    {
+        return $query->where('company_id', $companyId);
     }
 }

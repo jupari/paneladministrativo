@@ -3,7 +3,7 @@ $(function () {
     Cargar();
 });
 
-var myModal = new bootstrap.Modal(document.getElementById('ModalMaterial'), { keyboard: false });
+var myModal = $('#ModalMaterial');
 
 function Cargar() {
     if ($.fn.DataTable.isDataTable('#materiales-table')) {
@@ -38,7 +38,7 @@ function cleanInput() {
 }
 
 function regMaterial() {
-    myModal.show();
+    myModal.modal('show');
     $('.modal-title').html('Registrar Material');
     cleanInput();
     let footer = `
@@ -67,7 +67,7 @@ function storeMaterial() {
     })
     .done(response => {
         toastr.success(response.message)
-        myModal.hide()
+        myModal.modal('hide')
         Cargar()
     })
     .fail(e => handleErrors(e))
@@ -75,7 +75,7 @@ function storeMaterial() {
 }
 
 function upMaterial(id) {
-    myModal.show();
+    myModal.modal('show');
     $('.modal-title').html('Editar Material');
     cleanInput();
 
@@ -113,7 +113,7 @@ function updateMaterial(id) {
     })
     .done(response => {
         toastr.success(response.message);
-        myModal.hide();
+        myModal.modal('hide');
         Cargar();
     })
     .fail(e => handleErrors(e));

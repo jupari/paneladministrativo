@@ -1,10 +1,10 @@
 <!-- Modal -->
-<div class="modal fade" id="myModalPss" aria-hidden="true" style="display: none;">
+<div class="modal fade" id="myModalPss" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabelPss" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title" id="exampleModalLabelPss"></h4>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">×</span>
                 </button>
             </div>

@@ -1,11 +1,11 @@
 <!-- Modal -->
-<div class="modal fade" id="myModal" aria-hidden="true" style="display: none;">
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title" id="exampleModalLabel"></h4>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">×</span>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
@@ -79,6 +79,16 @@
                                         </select>
                                     </div>
                                 {{-- @endif --}}
+                                <div class="form-group">
+                                    <label for="company_id">Empresa</label>
+                                    <select class="form-control" id="company_id" style="width: 100%;">
+                                        <option value="">Seleccione una empresa</option>
+                                        @foreach($companies as $company)
+                                            <option value="{{ $company->id }}">{{ $company->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <span class="text-danger" id="error_company_id"></span>
+                                </div>
                                 <div class="form-group">
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="active" checked>

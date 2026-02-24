@@ -22,14 +22,20 @@ class UsuarioRolesController extends Controller
 
      public function __construct()
     {
+        // Solo usuarios con rol sysadmin pueden gestionar roles y permisos
+        //$this->middleware('sysadmin');
+
         $this->middleware('can:roles.index')->only('index');
-        // $this->middleware('can:roles.create')->only('store');
-        // $this->middleware('can:roles.edit')->only('edit','update');
+        $this->middleware('can:roles.create')->only('store');
+        $this->middleware('can:roles.edit')->only('edit','update');
     }
 
      public function index(Request $request)
      {
-        $this->authorize('view', new Role);
+        // Verificar que el usuario tenga permisos o rol adecuado
+        if (!auth()->user()->hasAnyRole(['Administrator', 'sysadmin']) && !auth()->user()->can('roles.index')) {
+            abort(403, 'Esta acción no está autorizada.');
+        }
 
          // // Campos para tablas siempre y cuando sean iguales
         $campos = ['id', 'name'];
@@ -107,7 +113,10 @@ class UsuarioRolesController extends Controller
                         ])
                         ->findOrFail($id);
 
-        $this->authorize('update', $roles);
+        // Verificar autorización simplificada
+        if (!auth()->user()->hasAnyRole(['Administrator', 'sysadmin']) && !auth()->user()->can('roles.edit')) {
+            abort(403, 'Esta acción no está autorizada.');
+        }
 
         if($roles){
 
@@ -121,7 +130,10 @@ class UsuarioRolesController extends Controller
 
     public function store(Request $request)
     {
-        $this->authorize('create', new Role);
+        // Verificar autorización simplificada
+        if (!auth()->user()->hasAnyRole(['Administrator', 'sysadmin']) && !auth()->user()->can('roles.create')) {
+            abort(403, 'Esta acción no está autorizada.');
+        }
 
         $validation =  Validator::make($request->all(),[
             'name'=>'required|unique:Spatie\Permission\Models\Role,name',
@@ -165,7 +177,11 @@ class UsuarioRolesController extends Controller
     public function update(Request $request, $id)
     {
         $rol = Role::select('id', 'name', 'guard_name')->findOrFail($id);
-        $this->authorize('update', $rol);
+        
+        // Verificar autorización simplificada
+        if (!auth()->user()->hasAnyRole(['Administrator', 'sysadmin']) && !auth()->user()->can('roles.edit')) {
+            abort(403, 'Esta acción no está autorizada.');
+        }
 
         $validation =  Validator::make($request->all(),[
             'name'=>'required',

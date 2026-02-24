@@ -4,20 +4,19 @@
 
 @section('content')
 
-    {{-- Breadcrumbs --}}
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb bg-light px-3 py-2 rounded">
-            <li class="breadcrumb-item">
-                <a href="{{ url('/dashboard') }}">Inicio</a>
-            </li>
-            <li class="breadcrumb-item">
-                <a href="#">Inventarios</a>
-            </li>
-            <li class="breadcrumb-item active" aria-current="page">
-                Listado de Movimientos
-            </li>
-        </ol>
-    </nav>
+    {{-- Breadcrumbs mejorados usando componente --}}
+    @php
+        $breadcrumbs = [
+            [
+                'title' => 'Inventarios',
+                'icon' => 'fas fa-boxes',
+                'url' => null
+            ]
+        ];
+        $currentTitle = 'Movimientos de Inventario';
+        $currentIcon = 'fas fa-exchange-alt';
+    @endphp
+    <x-breadcrumbs :breadcrumbs="$breadcrumbs" :currentTitle="$currentTitle" :currentIcon="$currentIcon" />
 
     <div class="card">
         <div class="card-header">

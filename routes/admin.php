@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\EstadoController;
 use App\Http\Controllers\Admin\OutlookController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\UsuarioRolesController;
 use App\Http\Controllers\Admin\RolesPermisosController;
 use App\Http\Controllers\Contratos\Cargos\CargoController;
@@ -18,6 +19,14 @@ use App\Http\Controllers\Contratos\Novedades\NovedadDetalleController;
 use App\Http\Controllers\Contratos\Parametrizacion\ParametrizacionController;
 use App\Http\Controllers\Contratos\Plantillas\PlantillaController;
 use App\Http\Controllers\Cotizar\CotizarController;
+use App\Http\Controllers\Cotizar\CotizacionController;
+use App\Http\Controllers\Cotizar\CotizacionConceptoController;
+use App\Http\Controllers\Cotizar\CotizacionItemController;
+use App\Http\Controllers\Cotizar\ObservacionController;
+use App\Http\Controllers\Cotizar\CondicionComercialController;
+use App\Http\Controllers\Cotizar\CotizacionSolicitudController;
+use App\Http\Controllers\Cotizar\CotizacionProductoController;
+use App\Http\Controllers\Cotizar\CotizacionUtilidadController;
 use App\Http\Controllers\elementos\ElementoController;
 use App\Http\Controllers\elementos\ElementosController;
 use App\Http\Controllers\elementos\SubElementoController;
@@ -43,8 +52,7 @@ use App\Http\Controllers\Terceros\UbicacionController;
 use App\Http\Controllers\Terceros\Vendedores\VendedorController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth')->group(function () {
-
+Route::middleware(['auth', 'company.license'])->group(function () {
     Route::get('admin.users.index', [UserController::class, 'indexDataTable'])->name('admin.users.index');
     Route::post('admin.users.store', [UserController::class, 'store'])->name('admin.users.store');
     Route::get('admin.users.edit/{id}', [UserController::class, 'edit'])->name('admin.users.edit');
@@ -52,6 +60,19 @@ Route::middleware('auth')->group(function () {
     Route::post('admin.users.changepass/{id}', [UserController::class, 'changePass'])->name('admin.users.changePass');
     Route::get('admin.users.show/{id}', [UserController::class, 'show'])->name('admin.users.show');
     Route::get('admin.users.delete/{id}', [UserController::class, 'delete'])->name('admin.users.delete');
+
+    // Gestión de Empresas
+    Route::controller(CompanyController::class)->group(function () {
+        Route::get('admin.companies.index', 'index')->name('admin.companies.index');
+        Route::get('admin.companies.create', 'create')->name('admin.companies.create');
+        Route::post('admin.companies.store', 'store')->name('admin.companies.store');
+        Route::get('admin.companies.show/{company}', 'show')->name('admin.companies.show');
+        Route::get('admin.companies.edit/{company}', 'edit')->name('admin.companies.edit');
+        Route::put('admin.companies.update/{company}', 'update')->name('admin.companies.update');
+        Route::delete('admin.companies.destroy/{company}', 'destroy')->name('admin.companies.destroy');
+        Route::post('admin.companies.renew-license/{company}', 'renewLicense')->name('admin.companies.renew-license');
+        Route::post('admin.companies.toggle-status/{company}', 'toggleStatus')->name('admin.companies.toggle-status');
+    });
 
     // Permisos
     Route::controller(RolesPermisosController::class)->group(function () {
@@ -225,6 +246,114 @@ Route::middleware('auth')->group(function () {
     Route::controller(CotizarController::class)->group(function () {
         Route::get('admin.cotizar.index', [CotizarController::class, 'index'])->name('admin.cotizar.index');
         Route::get('admin.cotizar.create', [CotizarController::class, 'create'])->name('admin.cotizar.create');
+    });
+
+    // Rutas para Cotizaciones CRUD
+    Route::controller(CotizacionController::class)->group(function () {
+        Route::get('admin.cotizaciones.index', 'index')->name('admin.cotizaciones.index');
+        Route::get('admin.cotizaciones.create', 'create')->name('admin.cotizaciones.create');
+        Route::post('admin.cotizaciones.store', 'store')->name('admin.cotizaciones.store');
+        Route::get('admin.cotizaciones.show/{id}', 'show')->name('admin.cotizaciones.show');
+        Route::get('admin.cotizaciones.edit/{id}', 'edit')->name('admin.cotizaciones.edit');
+        Route::put('admin.cotizaciones.update/{id}', 'update')->name('admin.cotizaciones.update');
+        Route::delete('admin.cotizaciones.destroy/{id}', 'destroy')->name('admin.cotizaciones.destroy');
+
+        // Rutas para PDF
+        Route::get('admin.cotizaciones.pdf/{id}', 'generatePdf')->name('admin.cotizaciones.pdf');
+        Route::get('admin.cotizaciones.preview/{id}', 'previewPdf')->name('admin.cotizaciones.preview');
+
+        // Rutas adicionales para AJAX
+        Route::get('admin.cotizaciones.getSucursales/{terceroId}', 'getSucursales')->name('admin.cotizaciones.getSucursales');
+        Route::get('admin.cotizaciones.getContactos/{terceroId}', 'getContactos')->name('admin.cotizaciones.getContactos');
+        Route::get('admin.cotizaciones.generateNextNumber', 'generateNextNumber')->name('admin.cotizaciones.generateNextNumber');
+        Route::post('admin.cotizaciones.duplicate/{id}', 'duplicate')->name('admin.cotizaciones.duplicate');
+        Route::post('admin.cotizaciones.search', 'search')->name('admin.cotizaciones.search');
+        Route::delete('admin.cotizaciones.destroy/{id}', 'destroy')->name('admin.cotizaciones.destroy');
+    });
+
+    // Rutas para Productos y Salarios de Cotizaciones
+    Route::controller(CotizacionProductoController::class)->group(function () {
+        Route::get('admin.cotizaciones.productos.obtener', 'obtenerProductos')->name('admin.cotizaciones.productos.obtener');
+        Route::get('admin.cotizaciones.cargos.obtener', 'obtenerCargos')->name('admin.cotizaciones.cargos.obtener');
+        Route::get('admin.cotizaciones.categorias.obtener', 'obtenerCategorias')->name('admin.cotizaciones.categorias.obtener');
+        Route::post('admin.cotizaciones.items-categoria.obtener', 'obtenerItemsPorCategoria')->name('admin.cotizaciones.items-categoria.obtener');
+        Route::post('admin.cotizaciones.valores-defecto.obtener', 'obtenerValoresPorDefecto')->name('admin.cotizaciones.valores-defecto.obtener');
+        Route::post('admin.cotizaciones.salarios.guardar', 'guardarSalariosCotizacion')->name('admin.cotizaciones.salarios.guardar');
+        Route::post('admin.cotizaciones.salarios.calcular', 'calcularCostoSalarios')->name('admin.cotizaciones.salarios.calcular');
+        Route::get('admin.cotizaciones.tipos-costo.obtener', 'obtenerTipoCostos')->name('admin.cotizaciones.tipos-costo.obtener');
+        Route::get('admin.cotizaciones/{id}/elementos', 'obtenerElementosCotizacion')->name('admin.cotizaciones.elementos.obtener');
+        Route::post('admin.cotizaciones.productos.agregar', 'agregarProductosCotizacion')->name('admin.cotizaciones.productos.agregar');
+        Route::delete('admin.cotizaciones.elementos.quitar/{id}', 'quitarElementosCotizacion')->name('admin.cotizaciones.elementos.quitar');
+
+        // Nuevas rutas para gestión avanzada de productos
+        Route::put('admin.cotizaciones.productos.actualizar/{id}', 'actualizarProducto')->name('admin.cotizaciones.productos.actualizar');
+        Route::delete('admin.cotizaciones.productos.eliminar/{id}', 'eliminarProducto')->name('admin.cotizaciones.productos.eliminar');
+        Route::get('cotizaciones/productos/obtener', 'obtenerProductosCotizacion')->name('admin.cotizaciones.productos.obtener.guardados');
+        Route::get('cotizaciones/totales/obtener', 'obtenerTotalesCotizacion')->name('admin.cotizaciones.totales.obtener');
+        Route::post('admin.cotizaciones.productos.reordenar', 'reordenarProductos')->name('admin.cotizaciones.productos.reordenar');
+        Route::post('admin.cotizaciones.productos.duplicar', 'duplicarProductos')->name('admin.cotizaciones.productos.duplicar');
+        Route::get('admin.cotizaciones.productos.buscar', 'buscarProductos')->name('admin.cotizaciones.productos.buscar');
+        Route::get('admin.cotizaciones/{cotizacionId}/totales', 'obtenerTotales')->name('admin.cotizaciones.totales');
+        Route::post('admin.cotizaciones.productos.descuento-global', 'aplicarDescuentoGlobal')->name('admin.cotizaciones.productos.descuento-global');
+    });
+
+    // Rutas para Cotizaciones Conceptos
+    Route::controller(CotizacionConceptoController::class)->group(function () {
+        Route::get('admin.cotizaciones.conceptos.getConceptos', 'getConceptos')->name('admin.cotizaciones.conceptos.getConceptos');
+        Route::post('admin.cotizaciones.conceptos.store', 'store')->name('admin.cotizaciones.conceptos.store');
+        Route::get('admin.cotizaciones.conceptos.getCotizacionConceptos/{cotizacionId}', 'getCotizacionConceptos')->name('admin.cotizaciones.conceptos.getCotizacionConceptos');
+        Route::put('admin.cotizaciones.conceptos.update/{cotizacionId}', 'update')->name('admin.cotizaciones.conceptos.update');
+        Route::delete('admin.cotizaciones.conceptos.destroy/{id}', 'destroy')->name('admin.cotizaciones.conceptos.destroy');
+        Route::post('admin.cotizaciones.conceptos.calcularTotales', 'calcularTotales')->name('admin.cotizaciones.conceptos.calcularTotales');
+    });
+
+    // Rutas para Observaciones de Cotizaciones
+    Route::controller(ObservacionController::class)->group(function () {
+        Route::get('admin.cotizaciones.observaciones.getObservaciones', 'getObservaciones')->name('admin.cotizaciones.observaciones.getObservaciones');
+        Route::get('admin.cotizaciones.observaciones.getCotizacionObservaciones/{cotizacionId}', 'getCotizacionObservaciones')->name('admin.cotizaciones.observaciones.getCotizacionObservaciones');
+        Route::post('admin.cotizaciones.observaciones.store', 'store')->name('admin.cotizaciones.observaciones.store');
+        Route::put('admin.cotizaciones.observaciones.update/{cotizacionId}', 'update')->name('admin.cotizaciones.observaciones.update');
+        Route::delete('admin.cotizaciones.observaciones.destroy/{id}', 'destroy')->name('admin.cotizaciones.observaciones.destroy');
+    });
+
+    // Rutas para Condiciones Comerciales de Cotizaciones
+    Route::controller(CondicionComercialController::class)->group(function () {
+        Route::get('admin.cotizaciones.condiciones.getCotizacionCondiciones/{cotizacionId}', 'getCotizacionCondiciones')->name('admin.cotizaciones.condiciones.getCotizacionCondiciones');
+        Route::post('admin.cotizaciones.condiciones.store', 'store')->name('admin.cotizaciones.condiciones.store');
+        Route::put('admin.cotizaciones.condiciones.update/{cotizacionId}', 'update')->name('admin.cotizaciones.condiciones.update');
+        Route::delete('admin.cotizaciones.condiciones.destroy/{cotizacionId}', 'destroy')->name('admin.cotizaciones.condiciones.destroy');
+        Route::post('admin.cotizaciones.condiciones.validar', 'validarCondiciones')->name('admin.cotizaciones.condiciones.validar');
+    });
+
+    // Rutas para Items de Cotizaciones
+    Route::controller(CotizacionItemController::class)->group(function () {
+        Route::get('admin.cotizaciones.items.getCotizacionItems/{cotizacionId}', 'getCotizacionItems')->name('admin.cotizaciones.items.getCotizacionItems');
+        Route::get('admin.cotizaciones.items.getSubitems', 'getSubitems')->name('admin.cotizaciones.items.getSubitems');
+        Route::get('admin.cotizaciones.items.getItemSubitems/{itemId}', 'getItemSubitems')->name('admin.cotizaciones.items.getItemSubitems');
+        Route::get('admin.cotizaciones.items.getSubitem/{subitemId}', 'getSubitem')->name('admin.cotizaciones.items.getSubitem');
+        Route::get('admin.cotizaciones.items.getUnidadesMedida', 'getUnidadesMedida')->name('admin.cotizaciones.items.getUnidadesMedida');
+        Route::post('admin.cotizaciones.items.store', 'store')->name('admin.cotizaciones.items.store');
+        Route::post('admin.cotizaciones.items.createItem', 'createItem')->name('admin.cotizaciones.items.createItem');
+        Route::put('admin.cotizaciones.items.update/{cotizacionId}', 'update')->name('admin.cotizaciones.items.update');
+        Route::delete('admin.cotizaciones.items.destroy/{id}', 'destroy')->name('admin.cotizaciones.items.destroy');
+        Route::post('admin.cotizaciones.items.createSubitem', 'createSubitem')->name('admin.cotizaciones.items.createSubitem');
+        Route::put('admin.cotizaciones.items.updateSubitem/{subitemId}', 'updateSubitem')->name('admin.cotizaciones.items.updateSubitem');
+        Route::delete('admin.cotizaciones.items.destroySubitem/{subitemId}', 'destroySubitem')->name('admin.cotizaciones.items.destroySubitem');
+    });
+
+    Route::controller(CotizacionSolicitudController::class)->group(function () {
+        Route::get('admin.cotizaciones.solicitudes.index', 'index')->name('admin.cotizaciones.solicitudes.index');
+        Route::delete('admin.cotizaciones.solicitudes.auth/{id}', 'authorizeCotizacion')->name('admin.cotizaciones.solicitudes.auth');
+    });
+
+    // Rutas para Utilidades de Cotizaciones
+    Route::controller(CotizacionUtilidadController::class)->group(function () {
+        Route::post('admin.cotizaciones.utilidades.store', 'store')->name('admin.cotizaciones.utilidades.store');
+        Route::delete('admin.cotizaciones.utilidades.destroy/{id}', 'destroy')->name('admin.cotizaciones.utilidades.destroy');
+        Route::get('admin.cotizaciones.utilidades.obtener/{cotizacionId}', 'obtenerUtilidades')->name('admin.cotizaciones.utilidades.obtener');
+        Route::get('admin.cotizaciones.utilidades.categorias/{cotizacionId}', 'obtenerCategorias')->name('admin.cotizaciones.utilidades.categorias');
+        Route::get('admin.cotizaciones.utilidades.items-propios/{cotizacionId}', 'obtenerItemsPropios')->name('admin.cotizaciones.utilidades.items-propios');
+        Route::get('admin.cotizaciones.utilidades.items-categoria/{cotizacionId}/{categoriaId}', 'obtenerItemsPorCategoria')->name('admin.cotizaciones.utilidades.items-categoria');
     });
 
     Route::controller(ItemPropioController::class)->group(function () {

@@ -7,19 +7,31 @@
 @section('plugin.Sweetalert2')
 
 @section('content')
-
+    {{-- Breadcrumbs mejorados usando componente --}}
+    @php
+        $breadcrumbs = [
+            [
+                'title' => 'Parametrización',
+                'icon' => 'fas fa-cog',
+                'url' => null
+            ]
+        ];
+        $currentTitle = 'Parametrización Liquidación';
+        $currentIcon = 'fas fa-tags';
+    @endphp
+    <x-breadcrumbs :breadcrumbs="$breadcrumbs" :currentTitle="$currentTitle" :currentIcon="$currentIcon" />
     <div class="card">
         <div class="card-header">
             <h4>Parametrización</h4>
         </div>
         <div class="card-body" >
-            @if(auth()->user()->hasRole('Administrator'))
+            @if(auth()->user()->hasRole(['Administrator', 'sysadmin']))
                 <ul class="nav nav-tabs" id="myTab" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="novedades-tab" data-bs-toggle="tab" data-bs-target="#novedades-tab-pane" type="button" role="tab" aria-controls="novedades-tab-pane" aria-selected="true">Novedades</button>
+                        <button class="nav-link active" id="novedades-tab" data-toggle="tab" data-target="#novedades-tab-pane" type="button" role="tab" aria-controls="novedades-tab-pane" aria-selected="true">Novedades</button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="costos-tab" data-bs-toggle="tab" data-bs-target="#costos-tab-pane" type="button" role="tab" aria-controls="costos-tab-pane" aria-selected="false">Costos</button>
+                        <button class="nav-link" id="costos-tab" data-toggle="tab" data-target="#costos-tab-pane" type="button" role="tab" aria-controls="costos-tab-pane" aria-selected="false">Costos</button>
                     </li>
                  </ul>
                 <div class="tab-content" id="myTabContent">

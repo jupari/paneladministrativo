@@ -38,7 +38,8 @@ class Tercero extends Model
     public $timestamps=false;
 
     protected $fillable = [
-          'tercerotipo_id'
+          'company_id'
+        , 'tercerotipo_id'
         , 'tipoidentificacion_id'
         , 'identificacion'
         , 'dv'
@@ -59,6 +60,11 @@ class Tercero extends Model
         , 'active'
     ];
 
+    public function company()
+    {
+        return $this->belongsTo(Company::class, 'company_id');
+    }
+
     public function tipoIdentificacion(){
         return $this->belongsTo(TipoIdentificacion::class, 'tipoidentificacion_id');
     }
@@ -73,6 +79,12 @@ class Tercero extends Model
 
     public function vendedores(){
         return $this->belongsTo(Vendedor::class, 'vendedor_id');
+    }
+
+    // Scope para filtrar por empresa
+    public function scopeByCompany($query, $companyId)
+    {
+        return $query->where('company_id', $companyId);
     }
 
 }

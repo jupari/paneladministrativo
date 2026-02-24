@@ -127,7 +127,7 @@ function saveData() {
         contentType: false,
         processData: false,
         success: function (res) {
-            $('#modalNovedad').modal('hide'); // o myModal.toggle(); si usas instancia JS
+            $('#modalNovedad').modal('hide'); // o myModal.modal('toggle'); si usas instancia JS
             toastr.success(res.message); // ← era "res", no "response"
         },
         error: function (err) {

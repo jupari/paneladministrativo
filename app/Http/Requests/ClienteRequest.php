@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class ClienteRequest extends FormRequest
 {
@@ -66,5 +68,26 @@ class ClienteRequest extends FormRequest
             'celular.regex' => 'El número de celular debe tener 10 dígitos numéricos.',
             'telefono.regex' => 'El número de teléfono debe tener 10 dígitos numéricos.',
         ];
+    }
+
+    /**
+     * Handle a failed validation attempt for AJAX requests.
+     *
+     * @param  \Illuminate\Contracts\Validation\Validator  $validator
+     * @return void
+     *
+     * @throws \Illuminate\Http\Exceptions\HttpResponseException
+     */
+    protected function failedValidation(Validator $validator)
+    {
+        if ($this->expectsJson()) {
+            throw new HttpResponseException(response()->json([
+                'success' => false,
+                'message' => 'Los datos proporcionados no son válidos.',
+                'errors' => $validator->errors()
+            ], 422));
+        }
+
+        parent::failedValidation($validator);
     }
 }

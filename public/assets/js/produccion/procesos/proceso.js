@@ -143,7 +143,7 @@ function showProceso (btn) {
 
 //Registrar usuario
 function regProceso () {
-    myModal.show()
+    myModal.modal('show')
     $('#exampleModalLabel').html('Crear Proceso')
 
     // LIMPIAR CAMPOS
@@ -205,7 +205,7 @@ function registerProceso () {
 
 // Actualizar usuario
 function upProceso (btn) {
-    myModal.show()
+    myModal.modal('show')
     $('#exampleModalLabel').html('Editar Proceso')
     // LIMPIAR CAMPOS
     cleanInput()
@@ -258,7 +258,7 @@ function updateProceso (btn) {
                 //     }
                 // }
             } else if (e.status == 403) {
-                myModal.toggle()
+                myModal.modal('toggle')
                 toastr.warning(arr.message)
             }
         })

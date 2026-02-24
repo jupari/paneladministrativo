@@ -8,6 +8,19 @@
 
 
 @section('content')
+    {{-- Breadcrumbs mejorados usando componente --}}
+    @php
+        $breadcrumbs = [
+            [
+                'title' => 'Parametrización',
+                'icon' => 'fas fa-cog',
+                'url' => null
+            ]
+        ];
+        $currentTitle = 'Items Propios';
+        $currentIcon = 'fas fa-tags';
+    @endphp
+    <x-breadcrumbs :breadcrumbs="$breadcrumbs" :currentTitle="$currentTitle" :currentIcon="$currentIcon" />
     <div class="card">
         <div class="card-header">
             <h4>Registrar Item Propio</h4>

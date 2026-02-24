@@ -8,7 +8,19 @@
 
 
 @section('content')
-
+    {{-- Breadcrumbs mejorados usando componente --}}
+    @php
+        $breadcrumbs = [
+            [
+                'title' => 'Parametrización',
+                'icon' => 'fas fa-cog',
+                'url' => null
+            ]
+        ];
+        $currentTitle = 'Novedades';
+        $currentIcon = 'fas fa-tags';
+    @endphp
+    <x-breadcrumbs :breadcrumbs="$breadcrumbs" :currentTitle="$currentTitle" :currentIcon="$currentIcon" />
     <div class="card">
         <div class="card-header">
             <h4>Novedades</h4>
@@ -41,9 +53,8 @@
     </div>
 @stop
 
-@push('modals')
 @include('contratos.novedades.modal')
-@endpush
+
 
 @section('css')
     {{-- Add here extra stylesheets --}}

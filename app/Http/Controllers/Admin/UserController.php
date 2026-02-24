@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Company;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -65,7 +66,8 @@ class UserController extends Controller
 
             // Politica y permiso incluido: ver usuario
 
-            $usuarios = User::with('roles')->get();
+            $usuarios = User::with(['roles', 'company'])->get();
+            $companies = Company::where('is_active', 1)->get();
 
             $roles =  Role::all();
             $authUser = auth()->user();
@@ -93,6 +95,11 @@ class UserController extends Controller
                         $href = $td->identificacion;
                         return $href;
                     })
+                    ->addColumn('empresa', function ($td) {
+
+                        $href = $td->company ? $td->company->name : '<span class="text-muted">Sin empresa</span>';
+                        return $href;
+                    })
                     ->addColumn('rol', function ($td) {
 
                         $href = $td->getRoleNames()->implode(', ');
@@ -114,7 +121,7 @@ class UserController extends Controller
                         return $href;
                     })
                     ->addColumn('acciones', function ($td) {
-                        if(Auth::user()->hasRole('Administrator')){
+                        if(Auth::user()->hasRole(['Administrator', 'Administrador', 'sysadmin'])){
                             $href = '<button type="button" onclick="upUsr(' . $td->id . ')" class="btn btn-warning btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Editar usuario"><i class="fas fa-pencil-alt"></i></button>&nbsp';
                             $href .= '<button type="button" onclick="changep(' . $td->id . ')" class="btn btn-info btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Cambiar contraseña"><i class="fas fa-key"></i></button>';
                         }else{
@@ -123,10 +130,10 @@ class UserController extends Controller
 
                         return $href;
                     })
-                    ->rawColumns(['nombres','email','identificacion','rol','fecha_cr','active','acciones'])
+                    ->rawColumns(['nombres','email','identificacion','empresa','rol','fecha_cr','active','acciones'])
                     ->make(true);
             }
-            return view('admin.users.index', compact('roles'));
+            return view('admin.users.index', compact('roles', 'companies'));
         } catch (Exception $e) {
 
             return response()->json(['error' => 'Error al obtener los usuarios. '. $e->getMessage()], 500);
@@ -187,7 +194,7 @@ class UserController extends Controller
         $this->authorize('update', $this->userRepository->userData()->findOrFail($id));
 
         $campos = [
-            'id', 'name', 'email','created_at','active','identificacion'
+            'id', 'name', 'email','created_at','active','identificacion','company_id'
         ];
 
         try {
@@ -195,6 +202,9 @@ class UserController extends Controller
             $usuario =User::select($campos)
                 ->with([
                     'roles' => function ($td) {
+                        $td->select('id', 'name');
+                    },
+                    'company' => function ($td) {
                         $td->select('id', 'name');
                     }
                 ])
@@ -217,6 +227,16 @@ class UserController extends Controller
     public function store(Request $request)
     {
         try {
+            $authUser = auth()->user();
+
+            // Validar que usuarios no-sysadmin solo asignen su empresa
+            if (!$authUser->hasRole('sysadmin') && $request->company_id) {
+                if (!$authUser->company_id || $request->company_id != $authUser->company_id) {
+                    return response()->json([
+                        'errors' => ['company_id' => ['Solo puede asignar usuarios a su propia empresa.']]
+                    ], 422);
+                }
+            }
 
             $validation =  Validator::make($request->all(),[
                 'name'=>'required|min:3',
@@ -228,11 +248,18 @@ class UserController extends Controller
                 return response()->json(['errors'=>$validation->errors()], 422);
             }
 
+            // Si no es sysadmin y no especifica empresa, usar la empresa del usuario actual
+            $companyId = $request->company_id;
+            if (!$authUser->hasRole('sysadmin') && !$companyId && $authUser->company_id) {
+                $companyId = $authUser->company_id;
+            }
+
             $act =  $request->active=='1'?1:0;
             $ok = User::create([
                 'name'=>$request->name,
                 'email'=>$request->email,
                 'active'=>$act,
+                'company_id'=>$companyId ?: null,
                 'password'=>$request->password?bcrypt($request->password):bcrypt('Password0'),
                 'identificacion'=>$request->identificacion
             ]);
@@ -260,7 +287,16 @@ class UserController extends Controller
     public function update($id,Request $request)
     {
         try {
-            //code...
+            $authUser = auth()->user();
+
+            // Validar que usuarios no-sysadmin solo asignen su empresa
+            if (!$authUser->hasRole('sysadmin') && $request->company_id) {
+                if (!$authUser->company_id || $request->company_id != $authUser->company_id) {
+                    return response()->json([
+                        'errors' => ['company_id' => ['Solo puede asignar usuarios a su propia empresa.']]
+                    ], 422);
+                }
+            }
 
             $validation =  Validator::make($request->all(),[
                 'name'=>'required|min:3',
@@ -272,6 +308,12 @@ class UserController extends Controller
                 return response()->json(['errors'=>$validation->errors()], 422);
             }
 
+            // Si no es sysadmin y no especifica empresa, usar la empresa del usuario actual
+            $companyId = $request->company_id;
+            if (!$authUser->hasRole('sysadmin') && !$companyId && $authUser->company_id) {
+                $companyId = $authUser->company_id;
+            }
+
 
             $upd =  User::where('id',$id)->first();
 
@@ -281,6 +323,7 @@ class UserController extends Controller
                 $upd->name=$request->name;
                 $upd->email=$request->email;
                 $upd->identificacion=$request->identificacion;
+                $upd->company_id=$companyId ?: null;
                 $upd->active=$act;
                 $upd->update();
                 $upd->syncRoles([$request->role]);

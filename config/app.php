@@ -210,6 +210,7 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+        App\Providers\CompanyConfigServiceProvider::class,
         //otros
         Yajra\DataTables\DataTablesServiceProvider::class,
         App\Providers\ZamzarServiceProvider::class,

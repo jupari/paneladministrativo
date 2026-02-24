@@ -2,12 +2,29 @@
 
 @section('title', 'Categorias')
 
+@section('plugins.jQueryLib', true)
+@section('plugins.BootstrapBundle', true)
+
 @section('plugin.Datatables')
 
 @section('plugin.Sweetalert2')
 
 
 @section('content')
+
+    {{-- Breadcrumbs mejorados usando componente --}}
+    @php
+        $breadcrumbs = [
+            [
+                'title' => 'Configuración',
+                'icon' => 'fas fa-cog',
+                'url' => null
+            ]
+        ];
+        $currentTitle = 'Categorías';
+        $currentIcon = 'fas fa-tags';
+    @endphp
+    <x-breadcrumbs :breadcrumbs="$breadcrumbs" :currentTitle="$currentTitle" :currentIcon="$currentIcon" />
 
     <div class="card">
         <div class="card-header">
@@ -39,11 +56,12 @@
             </div>
         </div>
     </div>
+
 @stop
 
-@push('modals')
+{{-- Incluir el modal de categorías --}}
 @include('contratos.categorias.modal')
-@endpush
+
 
 @section('css')
     {{-- Add here extra stylesheets --}}
@@ -51,5 +69,7 @@
 @stop
 
 @section('js')
+    {{-- JavaScript específico de la página aquí --}}
     <script src="{{asset('assets/js/contratos/categorias/categorias.js') }}" type="text/javascript"></script>
+
 @stop
