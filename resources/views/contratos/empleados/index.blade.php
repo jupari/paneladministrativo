@@ -28,7 +28,7 @@
             <h4>Empleados</h4>
         </div>
         <div class="card-body" >
-            @if(auth()->user()->hasRole('Administrator'))
+            @if(auth()->user()->can('empleados.create'))
                 <div class="col-md-1">
                 <button type="button" onclick="regEmpleado()" class="btn btn-primary btn-block mb-1" data-toggle="tooltip" data-placement="top" title="Crear Empleado">
                     <i class="fas fa-user-plus"></i>
@@ -72,7 +72,12 @@
 
 @section('js')
     <script>
-        //const user_id = @json($user_id);
+        const user_id = @json($user_id);
+        const paises = @json($paises);
+        const ciudades = @json($ciudades);
+        // Hacer los datos disponibles globalmente para el JavaScript
+        window.paises = paises;
+        window.ciudades = ciudades;
     </script>
     <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.6.0/dist/autoNumeric.min.js"></script>
     <script src="{{asset('assets/js/contratos/empleados/empleados.js') }}" type="text/javascript"></script>
