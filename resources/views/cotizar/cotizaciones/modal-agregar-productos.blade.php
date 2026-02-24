@@ -332,7 +332,7 @@
             </div>
             <div class="modal-footer">
                 <div class="mr-auto">
-                    <strong>Total General: $<span id="totalGeneral">0.00</span></strong>
+                    <strong>Total General: $ <span id="totalGeneral">0.00</span></strong>
                 </div>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-primary" id="confirmarAgregarProductos">

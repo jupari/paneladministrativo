@@ -304,6 +304,7 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::get('admin.cotizaciones.cargos.obtener', 'obtenerCargos')->name('admin.cotizaciones.cargos.obtener');
         Route::get('admin.cotizaciones.categorias.obtener', 'obtenerCategorias')->name('admin.cotizaciones.categorias.obtener');
         Route::post('admin.cotizaciones.items-categoria.obtener', 'obtenerItemsPorCategoria')->name('admin.cotizaciones.items-categoria.obtener');
+        Route::post('admin.cotizaciones.valores-defecto.obtener', 'obtenerValoresPorDefecto')->name('admin.cotizaciones.valores-defecto.obtener');
         Route::post('admin.cotizaciones.salarios.guardar', 'guardarSalariosCotizacion')->name('admin.cotizaciones.salarios.guardar');
         Route::post('admin.cotizaciones.salarios.calcular', 'calcularCostoSalarios')->name('admin.cotizaciones.salarios.calcular');
         Route::get('admin.cotizaciones.tipos-costo.obtener', 'obtenerTipoCostos')->name('admin.cotizaciones.tipos-costo.obtener');

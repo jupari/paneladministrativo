@@ -2201,6 +2201,7 @@ function usarItemSeleccionado() {
 
     // Buscar item seleccionado en el acordeón
     const itemSeleccionado = document.querySelector('input[name="itemSelected"]:checked');
+    console.log("itemSeleccionado>>>>",itemSeleccionado);
 
     if (!itemSeleccionado) {
         Swal.fire({
@@ -2213,6 +2214,8 @@ function usarItemSeleccionado() {
     }
 
     const tipo = itemSeleccionado.dataset.type;
+    const itemId= itemSeleccionado.dataset.item-id;
+    const subitemId= itemSeleccionado.dataset.id;
     const indexData = itemSeleccionado.dataset.index;
 
 
@@ -2220,6 +2223,8 @@ function usarItemSeleccionado() {
     if (tipo === 'item') {
         const itemIndex = parseInt(indexData);
         window.subitemTemporal = {
+            item_id:itemId,
+            subitem_id: subitemId,
             tipo: 'item',
             item: itemsCotizacion[itemIndex],
             index: itemIndex
@@ -2230,6 +2235,8 @@ function usarItemSeleccionado() {
         const subitem = item.subitems[subitemIndex];
 
         window.subitemTemporal = {
+            item_id:itemId,
+            subitem_id: subitemId,
             tipo: 'subitem',
             item: item,
             subitem: subitem,
@@ -2487,7 +2494,6 @@ async function cargarItemsPorCategorias() {
                 // Asegurar que todos los campos son del tipo correcto
                 return {
                     id: String(item.id || ''),
-
                     nombre: String(item.nombre || 'Sin nombre'),
                     codigo: String(item.codigo || 'Sin código'),
                     descripcion: String(item.descripcion || 'Sin descripción'),
@@ -2512,6 +2518,9 @@ async function cargarItemsPorCategorias() {
                     })
                 };
             });
+
+            // Guardar items en variable global para uso posterior
+            window.itemsPropiosDisponibles = itemsPropios;
         } else {
             // Datos simulados como fallback
             // itemsPropios = generarItemsPropiosSimulados(categoriaIds);
@@ -3654,6 +3663,9 @@ function cambiarTipoCostoVisual(itemId, tipoCosto) {
     limpiarCamposCostoVisual(itemId);
     const precioDisplay = document.getElementById(`precioDisplay_${itemId}`);
     precioDisplay.classList.remove('d-none');
+
+    // Cargar valores por defecto desde backend
+    cargarValoresDefectoPorTipo(itemId, tipoCosto);
 }
 
 /**
@@ -4144,6 +4156,9 @@ function cambiarTipoCosto(itemId, tipoCosto) {
 
     // Limpiar campos al cambiar tipo
     limpiarCamposCosto(itemId);
+
+    // Cargar valores por defecto desde backend
+    cargarValoresDefectoPorTipo(itemId, tipoCosto);
 }
 
 /**
@@ -4374,8 +4389,12 @@ function volverASeleccionItemsPropios() {
  * Finalizar configuración de costos y agregar todo a la tabla
  */
 async function finalizarConfiguracionCostos() {
-
     const itemsPropiosSeleccionados = window.itemsPropiosSeleccionadosTemporal;
+
+    console.log('window.itemsPropiosSeleccionadosTemporal><>>><>',window.itemsPropiosSeleccionadosTemporal);
+    console.log('window.subitemTemporal><>>><>',window.subitemTemporal);
+
+
     const errores = [];
     const itemsConCostos = [];
 
@@ -4452,6 +4471,16 @@ async function finalizarConfiguracionCostos() {
                 break;
         }
 
+        item.cotizacion_item_id = window.subitemTemporal.item.id;
+        item.cotizacion_subitem_id = window.subitemTemporal.subitem.id;
+        if(item.categoria.nombre=='NOMINA'){
+            item.item_propio_id = null;
+            item.parametrizacion_id = item.id;
+        }else{
+            item.parametrizacion_id = null;
+            item.item_propio_id = item.id;
+        }
+
         // Recopilar toda la configuración del item
         const itemConCosto = {
             ...item,
@@ -4477,7 +4506,6 @@ async function finalizarConfiguracionCostos() {
 
         itemsConCostos.push(itemConCosto);
     }
-
     // Mostrar errores si los hay
     if (errores.length > 0) {
         Swal.fire({
@@ -4521,6 +4549,7 @@ async function finalizarConfiguracionCostos() {
 
         // SINCRONIZAR: Convertir items de la tabla a productosSeleccionados
         sincronizarItemsTablaConProductosSeleccionados(itemsConCostos);
+        actualizarTotalGeneral();
 
 
     } catch (error) {
@@ -4538,37 +4567,34 @@ async function finalizarConfiguracionCostos() {
  * Sincronizar items de tbody_items con productosSeleccionados
  */
 function sincronizarItemsTablaConProductosSeleccionados(itemsConCostos) {
-
-    console.log('🔄 Sincronizando items con productos seleccionados');
-    console.log('📋 Productos seleccionados antes:', productosSeleccionados.length);
-    console.log('➕ Items con costos a agregar:', itemsConCostos?.length || 0);
-
     // NO limpiar productos seleccionados - agregar a los existentes
-    // productosSeleccionados = []; // ❌ REMOVIDO - causaba que solo quedara el último producto
-
     // Buscar datos directamente desde window.subitemsSeleccionados
     if (itemsConCostos && itemsConCostos.length > 0) {
 
         itemsConCostos.forEach(subitem => {
 
             // Usar directamente los datos de configuración de costos
-            const precio = subitem.configuracionCosto ?
+            const precioTotal = subitem.configuracionCosto ?
                 parseFloat(subitem.configuracionCosto.precio) : 50.0;
             const cantidad = subitem.configuracionCosto ?
                 parseFloat(subitem.configuracionCosto.cantidadOperarios) : 1;
             const unidad = subitem.configuracionCosto ?
                 subitem.configuracionCosto.unidadMedida : 'Unidad';
 
-            //const id = `item_${subitem.nombre.replace(/\s+/g, '_').toLowerCase()}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            // 🔧 CORRECCIÓN: Calcular precio unitario correcto
+            const precioUnitario = cantidad > 0 ? precioTotal / cantidad : precioTotal;
             const id = subitem.id;
-
             const nuevoProducto = {
                 id: id,
+                cotizacion_item_id: subitem.cotizacion_item_id,
+                cotizacion_subitem_id: subitem.cotizacion_subitem_id,
+                item_propio_id: subitem.item_propio_id,
+                parametrizacion_id: subitem.parametrizacion_id,
                 nombre: subitem.nombre,
                 codigo: subitem.codigo || '',
-                precio: subitem.configuracionCosto ? precio : 50.0,
-                cantidad: subitem.configuracionCosto ? cantidad : 1,
-                total: precio * cantidad,
+                precio: precioUnitario, // 🎯 Usar precio unitario calculado
+                cantidad: cantidad, // 🎯 Usar cantidad correcta
+                total: precioTotal, // 🎯 El total ya está correcto
                 unidad: subitem.configuracionCosto ? unidad : 'Unidad',
                 categoria: subitem.categoria?.nombre || 'Item Propio',
                 descripcion: subitem.descripcion || '',
@@ -4587,29 +4613,17 @@ function sincronizarItemsTablaConProductosSeleccionados(itemsConCostos) {
             );
 
             if (!existeProducto) {
-                console.log('➕ Agregando nuevo producto:', nuevoProducto.nombre);
                 productosSeleccionados.push(nuevoProducto);
             } else {
                 console.log('⚠️ Producto duplicado no agregado:', nuevoProducto.nombre);
             }
 
         });
-
-        console.log('✅ Sincronización completada');
-        console.log('📋 Total productos seleccionados después:', productosSeleccionados.length);
-        console.log('📦 Lista actual de productos:', productosSeleccionados.map(p => ({
-            id: p.id,
-            nombre: p.nombre,
-            precio: p.precio,
-            categoria: p.categoria
-        })));
     } else {
         console.log('⚠️ No hay items con costos para sincronizar');
     }
-
     // Actualizar la tabla de productos seleccionados
-    actualizarTablaProductosSeleccionados();
-
+    //actualizarTablaProductosSeleccionados();
 }
 
 /**
@@ -5744,6 +5758,7 @@ function toggleSubitems(itemId) {
         button.innerHTML = `<i class="fas fa-eye" id="icon_${itemId}"></i> Ver subitems (${count})`;
     }
 }
+
 function limpiarFormularioItem() {
     document.getElementById('item_nombre').value = '';
     limpiarErroresItems();
@@ -6503,8 +6518,76 @@ function crearProductosDesdeItemsPropios() {
         if (nombreElement) {
             const nombre = nombreElement.textContent.trim();
             const codigo = codigoElement ? codigoElement.textContent.trim() : `ITEM-${index + 1}`;
-            const precioText = precioElement ? precioElement.textContent.replace(/[^0-9.,]/g, '') : '0';
-            const precio = parseFloat(precioText.replace(',', '.')) || 0;
+
+            // Obtener precio - manejar casos especiales donde el precio mostrado es un total calculado
+            let precio = 0;
+            if (precioElement) {
+                const precioText = precioElement.textContent;
+                console.log('=== DEBUGGING PRECIO (crearProductos) ===');
+                console.log('Texto completo del precio:', precioText);
+                console.log('Elemento precio HTML:', precioElement.outerHTML);
+
+                // Método simplificado: buscar diferentes patrones paso a paso
+                let precioUnitario = null;
+
+                // PATRÓN 1: Buscar "$X x Y" donde X es unitario
+                const patron1 = precioText.match(/\$?([0-9.,]+)\s*x\s*([0-9.,]+)/i);
+                if (patron1) {
+                    const numero1 = parseFloat(patron1[1].replace(/,/g, '')) || 0;
+                    const numero2 = parseFloat(patron1[2].replace(/,/g, '')) || 0;
+                    console.log(`Patrón X x Y encontrado: ${numero1} x ${numero2}`);
+
+                    // Si numero1 * numero2 parece ser el total mostrado, entonces numero1 es unitario
+                    const totalCalculado = numero1 * numero2;
+                    console.log(`Total calculado: ${totalCalculado}`);
+
+                    // Buscar si aparece el total en alguna parte del texto
+                    const textoSinFormato = precioText.replace(/[^0-9]/g, '');
+                    const totalEnTexto = totalCalculado.toString().replace(/[^0-9]/g, '');
+
+                    if (textoSinFormato.includes(totalEnTexto)) {
+                        precioUnitario = numero1;
+                        console.log(`✅ Precio unitario calculado: ${precioUnitario}`);
+                    } else {
+                        // Si no encuentra el total, tomar el menor número como unitario
+                        precioUnitario = Math.min(numero1, numero2);
+                        console.log(`⚠️ Tomando menor valor como unitario: ${precioUnitario}`);
+                    }
+                }
+
+                // PATRÓN 2: Buscar "($X c/u)" o similar
+                if (!precioUnitario) {
+                    const patron2 = precioText.match(/\(\$?([0-9.,]+)\s*(?:c\/u|cada|unitario)\)/i);
+                    if (patron2) {
+                        precioUnitario = parseFloat(patron2[1].replace(/,/g, '')) || 0;
+                        console.log(`✅ Precio por unidad encontrado: ${precioUnitario}`);
+                    }
+                }
+
+                // PATRÓN 3: Solo números con $
+                if (!precioUnitario) {
+                    const patron3 = precioText.match(/\$([0-9.,]+)/i);
+                    if (patron3) {
+                        const soloNumero = parseFloat(patron3[1].replace(/,/g, '')) || 0;
+                        console.log(`Solo número con $: ${soloNumero}`);
+
+                        // Si hay "x" en el texto, es probable que sea un total
+                        if (precioText.toLowerCase().includes('x') && precioText.match(/x\s*([0-9]+)/)) {
+                            const cantidad = parseInt(precioText.match(/x\s*([0-9]+)/)[1]) || 1;
+                            precioUnitario = cantidad > 1 ? soloNumero / cantidad : soloNumero;
+                            console.log(`⚠️ Dividiendo total entre cantidad: ${soloNumero} ÷ ${cantidad} = ${precioUnitario}`);
+                        } else {
+                            precioUnitario = soloNumero;
+                            console.log(`✅ Precio unitario directo: ${precioUnitario}`);
+                        }
+                    }
+                }
+
+                // Resultado final
+                precio = precioUnitario || 0;
+                console.log('🎯 PRECIO FINAL EXTRAÍDO (crearProductos):', precio);
+                console.log('==========================\n');
+            }
 
             // Verificar si ya existe en productos disponibles
             if (!productosDisponibles.find(p => p.nombre === nombre)) {
@@ -6565,8 +6648,76 @@ function seleccionarProductoDesdeItem(itemElement) {
 
         const nombre = nombreElement.textContent.trim();
         const codigo = codigoElement ? codigoElement.textContent.trim() : `ITEM-${Date.now()}`;
-        const precioText = precioElement ? precioElement.textContent.replace(/[^0-9.,]/g, '') : '0';
-        const precio = parseFloat(precioText.replace(',', '.')) || 0;
+
+        // Obtener precio - manejar casos especiales donde el precio mostrado es un total calculado
+        let precio = 0;
+        if (precioElement) {
+            const precioText = precioElement.textContent;
+            console.log('=== DEBUGGING PRECIO ===');
+            console.log('Texto completo del precio:', precioText);
+            console.log('Elemento precio HTML:', precioElement.outerHTML);
+
+            // Método simplificado: buscar diferentes patrones paso a paso
+            let precioUnitario = null;
+
+            // PATRÓN 1: Buscar "$X x Y" donde X es unitario
+            const patron1 = precioText.match(/\$?([0-9.,]+)\s*x\s*([0-9.,]+)/i);
+            if (patron1) {
+                const numero1 = parseFloat(patron1[1].replace(/,/g, '')) || 0;
+                const numero2 = parseFloat(patron1[2].replace(/,/g, '')) || 0;
+                console.log(`Patrón X x Y encontrado: ${numero1} x ${numero2}`);
+
+                // Si numero1 * numero2 parece ser el total mostrado, entonces numero1 es unitario
+                const totalCalculado = numero1 * numero2;
+                console.log(`Total calculado: ${totalCalculado}`);
+
+                // Buscar si aparece el total en alguna parte del texto
+                const textoSinFormato = precioText.replace(/[^0-9]/g, '');
+                const totalEnTexto = totalCalculado.toString().replace(/[^0-9]/g, '');
+
+                if (textoSinFormato.includes(totalEnTexto)) {
+                    precioUnitario = numero1;
+                    console.log(`✅ Precio unitario calculado: ${precioUnitario}`);
+                } else {
+                    // Si no encuentra el total, tomar el menor número como unitario
+                    precioUnitario = Math.min(numero1, numero2);
+                    console.log(`⚠️ Tomando menor valor como unitario: ${precioUnitario}`);
+                }
+            }
+
+            // PATRÓN 2: Buscar "($X c/u)" o similar
+            if (!precioUnitario) {
+                const patron2 = precioText.match(/\(\$?([0-9.,]+)\s*(?:c\/u|cada|unitario)\)/i);
+                if (patron2) {
+                    precioUnitario = parseFloat(patron2[1].replace(/,/g, '')) || 0;
+                    console.log(`✅ Precio por unidad encontrado: ${precioUnitario}`);
+                }
+            }
+
+            // PATRÓN 3: Solo números con $
+            if (!precioUnitario) {
+                const patron3 = precioText.match(/\$([0-9.,]+)/i);
+                if (patron3) {
+                    const soloNumero = parseFloat(patron3[1].replace(/,/g, '')) || 0;
+                    console.log(`Solo número con $: ${soloNumero}`);
+
+                    // Si hay "x" en el texto, es probable que sea un total
+                    if (precioText.toLowerCase().includes('x') && precioText.match(/x\s*([0-9]+)/)) {
+                        const cantidad = parseInt(precioText.match(/x\s*([0-9]+)/)[1]) || 1;
+                        precioUnitario = cantidad > 1 ? soloNumero / cantidad : soloNumero;
+                        console.log(`⚠️ Dividiendo total entre cantidad: ${soloNumero} ÷ ${cantidad} = ${precioUnitario}`);
+                    } else {
+                        precioUnitario = soloNumero;
+                        console.log(`✅ Precio unitario directo: ${precioUnitario}`);
+                    }
+                }
+            }
+
+            // Resultado final
+            precio = precioUnitario || 0;
+            console.log('🎯 PRECIO FINAL EXTRAÍDO:', precio);
+            console.log('==========================\n');
+        }
 
         // Verificar si ya está seleccionado
         const yaSeleccionado = productosSeleccionados.find(p => p.nombre === nombre);
@@ -6588,6 +6739,8 @@ function seleccionarProductoDesdeItem(itemElement) {
         };
 
         productosSeleccionados.push(producto);
+
+        console.log('productosSeleccionados seleccionarProductoDesdeItem(6597)', productosSeleccionados);
 
         // Actualizar UI
         actualizarTablaProductosSeleccionados();
@@ -6626,6 +6779,7 @@ function configurarSeleccionManualItems() {
     });
 
 }
+
 
 function actualizarSelectAllProductos() {
     const selectAllCheckbox = document.getElementById('selectAllProductos');
@@ -6730,26 +6884,20 @@ function setupEventListenersProductos() {
  * Abrir modal agregar productos
  */
 function abrirModalAgregarProductos() {
-
-    // Actualizar la tabla de items del acordeón antes de mostrar el modal
-    actualizarTablaItemsAcordeon();
-
     // Cargar productos disponibles si no están cargados
     if (productosDisponibles.length != 0) {
         renderizarTablaProductos();
     }
-
     // Mostrar el modal usando jQuery (Bootstrap 4)
     $('#modalAgregarProductos').modal('show');
     // Pequeí±o delay para que el modal se renderice completamente
     setTimeout(() => {
-        actualizarTablaProductosSeleccionados();
-        // actualizarTablaPersonalAsignado();
-        calcularTotales();
-
+        const elementoTotal = document.getElementById('totalGeneral');
+        if (elementoTotal) {
+            console.log('📍 Contenido actual del elemento:', elementoTotal.textContent);
+        }
         // Agregar instrucciones visuales para el usuario
         mostrarInstruccionesSeleccion();
-
         configurarSeleccionManualItems();
         // Actualizar contador debug
         const productosCount = document.getElementById('productosCount');
@@ -6804,6 +6952,8 @@ function abrirModalQuitarProductos() {
  */
 function usarItemsSeleccionados() {
     const itemsSeleccionados = obtenerItemsSeleccionados();
+
+    console.log('itemsSeleccionados usarItemsSeleccionados(6816)', itemsSeleccionados);
 
     if (itemsSeleccionados.length === 0) {
         Swal.fire({
@@ -6937,19 +7087,17 @@ function actualizarTablaProductosSeleccionados() {
         console.warn('Elemento tbodyProductosSeleccionados no encontrado');
         return;
     }
-
     if (!noItemsRow) {
         console.warn('Elemento noProductosSeleccionados no encontrado');
         return;
     }
+    noItemsRow.style.display = 'none';
+
 
     if (productosSeleccionados.length === 0) {
         noItemsRow.style.display = 'table-row';
         return;
     }
-
-    noItemsRow.style.display = 'none';
-
     // Limpiar filas existentes excepto la de "no items"
     Array.from(tbody.children).forEach(row => {
         if (row.id !== 'noProductosSeleccionados') {
@@ -7011,17 +7159,86 @@ function actualizarTablaProductosSeleccionados() {
 
         tbody.appendChild(row);
     });
+
+    // Calcular y actualizar el total general
+    actualizarTotalGeneral();
 }
+
+/**
+ * Actualizar el total general de productos seleccionados
+ */
+function actualizarTotalGeneral() {
+    console.log('🔍 Iniciando actualización del total general...');
+    console.log('📦 Productos seleccionados:', productosSeleccionados);
+
+    const totalGeneral = productosSeleccionados.reduce((sum, producto) => {
+        const productoTotal = producto.total || 0;
+        console.log(`   - ${producto.nombre}: $${productoTotal}`);
+        return sum + productoTotal;
+    }, 0);
+
+    console.log('💰 Total calculado:', totalGeneral);
+
+    const elementoTotalGeneral = document.getElementById('totalGeneral');
+    console.log('🎯 Elemento totalGeneral encontrado:', !!elementoTotalGeneral);
+
+    if (elementoTotalGeneral) {
+        const totalFormateado = totalGeneral.toLocaleString('es-CO', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        elementoTotalGeneral.textContent = totalFormateado;
+        console.log('✅ Total general actualizado en el DOM:', totalFormateado);
+    } else {
+        console.error('❌ No se encontró el elemento #totalGeneral en el DOM');
+    }
+}
+
+/**
+ * Función de debug para diagnosticar problemas con el total general
+ */
+window.debugTotalGeneral = function() {
+    console.log('=== 🔍 DEBUG TOTAL GENERAL ===');
+    console.log('📦 Productos seleccionados:', productosSeleccionados);
+    console.log('📊 Cantidad de productos:', productosSeleccionados.length);
+
+    let totalCalculado = 0;
+    productosSeleccionados.forEach((producto, index) => {
+        const total = producto.total || 0;
+        totalCalculado += total;
+        console.log(`   ${index + 1}. ${producto.nombre}: cantidad=${producto.cantidad}, precio=${producto.precio}, total=${total}`);
+    });
+
+    console.log('💰 Total calculado manualmente:', totalCalculado);
+
+    const elemento = document.getElementById('totalGeneral');
+    console.log('🎯 Elemento #totalGeneral:');
+    console.log('  - Existe:', !!elemento);
+    if (elemento) {
+        console.log('  - Contenido actual:', elemento.textContent);
+        console.log('  - Elemento visible:', elemento.offsetParent !== null);
+        console.log('  - Clase CSS:', elemento.className);
+        console.log('  - Elemento HTML completo:', elemento.outerHTML);
+    }
+
+    console.log('🔄 Ejecutando actualización manual...');
+    actualizarTotalGeneral();
+    console.log('=== FIN DEBUG ===');
+};
 
 /**
  * Actualizar cantidad de producto
  */
 function actualizarCantidadProducto(productoId, nuevaCantidad) {
+    console.log('🔢 Actualizando cantidad producto:', productoId, 'cantidad:', nuevaCantidad);
     const producto = productosSeleccionados.find(p => p.id === productoId);
     if (producto) {
         producto.cantidad = parseInt(nuevaCantidad) || 1;
         producto.total = producto.precio * producto.cantidad;
+        console.log(`   - ${producto.nombre}: cantidad=${producto.cantidad}, precio=${producto.precio}, total=${producto.total}`);
         actualizarTablaProductosSeleccionados();
+    } else {
+        console.error('❌ Producto no encontrado para actualizar cantidad:', productoId);
     }
 }
 
@@ -7029,11 +7246,15 @@ function actualizarCantidadProducto(productoId, nuevaCantidad) {
  * Actualizar precio de producto
  */
 function actualizarPrecioProducto(productoId, nuevoPrecio) {
+    console.log('💲 Actualizando precio producto:', productoId, 'precio:', nuevoPrecio);
     const producto = productosSeleccionados.find(p => p.id === productoId);
     if (producto) {
         producto.precio = parseFloat(nuevoPrecio) || 0;
         producto.total = producto.precio * producto.cantidad;
+        console.log(`   - ${producto.nombre}: cantidad=${producto.cantidad}, precio=${producto.precio}, total=${producto.total}`);
         actualizarTablaProductosSeleccionados();
+    } else {
+        console.error('❌ Producto no encontrado para actualizar precio:', productoId);
     }
 }
 
@@ -7497,6 +7718,7 @@ function procesarProductosSeleccionadosDeTabla() {
 
         // Actualizar totales
         calcularTotales();
+        actualizarTotalGeneral();;
     }).catch((error) => {
         console.error('Error al enviar productos:', error);
     });
@@ -7531,7 +7753,11 @@ async function enviarProductosTablaABaseDatos(productosEnTabla) {
             // Mapear a estructura CotizacionProductoRequest usando datos ya capturados
             const productoMapeado = {
                 cotizacion_id: parseInt(cotizacionId),
-                producto_id: null,
+                cotizacion_item_id: producto.cotizacion_item_id,
+                cotizacion_subitem_id: producto.cotizacion_subitem_id,
+                item_propio_id: producto.item_propio_id,
+                parametrizacion_id: producto.parametrizacion_id,
+                producto_id: producto.id,
                 nombre: producto.nombre || `Producto ${index + 1}`,
                 descripcion: producto.descripcion || producto.observaciones || `${producto.categoria || ''} - ${producto.source || 'manual'}`,
                 codigo: producto.codigo || `PROD-${Date.now()}-${index}`,
@@ -8213,12 +8439,22 @@ async function cargarProductosGuardados() {
             await actualizarTotalesCompletos();
         } else {
             mostrarEstadoVacioProductos();
+
+            // IMPORTANTE: Actualizar totales en backend cuando no hay productos
+            await actualizarTotalesCompletos();
         }
 
     } catch (error) {
         console.error('Error al cargar productos guardados:', error);
         document.getElementById('loadingProductosGuardados').classList.add('d-none');
         mostrarEstadoVacioProductos();
+
+        // IMPORTANTE: Actualizar totales en backend incluso en caso de error
+        try {
+            await actualizarTotalesCompletos();
+        } catch (totalesError) {
+            console.error('Error al actualizar totales después del error:', totalesError);
+        }
 
         toastr.error('Error al cargar productos guardados: ' + error.message);
     }
@@ -8238,6 +8474,14 @@ function mostrarProductosGuardados(productos) {
     productos.forEach((producto, index) => {
         const row = document.createElement('tr');
         row.setAttribute('data-producto-id', producto.id);
+
+        // Agregar atributos para identificar utilidades asociadas
+        if (producto.categoria_id) {
+            row.setAttribute('data-categoria-id', producto.categoria_id);
+        }
+        if (producto.item_propio_id) {
+            row.setAttribute('data-item-propio-id', producto.item_propio_id);
+        }
 
         const valorUnitario = parseFloat(producto.valor_unitario || 0);
         const cantidad = parseFloat(producto.cantidad || 0);
@@ -8316,10 +8560,40 @@ function mostrarProductosGuardados(productos) {
  * Mostrar estado vací­o cuando no hay productos
  */
 function mostrarEstadoVacioProductos() {
+    console.log('🏷️ ESTADO VACÍO - No hay productos, reseteando totales...');
+
     document.getElementById('emptyProductosGuardados').style.display = 'block';
     document.getElementById('tablaProductosGuardados').style.display = 'none';
     document.getElementById('footerProductosGuardados').classList.add('d-none');
     document.getElementById('contadorProductosGuardados').textContent = '0';
+
+    // ACTUALIZACIÓN: Restablecer totales a cero cuando no hay productos
+    resetearTotalesACero();
+}
+
+/**
+ * Resetear totales a cero cuando no hay productos
+ */
+function resetearTotalesACero() {
+    console.log('💰 RESETEANDO TOTALES A CERO...');
+
+    try {
+        // Totales en cero
+        const totalesVacios = {
+            subtotal: 0,
+            descuento: 0,
+            impuestos: 0,
+            total: 0
+        };
+
+        // Usar la función existente para actualizar la vista
+        actualizarTotalesEnVista(totalesVacios);
+
+        console.log('✅ Totales reseteados a cero exitosamente');
+
+    } catch (error) {
+        console.error('❌ Error al resetear totales:', error);
+    }
 }
 
 /**
@@ -8466,6 +8740,114 @@ async function eliminarProducto(productoId) {
     }
 }
 
+/**
+ * Eliminar utilidades asociadas a un producto específico
+ */
+async function eliminarUtilidadesDelProducto(productoId) {
+    try {
+        // Obtener información del producto desde la fila de la tabla
+        const productoRow = document.querySelector(`tr[data-producto-id="${productoId}"]`);
+        if (!productoRow) {
+            console.warn(`No se encontró la fila del producto ${productoId} en el DOM`);
+            return;
+        }
+
+        // Obtener datos del producto desde atributos data o contenido de la fila
+        const categoriaId = productoRow.dataset.categoriaId;
+        const itemPropioId = productoRow.dataset.itemPropioId;
+
+        if (!categoriaId && !itemPropioId) {
+            // Si no están en dataset, intentar obtener del servidor
+            const cotizacionId = document.getElementById('id')?.value || document.getElementById('cotizacion_id')?.value;
+            if (!cotizacionId) {
+                console.warn('No se pudo obtener el ID de cotización');
+                return;
+            }
+
+            // Obtener utilidades de la cotización
+            const response = await fetch(`/admin/admin.cotizaciones.utilidades.obtener/${cotizacionId}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+
+            if (!response.ok) {
+                console.warn('No se pudieron obtener las utilidades de la cotización');
+                return;
+            }
+
+            const result = await response.json();
+
+            if (result.success && result.data && result.data.length > 0) {
+                console.log(`Eliminando ${result.data.length} utilidades asociadas al producto ${productoId}`);
+
+                // Eliminar todas las utilidades (enfoque seguro si no podemos identificar específicas)
+                const eliminarPromesas = result.data.map(utilidad => eliminarUtilidadSilenciosa(utilidad.id));
+                await Promise.all(eliminarPromesas);
+            }
+            return;
+        }
+
+        // Si tenemos categoria_id e item_propio_id, buscar utilidades específicas
+        const cotizacionId = document.getElementById('id')?.value || document.getElementById('cotizacion_id')?.value;
+        if (cotizacionId) {
+            const response = await fetch(`/admin/admin.cotizaciones.utilidades.obtener/${cotizacionId}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    // Filtrar utilidades que coincidan con el producto
+                    const utilidadesDelProducto = result.data.filter(utilidad =>
+                        utilidad.categoria_id == categoriaId && utilidad.item_propio_id == itemPropioId
+                    );
+
+                    if (utilidadesDelProducto.length > 0) {
+                        console.log(`Eliminando ${utilidadesDelProducto.length} utilidades específicas del producto ${productoId}`);
+
+                        // Eliminar utilidades específicas del producto
+                        const eliminarPromesas = utilidadesDelProducto.map(utilidad => eliminarUtilidadSilenciosa(utilidad.id));
+                        await Promise.all(eliminarPromesas);
+                    }
+                }
+            }
+        }
+
+    } catch (error) {
+        console.error('Error al eliminar utilidades del producto:', error);
+        // No lanzar error para que la eliminación del producto pueda continuar
+    }
+}
+
+/**
+ * Eliminar una utilidad de forma silenciosa (sin confirmación ni toastr)
+ */
+async function eliminarUtilidadSilenciosa(utilidadId) {
+    try {
+        const response = await fetch(`/admin/admin.cotizaciones.utilidades.destroy/${utilidadId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'Accept': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            console.log(`Utilidad ${utilidadId} eliminada exitosamente`);
+        } else {
+            console.warn(`Error al eliminar utilidad ${utilidadId}`);
+        }
+    } catch (error) {
+        console.error(`Error al eliminar utilidad ${utilidadId}:`, error);
+    }
+}
+
 
 async function eliminarProductoGuardado(productoId) {
 
@@ -8476,8 +8858,10 @@ async function eliminarProductoGuardado(productoId) {
             throw new Error('No se encontró el token CSRF');
         }
 
-        const url = `/admin/admin.cotizaciones.productos.eliminar/${productoId}`;
+        // Primero, obtener información del producto para eliminar utilidades asociadas
+        await eliminarUtilidadesDelProducto(productoId);
 
+        const url = `/admin/admin.cotizaciones.productos.eliminar/${productoId}`;
 
         const response = await $.ajax({
             url: url,
@@ -8494,7 +8878,7 @@ async function eliminarProductoGuardado(productoId) {
         return response;
 
     } catch (error) {
-        console.error('âŒ Error en eliminarProductoGuardado:', error);
+        console.error('Error en eliminarProductoGuardado:', error);
 
         if (error.status === 419) {
             throw new Error('Token CSRF expirado. Por favor, recarga la página.');
@@ -9041,8 +9425,112 @@ async function actualizarTotalesCompletos() {
  * Función para forzar la actualización de totales - útil para debugging
  */
 function forzarActualizacionTotales() {
+    console.log('🚀 FORZANDO actualización de totales...');
     actualizarTotalesCompletos();
 }
+
+/**
+ * Función para forzar el reseteo de totales a cero - útil cuando no hay productos
+ */
+function forzarReseteoTotales() {
+    console.log('🔄 FORZANDO reseteo de totales a cero...');
+    resetearTotalesACero();
+}
+
+/**
+ * Configurar event listeners para actualización automática de totales
+ */
+function setupAutoUpdateTotales() {
+    console.log('🔧 Configurando event listeners para auto-actualización de totales...');
+
+    // Detectar cambios en campos de la cotización que podrían afectar totales
+    const camposAMonitorear = [
+        '#tercero_id',
+        '#proyecto',
+        '#observacion',
+        'input[name*="descuento"]',
+        'input[name*="impuesto"]',
+        'select[name*="concepto"]',
+        'input[name*="porcentaje"]',
+        'input[name*="valor"]'
+    ];
+
+    camposAMonitorear.forEach(selector => {
+        const elementos = document.querySelectorAll(selector);
+        elementos.forEach(elemento => {
+            // Eventos para diferentes tipos de elementos
+            elemento.addEventListener('change', debounceUpdateTotales);
+            elemento.addEventListener('blur', debounceUpdateTotales);
+
+            // Para inputs de texto, también en keyup con delay
+            if (elemento.type === 'text' || elemento.type === 'number') {
+                elemento.addEventListener('keyup', debounceUpdateTotales);
+            }
+        });
+    });
+
+    // Event listener específico para cuando se guarda el formulario
+    const formulario = document.querySelector('form');
+    if (formulario) {
+        formulario.addEventListener('submit', async (e) => {
+            console.log('📝 Formulario enviado, actualizando totales...');
+            await actualizarTotalesCompletos();
+        });
+    }
+
+    console.log('✅ Event listeners configurados para auto-actualización');
+}
+
+/**
+ * Función debounced para actualizar totales (evita llamadas excesivas)
+ */
+const debounceUpdateTotales = debounce(async () => {
+    console.log('🔄 Campo de formulario modificado, actualizando totales...');
+    await actualizarTotalesCompletos();
+}, 1000); // 1 segundo de delay
+
+/**
+ * Función debounce utility
+ */
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+/**
+ * Función de debugging para verificar el estado de totales
+ */
+window.verificarEstadoTotales = async function() {
+    console.log('🔍 === VERIFICANDO ESTADO DE TOTALES ===');
+
+    const cotizacionId = document.getElementById('id')?.value;
+    console.log('📋 ID de cotización:', cotizacionId);
+
+    // Verificar productos
+    try {
+        console.log('📦 Verificando productos...');
+        await cargarProductosGuardados();
+    } catch (error) {
+        console.error('❌ Error al cargar productos:', error);
+    }
+
+    // Verificar totales
+    try {
+        console.log('💰 Verificando totales...');
+        await actualizarTotalesCompletos();
+    } catch (error) {
+        console.error('❌ Error al actualizar totales:', error);
+    }
+
+    console.log('🏁 === VERIFICACIÓN COMPLETADA ===');
+};
 
 //  TAMBIÉN ejecutar cuando se haga clic en cualquier parte de los totales
 document.addEventListener('click', function(e) {
@@ -9093,6 +9581,9 @@ function configurarEventListeners() {
     if (btnAgregarItemsPropios) {
         btnAgregarItemsPropios.addEventListener('click', usarItemSeleccionado);
     }
+
+    // Configurar auto-actualización de totales
+    setupAutoUpdateTotales();
 }
 
 // Función de utilidad para forzar actualización de totales
@@ -9104,5 +9595,171 @@ window.forzarActualizacionTotales = async function() {
     }
 };
 
+// Función de utilidad adicional para resetear totales manualmente
+window.forzarReseteoTotales = forzarReseteoTotales;
+window.actualizarTotalesManualmente = async function() {
+    console.log('🔄 Actualizando totales manualmente desde consola...');
+    await actualizarTotalesCompletos();
+};
+
 // Configurar event listeners básicos inmediatamente
 configurarEventListeners();
+
+/**
+ * Obtener valores por defecto para un item desde el backend
+ */
+async function obtenerValoresPorDefecto(itemId, tipoItem, tipoCosto) {
+    try {
+        const baseUrl = document.querySelector('meta[name="app-url"]')?.getAttribute('content') || window.location.origin;
+        const url = `${baseUrl}/admin/admin.cotizaciones.valores-defecto.obtener`;
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                item_id: itemId,
+                tipo_item: tipoItem,
+                tipo_costo: tipoCosto
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success && result.data.encontrado) {
+            return result.data;
+        }
+
+        return null;
+    } catch (error) {
+        console.error('Error al obtener valores por defecto:', error);
+        return null;
+    }
+}
+
+/**
+ * Cargar valores por defecto en los campos del formulario
+ */
+async function cargarValoresPorDefecto(itemId, tipoItem, tipoCosto) {
+    const valores = await obtenerValoresPorDefecto(itemId, tipoItem, tipoCosto);
+
+    if (!valores || !valores.encontrado) {
+        console.log(`No se encontraron valores por defecto para el item ${itemId}`);
+        return false;
+    }
+
+    try {
+        // Cargar unidad de medida
+        const unidadMedidaInput = document.getElementById(`unidadMedida_${itemId}`);
+        if (unidadMedidaInput && valores.unidad_medida) {
+            unidadMedidaInput.value = valores.unidad_medida;
+        }
+
+        // Cargar costo según el tipo
+        let costoInput = null;
+        switch (tipoCosto) {
+            case 'unitario':
+                costoInput = document.getElementById(`costoUnitario_${itemId}`);
+                break;
+            case 'hora':
+                costoInput = document.getElementById(`costoHora_${itemId}`);
+                break;
+            case 'dia':
+                costoInput = document.getElementById(`costoDia_${itemId}`);
+                break;
+        }
+
+        if (costoInput && valores.costo > 0) {
+            costoInput.value = valores.costo;
+
+            // Mostrar notificación suave
+            mostrarNotificacionValoresCargados(tipoCosto, valores.costo, valores.unidad_medida);
+
+            // Calcular precio después de cargar valores
+            calcularPrecioItem(itemId);
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Error al cargar valores en campos:', error);
+        return false;
+    }
+}
+
+/**
+ * Cargar valores por defecto según el tipo de item y tipo de costo seleccionado
+ */
+async function cargarValoresDefectoPorTipo(itemId, tipoCosto) {
+    try {
+        // Buscar los datos del item en la variable global de items seleccionados
+        let itemData = null;
+
+        // Buscar en los items propios disponibles
+        if (window.itemsPropiosDisponibles) {
+            itemData = window.itemsPropiosDisponibles.find(item => String(item.id) === String(itemId));
+        }
+
+        if (!itemData) {
+            console.log(`No se encontró información del item ${itemId} para cargar valores por defecto`);
+            return;
+        }
+
+        // Determinar el tipo de item y el ID real
+        let tipoItem = 'propio'; // por defecto
+        let idReal = itemId;
+
+        if (itemData.tipo === 'parametrizacion') {
+            tipoItem = 'cargo';
+            // Para items de parametrización, el ID puede tener prefijo 'param_'
+            // que necesitamos remover para la consulta al backend
+            if (String(itemId).startsWith('param_')) {
+                idReal = itemId.replace('param_', '');
+            }
+        }
+
+        console.log(`Cargando valores para item ${itemId} (${tipoItem}) - Tipo costo: ${tipoCosto}`);
+
+        // Cargar valores por defecto
+        const cargaExitosa = await cargarValoresPorDefecto(idReal, tipoItem, tipoCosto);
+
+        if (!cargaExitosa) {
+            console.log(`No se pudieron cargar valores por defecto para el item ${itemId}`);
+        }
+
+    } catch (error) {
+        console.error('Error al cargar valores por defecto:', error);
+    }
+}
+
+/**
+ * Mostrar notificación cuando se cargan valores por defecto
+ */
+function mostrarNotificacionValoresCargados(tipoCosto, costo, unidadMedida) {
+    if (typeof toastr !== 'undefined') {
+        toastr.success(
+            `Valores cargados automáticamente: $${costo} (${unidadMedida})`,
+            `Tipo ${tipoCosto.charAt(0).toUpperCase() + tipoCosto.slice(1)}`,
+            {
+                timeOut: 3000,
+                closeButton: true,
+                progressBar: true
+            }
+        );
+    } else if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            type: 'success',
+            title: 'Valores Cargados',
+            text: `Tipo ${tipoCosto}: $${costo} (${unidadMedida})`,
+            toast: true,
+            position: 'top-end',
+            timer: 3000,
+            showConfirmButton: false
+        });
+    }
+}

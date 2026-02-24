@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Cotizacion;
 use App\Models\CotizacionProducto;
 use App\Models\CotizacionConcepto;
+use App\Models\CotizacionUtilidad;
 use App\Models\CotizacionSubImtes;
 use App\Models\Producto;
 use Illuminate\Database\Eloquent\Collection;
@@ -104,7 +105,7 @@ class CotizacionProductoService
     /**
      * Eliminar producto de cotización
      */
-    public function eliminarProducto(int $id): bool
+    public function eliminarProducto(int $id): array
     {
         return DB::transaction(function () use ($id) {
             // Verificar que el producto existe
@@ -129,9 +130,6 @@ class CotizacionProductoService
                 throw new \Exception("No se pudo eliminar el producto de la base de datos");
             }
 
-            // Recalcular totales de la cotización
-            $this->recalcularTotalesCotizacion($cotizacionId);
-
             // Reordenar productos restantes
             $this->reordenarProductos($cotizacionId);
 
@@ -140,7 +138,7 @@ class CotizacionProductoService
                 'cotizacion_id' => $cotizacionId
             ]);
 
-            return true;
+            return ['success' => true, 'cotizacion_id' => $cotizacionId];
         });
     }
 
@@ -191,7 +189,7 @@ class CotizacionProductoService
 
             return $query->get();
         } catch (\Exception $e) {
-            \Log::error('Error al obtener productos de cotización', [
+            Log::error('Error al obtener productos de cotización', [
                 'cotizacion_id' => $cotizacionId,
                 'error' => $e->getMessage()
             ]);
@@ -305,129 +303,152 @@ class CotizacionProductoService
     }
 
     /**
-     * Obtener totales de cotización incluyendo productos y conceptos adicionales
+     * Obtener totales de cotización incluyendo productos, conceptos adicionales y utilidades
      */
     public function obtenerTotalesCotizacion(int $cotizacionId): array
     {
         try {
-            Log::info('🔍 INICIO - Calculando totales simple', ['cotizacion_id' => $cotizacionId]);
+            Log::info('🔍 INICIO - Calculando totales completos de cotización', ['cotizacion_id' => $cotizacionId]);
 
-            // 1. OBTENER PRODUCTOS
+            // Cargar cotización con sus relaciones
+            $cotizacion = Cotizacion::with(['utilidades', 'conceptos.concepto'])->findOrFail($cotizacionId);
+
+            // PASO 1: CALCULAR SUBTOTAL BASE DE PRODUCTOS
             $productos = CotizacionProducto::where('cotizacion_id', $cotizacionId)
                 ->where('active', true)
                 ->get();
 
-            Log::info('📦 Productos encontrados', [
-                'cantidad_productos' => $productos->count()
-            ]);
+            // VALIDACIÓN ESPECIAL: Si no hay productos, todos los totales deben ser cero
+            if ($productos->count() === 0) {
+                Log::info('🚫 No hay productos - Estableciendo totales en cero', ['cotizacion_id' => $cotizacionId]);
+                
+                // Actualizar inmediatamente la cotización con totales en cero
+                $cotizacion->update([
+                    'subtotal' => 0,
+                    'descuento' => 0,
+                    'total_impuesto' => 0,
+                    'total' => 0
+                ]);
 
-            // 2. CALCULAR TOTALES DE PRODUCTOS
+                return [
+                    'subtotal' => 0.00,
+                    'descuento' => 0.00,
+                    'impuestos' => 0.00,
+                    'total' => 0.00,
+                    'detalle' => [
+                        'productos' => [
+                            'cantidad' => 0,
+                            'subtotal_bruto' => 0.00,
+                            'descuentos_productos' => 0.00
+                        ],
+                        'utilidades' => [
+                            'total_utilidades' => 0.00,
+                            'subtotal_con_utilidades' => 0.00,
+                            'detalle_utilidades' => []
+                        ],
+                        'conceptos' => [
+                            'descuentos_adicionales' => 0.00,
+                            'impuestos' => 0.00,
+                            'retenciones' => 0.00,
+                            'detalle_conceptos' => []
+                        ],
+                        'calculo_final' => [
+                            'base_gravable' => 0.00,
+                            'formula' => 'Sin productos - Totales en cero'
+                        ]
+                    ]
+                ];
+            }
+
             $subtotalProductos = 0;
             $descuentosProductos = 0;
 
             foreach ($productos as $producto) {
                 $subtotalProducto = $producto->cantidad * $producto->valor_unitario;
-                $descuentoProducto = $producto->descuento_valor ??
+                $descuentoProducto = $producto->descuento_valor ?? 
                     ($subtotalProducto * ($producto->descuento_porcentaje / 100));
 
                 $subtotalProductos += $subtotalProducto;
                 $descuentosProductos += $descuentoProducto;
             }
 
-            // Subtotal base (productos menos sus descuentos)
-            $subtotalBase = $subtotalProductos - $descuentosProductos;
-
-            Log::info('Totales de productos calculados', [
-                'subtotal_productos' => $subtotalProductos,
-                'descuentos_productos' => $descuentosProductos,
-                'subtotal_base' => $subtotalBase
+            Log::info('📦 Subtotal productos', [
+                'cantidad_productos' => $productos->count(),
+                'subtotal_bruto' => $subtotalProductos,
+                'descuentos_productos' => $descuentosProductos
             ]);
 
-            // Obtener conceptos adicionales (impuestos y descuentos) de la cotización
-            $conceptos = CotizacionConcepto::with('concepto')
-                ->where('cotizacion_id', $cotizacionId)
-                ->get();
+            // PASO 2: APLICAR UTILIDADES AL SUBTOTAL (antes de descuentos adicionales)
+            $subtotalConUtilidades = $subtotalProductos;
+            $totalUtilidades = 0;
+            $detalleUtilidades = [];
 
-            $totalImpuestosAdicionales = 0;
-            $totalDescuentosAdicionales = 0;
-            $detalleConceptos = [];
-
-            // PRIMERO: Calcular todos los descuentos adicionales
-            foreach ($conceptos as $cotizacionConcepto) {
-                $concepto = $cotizacionConcepto->concepto;
-
-                if (!$concepto) {
-                    Log::warning('Concepto no encontrado', ['concepto_id' => $cotizacionConcepto->concepto_id]);
-                    continue;
-                }
-
-                $valorConcepto = 0;
-                $tipoConcepto = strtoupper($concepto->tipo); // Cambiar a uppercase para comparar
-
-                // Solo calcular descuentos en esta pasada
-                if (in_array($tipoConcepto, ['DESCUENTO', 'DISCOUNT', 'DES', 'DESC'])) {
-                    if ($cotizacionConcepto->porcentaje && $cotizacionConcepto->porcentaje > 0) {
-                        $valorConcepto = $subtotalProductos * ($cotizacionConcepto->porcentaje / 100);
-                    } elseif ($cotizacionConcepto->valor && $cotizacionConcepto->valor > 0) {
-                        $valorConcepto = $cotizacionConcepto->valor;
+            if ($cotizacion->utilidades->isNotEmpty()) {
+                foreach ($cotizacion->utilidades as $utilidad) {
+                    $valorUtilidad = 0;
+                    
+                    if ($utilidad->tipo === 'porcentaje') {
+                        $valorUtilidad = $subtotalProductos * ($utilidad->valor / 100);
+                    } else {
+                        $valorUtilidad = $utilidad->valor;
                     }
 
-                    $totalDescuentosAdicionales += $valorConcepto;
+                    $totalUtilidades += $valorUtilidad;
 
-                    Log::info('Descuento calculado', [
-                        'concepto' => $concepto->nombre,
-                        'tipo' => $concepto->tipo,
-                        'porcentaje' => $cotizacionConcepto->porcentaje,
-                        'base_calculo' => $subtotalProductos,
-                        'valor_calculado' => $valorConcepto
+                    $detalleUtilidades[] = [
+                        'categoria' => $utilidad->categoria->nombre ?? 'N/A',
+                        'item_propio' => $utilidad->itemPropio->nombre ?? 'N/A',
+                        'tipo' => $utilidad->tipo,
+                        'valor' => $utilidad->valor,
+                        'valor_calculado' => $valorUtilidad
+                    ];
+
+                    Log::info('💰 Utilidad aplicada', [
+                        'tipo' => $utilidad->tipo,
+                        'valor_config' => $utilidad->valor,
+                        'valor_calculado' => $valorUtilidad,
+                        'base_calculo' => $subtotalProductos
                     ]);
                 }
+
+                $subtotalConUtilidades = $subtotalProductos + $totalUtilidades;
             }
 
-            // Base para impuestos (productos - descuentos de productos - descuentos adicionales)
-            $baseParaImpuestos = $subtotalProductos - $descuentosProductos - $totalDescuentosAdicionales;
+            // PASO 3: PROCESAR CONCEPTOS (DESCUENTOS, IMPUESTOS, RETENCIONES)
+            $totalDescuentosConceptos = 0;
+            $totalImpuestos = 0;
+            $totalRetenciones = 0;
+            $detalleConceptos = [];
 
-            // SEGUNDO: Calcular todos los impuestos sobre la base correcta
-            foreach ($conceptos as $cotizacionConcepto) {
+            foreach ($cotizacion->conceptos as $cotizacionConcepto) {
                 $concepto = $cotizacionConcepto->concepto;
                 if (!$concepto) continue;
 
                 $valorConcepto = 0;
-                $tipoConcepto = strtoupper($concepto->tipo); // Cambiar a uppercase
+                $tipoConcepto = strtoupper(trim($concepto->tipo));
 
-                // Calcular valor basado en porcentaje o valor fijo
+                // Calcular valor del concepto
                 if ($cotizacionConcepto->porcentaje && $cotizacionConcepto->porcentaje > 0) {
-                    if (in_array($tipoConcepto, ['IMPUESTO', 'IVA', 'TAX', 'IMP'])) {
-                        // Impuestos sobre base después de todos los descuentos
-                        $valorConcepto = $baseParaImpuestos * ($cotizacionConcepto->porcentaje / 100);
-
-                        Log::info('Impuesto calculado', [
-                            'concepto' => $concepto->nombre,
-                            'tipo' => $concepto->tipo,
-                            'porcentaje' => $cotizacionConcepto->porcentaje,
-                            'base_calculo' => $baseParaImpuestos,
-                            'valor_calculado' => $valorConcepto
-                        ]);
-                    } else if (in_array($tipoConcepto, ['DESCUENTO', 'DISCOUNT', 'DES', 'DESC'])) {
-                        // Descuentos ya calculados arriba
-                        $valorConcepto = $subtotalProductos * ($cotizacionConcepto->porcentaje / 100);
+                    // Para descuentos se aplica sobre subtotal con utilidades
+                    // Para impuestos se aplica sobre base gravable (después de descuentos)
+                    if (in_array($tipoConcepto, ['DESCUENTO', 'DISCOUNT', 'DES', 'DESC'])) {
+                        $valorConcepto = $subtotalConUtilidades * ($cotizacionConcepto->porcentaje / 100);
+                    } else {
+                        // Para impuestos y retenciones, se calculará después de descuentos
+                        $valorConcepto = $cotizacionConcepto->porcentaje;
                     }
                 } elseif ($cotizacionConcepto->valor && $cotizacionConcepto->valor > 0) {
                     $valorConcepto = $cotizacionConcepto->valor;
                 }
 
-                // Clasificar por tipo de concepto
-                if (in_array($tipoConcepto, ['IMPUESTO', 'IVA', 'TAX', 'IMP'])) {
-                    $totalImpuestosAdicionales += $valorConcepto;
-                } elseif (in_array($tipoConcepto, ['DESCUENTO', 'DISCOUNT', 'DES', 'DESC'])) {
-                    // Ya sumado arriba
+                // Clasificar conceptos
+                if (in_array($tipoConcepto, ['DESCUENTO', 'DISCOUNT', 'DES', 'DESC'])) {
+                    $totalDescuentosConceptos += $valorConcepto;
+                } elseif (in_array($tipoConcepto, ['RETENCION', 'RETENTION', 'RET', 'RETE'])) {
+                    $totalRetenciones += $valorConcepto;
                 } else {
-                    // Si no está definido claramente, asumimos que es impuesto
-                    $totalImpuestosAdicionales += $valorConcepto;
-                    Log::info('Concepto sin tipo específico, asumido como impuesto', [
-                        'concepto_tipo' => $concepto->tipo,
-                        'concepto_nombre' => $concepto->nombre
-                    ]);
+                    // Asumir que es impuesto (IVA, TAX, etc)
+                    $totalImpuestos += $valorConcepto;
                 }
 
                 $detalleConceptos[] = [
@@ -440,57 +461,96 @@ class CotizacionProductoService
                 ];
             }
 
-            // Cálculos finales CORREGIDOS
-            $subtotal = $subtotalProductos; // Subtotal sin descuentos
-            $totalDescuentos = $descuentosProductos + $totalDescuentosAdicionales;
-            $baseGravable = $subtotal - $totalDescuentos; // Base después de TODOS los descuentos
-            $totalImpuestos = $totalImpuestosAdicionales; // Los impuestos ya se calcularon sobre la base correcta
-            $totalFinal = $baseGravable + $totalImpuestos;
+            // PASO 4: CALCULAR BASE GRAVABLE Y APLICAR IMPUESTOS/RETENCIONES
+            $baseGravable = $subtotalConUtilidades - $descuentosProductos - $totalDescuentosConceptos;
 
-            Log::info('✅ CÁLCULOS FINALES CORREGIDOS', [
-                '1_subtotal_productos' => $subtotalProductos,
-                '2_descuentos_productos' => $descuentosProductos,
-                '3_descuentos_adicionales' => $totalDescuentosAdicionales,
-                '4_total_descuentos' => $totalDescuentos,
-                '5_base_gravable' => $baseGravable,
-                '6_impuestos_sobre_base' => $totalImpuestosAdicionales,
-                '7_total_final' => $totalFinal,
-                'formula_aplicada' => 'Subtotal - Descuentos + Impuestos = Total'
+            // Recalcular impuestos y retenciones sobre la base gravable correcta
+            $totalImpuestosCalculados = 0;
+            $totalRetencionesCalculadas = 0;
+
+            foreach ($cotizacion->conceptos as $cotizacionConcepto) {
+                $concepto = $cotizacionConcepto->concepto;
+                if (!$concepto) continue;
+
+                $tipoConcepto = strtoupper(trim($concepto->tipo));
+                
+                // Solo recalcular si es porcentaje y no es descuento
+                if ($cotizacionConcepto->porcentaje && $cotizacionConcepto->porcentaje > 0 && 
+                    !in_array($tipoConcepto, ['DESCUENTO', 'DISCOUNT', 'DES', 'DESC'])) {
+                    
+                    $valorCalculado = $baseGravable * ($cotizacionConcepto->porcentaje / 100);
+                    
+                    if (in_array($tipoConcepto, ['RETENCION', 'RETENTION', 'RET', 'RETE'])) {
+                        $totalRetencionesCalculadas += $valorCalculado;
+                    } else {
+                        $totalImpuestosCalculados += $valorCalculado;
+                    }
+                }
+            }
+
+            // PASO 5: CALCULAR TOTALES FINALES
+            $subtotalFinal = $subtotalConUtilidades;
+            $descuentosFinal = $descuentosProductos + $totalDescuentosConceptos;
+            $impuestosFinal = $totalImpuestosCalculados;
+            $retencionesFinal = $totalRetencionesCalculadas;
+            $totalFinal = $baseGravable + $impuestosFinal - $retencionesFinal;
+
+            // PASO 6: ACTUALIZAR CAMPOS EN LA TABLA COTIZACION
+            $cotizacion->update([
+                'subtotal' => round($subtotalFinal, 2),
+                'descuento' => round($descuentosFinal, 2),
+                'total_impuesto' => round($impuestosFinal, 2),
+                'total' => round($totalFinal, 2)
             ]);
 
+            Log::info('✅ Totales actualizados en BD', [
+                'subtotal_bd' => $cotizacion->subtotal,
+                'descuento_bd' => $cotizacion->descuento,
+                'total_impuesto_bd' => $cotizacion->total_impuesto,
+                'total_bd' => $cotizacion->total
+            ]);
+
+            // PASO 7: PREPARAR RESPUESTA DETALLADA
             $resultadoFinal = [
-                'subtotal' => round($subtotal, 2),
-                'descuento' => round($totalDescuentos, 2),
-                'impuestos' => round($totalImpuestos, 2),
+                'subtotal' => round($subtotalFinal, 2),
+                'descuento' => round($descuentosFinal, 2),
+                'impuestos' => round($impuestosFinal, 2),
                 'total' => round($totalFinal, 2),
                 'detalle' => [
                     'productos' => [
                         'cantidad' => $productos->count(),
-                        'subtotal' => round($subtotalProductos, 2),
-                        'descuentos' => round($descuentosProductos, 2)
+                        'subtotal_bruto' => round($subtotalProductos, 2),
+                        'descuentos_productos' => round($descuentosProductos, 2)
                     ],
-                    'conceptos_adicionales' => $detalleConceptos,
-                    'resumen_conceptos' => [
-                        'impuestos_adicionales' => round($totalImpuestosAdicionales, 2),
-                        'descuentos_adicionales' => round($totalDescuentosAdicionales, 2)
+                    'utilidades' => [
+                        'total_utilidades' => round($totalUtilidades, 2),
+                        'subtotal_con_utilidades' => round($subtotalConUtilidades, 2),
+                        'detalle_utilidades' => $detalleUtilidades
                     ],
-                    'base_gravable' => round($baseGravable, 2)
+                    'conceptos' => [
+                        'descuentos_adicionales' => round($totalDescuentosConceptos, 2),
+                        'impuestos' => round($impuestosFinal, 2),
+                        'retenciones' => round($retencionesFinal, 2),
+                        'detalle_conceptos' => $detalleConceptos
+                    ],
+                    'calculo_final' => [
+                        'base_gravable' => round($baseGravable, 2),
+                        'formula' => 'Subtotal + Utilidades - Descuentos + Impuestos - Retenciones = Total'
+                    ]
                 ]
             ];
 
-
-            Log::info('Totales finales de cotización', $resultadoFinal);
+            Log::info('🎯 Totales finales calculados', $resultadoFinal);
 
             return $resultadoFinal;
 
         } catch (\Exception $e) {
-            Log::error('Error al calcular totales de cotización', [
+            Log::error('❌ Error al calcular totales de cotización', [
                 'cotizacion_id' => $cotizacionId,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
 
-            // Retornar totales en cero en caso de error
             return [
                 'subtotal' => 0,
                 'descuento' => 0,
@@ -569,5 +629,26 @@ class CotizacionProductoService
         }
 
         return $datos;
+    }
+
+    /**
+     * Actualizar automaticamente totales de cotización
+     * Se ejecuta después de cambios en productos, utilidades o conceptos
+     */
+    public function actualizarTotalesAutomaticamente(int $cotizacionId): void
+    {
+        try {
+            Log::info('🔄 Actualizando totales automáticamente', ['cotizacion_id' => $cotizacionId]);
+
+            // Llamar al método de cálculo de totales
+            $this->obtenerTotalesCotizacion($cotizacionId);
+
+            Log::info('✅ Totales actualizados automáticamente completado', ['cotizacion_id' => $cotizacionId]);
+        } catch (\Exception $e) {
+            Log::error('❌ Error al actualizar totales automáticamente', [
+                'cotizacion_id' => $cotizacionId,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 }

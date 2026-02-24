@@ -74,6 +74,9 @@ class CotizacionProductoController extends Controller
         try {
             $producto = $this->cotizacionProductoService->agregarProducto($request->validated());
 
+            // Actualizar totales automáticamente después de agregar producto
+            $this->cotizacionProductoService->actualizarTotalesAutomaticamente($producto->cotizacion_id);
+
             return response()->json([
                 'success' => true,
                 'data' => $producto->load('producto'),
@@ -120,6 +123,9 @@ class CotizacionProductoController extends Controller
         try {
             $producto = $this->cotizacionProductoService->actualizarProducto($id, $request->validated());
 
+            // Actualizar totales automáticamente después de actualizar producto
+            $this->cotizacionProductoService->actualizarTotalesAutomaticamente($producto->cotizacion_id);
+
             return response()->json([
                 'success' => true,
                 'data' => $producto->load('producto'),
@@ -141,7 +147,12 @@ class CotizacionProductoController extends Controller
     public function destroy(int $id): JsonResponse
     {
         try {
-            $this->cotizacionProductoService->eliminarProducto($id);
+            $resultado = $this->cotizacionProductoService->eliminarProducto($id);
+
+            // Actualizar totales automáticamente después de eliminar producto
+            if ($resultado['success'] && isset($resultado['cotizacion_id'])) {
+                $this->cotizacionProductoService->actualizarTotalesAutomaticamente($resultado['cotizacion_id']);
+            }
 
             return response()->json([
                 'success' => true,
@@ -1222,6 +1233,112 @@ class CotizacionProductoController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error interno del servidor al obtener totales'
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener valores por defecto para un item según el tipo de costo
+     */
+    public function obtenerValoresPorDefecto(Request $request): JsonResponse
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'item_id' => 'required',
+                'tipo_item' => 'required|in:propio,cargo',
+                'tipo_costo' => 'required|in:unitario,hora,dia'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Datos inválidos',
+                    'errors' => $validator->errors()
+                ], 400);
+            }
+
+            $itemId = $request->input('item_id');
+            $tipoItem = $request->input('tipo_item');
+            $tipoCosto = $request->input('tipo_costo');
+
+            $valores = [
+                'costo' => 0,
+                'unidad_medida' => '',
+                'encontrado' => false
+            ];
+
+            if ($tipoItem === 'propio') {
+                // Buscar el ItemPropio primero para obtener su código
+                $itemPropio = \App\Models\ItemPropio::where('id', $itemId)
+                    ->where('active', 1)
+                    ->first();
+
+                if ($itemPropio) {
+                    // Buscar en ParametrizacionCosto usando el código del ItemPropio
+                    $parametrizacionCosto = \App\Models\ParametrizacionCosto::where('item', $itemPropio->codigo)
+                        ->where('active', 1)
+                        ->first();
+
+                    if ($parametrizacionCosto) {
+                        $valores['encontrado'] = true;
+                        $valores['unidad_medida'] = $parametrizacionCosto->unidad_medida ?? $itemPropio->unidad_medida ?? '';
+
+                        // Asignar costo según tipo
+                        switch ($tipoCosto) {
+                            case 'unitario':
+                                $valores['costo'] = $parametrizacionCosto->costo_unitario ?? 0;
+                                break;
+                            case 'hora':
+                                // Calcular costo por hora desde costo día
+                                $costoDia = $parametrizacionCosto->costo_dia ?? 0;
+                                $valores['costo'] = $costoDia > 0 ? round($costoDia / 8, 2) : 0; // 8 horas por día
+                                break;
+                            case 'dia':
+                                $valores['costo'] = $parametrizacionCosto->costo_dia ?? 0;
+                                break;
+                        }
+                    } else {
+                        // Si no hay parametrización de costos, al menos obtener unidad de medida
+                        $valores['unidad_medida'] = $itemPropio->unidad_medida ?? '';
+                    }
+                }
+            } else {
+                // Buscar en Parametrizacion para cargos
+                $parametrizacion = \App\Models\Parametrizacion::where('id', $itemId)
+                    ->where('active', 1)
+                    ->with('cargo')
+                    ->first();
+
+                if ($parametrizacion) {
+                    $valores['encontrado'] = true;
+                    $valores['unidad_medida'] = 'Porcentaje'; // Los cargos siempre usan porcentaje
+
+                    // Para cargos, los valores dependen del contexto de obra/administración
+                    switch ($tipoCosto) {
+                        case 'unitario':
+                        case 'hora':
+                        case 'dia':
+                            // Para cargos se puede usar el valor_porcentaje como base
+                            $valores['costo'] = $parametrizacion->valor_porcentaje ?? 0;
+                            break;
+                    }
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $valores
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error al obtener valores por defecto', [
+                'error' => $e->getMessage(),
+                'request_data' => $request->all()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener valores por defecto: ' . $e->getMessage()
             ], 500);
         }
     }

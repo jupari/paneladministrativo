@@ -3,13 +3,9 @@ let tablaNovedades = null
 let primeraCarga = firstTime
 
 const SAVE_NOVEDADES_URL ='/admin/admin.parametrizacion.storenovedades' // guarda {parametrizacion:[]}
-
 const categoriasNovedades = Array.isArray(categorias)
     ? categorias.filter(c => c.costos === 0)
     : []
-// const categoriasCostos = Array.isArray(categorias)
-//     ? categorias.filter(c => c.costos === 1)
-//     : [];
 
 const columnasCategoriasNovedades = [
     {

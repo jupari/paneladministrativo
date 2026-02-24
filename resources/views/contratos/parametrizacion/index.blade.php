@@ -25,7 +25,7 @@
             <h4>Parametrización</h4>
         </div>
         <div class="card-body" >
-            @if(auth()->user()->hasRole('Administrator'))
+            @if(auth()->user()->hasRole(['Administrator', 'sysadmin']))
                 <ul class="nav nav-tabs" id="myTab" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active" id="novedades-tab" data-toggle="tab" data-target="#novedades-tab-pane" type="button" role="tab" aria-controls="novedades-tab-pane" aria-selected="true">Novedades</button>

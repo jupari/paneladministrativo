@@ -12,7 +12,6 @@ let maxIntentos = 10;
  * Debug de elementos del sistema sticky
  */
 function debugElementos() {
-    console.log('=== DEBUG ELEMENTOS ===');
 
     // Elementos hidden
     const subtotalHidden = document.getElementById('subtotal');
@@ -20,12 +19,12 @@ function debugElementos() {
     const impuestoHidden = document.getElementById('total_impuesto');
     const totalHidden = document.getElementById('total');
 
-    console.log('Elementos Hidden:', {
-        subtotal: subtotalHidden ? subtotalHidden.value : 'NO ENCONTRADO',
-        descuento: descuentoHidden ? descuentoHidden.value : 'NO ENCONTRADO',
-        impuesto: impuestoHidden ? impuestoHidden.value : 'NO ENCONTRADO',
-        total: totalHidden ? totalHidden.value : 'NO ENCONTRADO'
-    });
+    // console.log('Elementos Hidden:', {
+    //     subtotal: subtotalHidden ? subtotalHidden.value : 'NO ENCONTRADO',
+    //     descuento: descuentoHidden ? descuentoHidden.value : 'NO ENCONTRADO',
+    //     impuesto: impuestoHidden ? impuestoHidden.value : 'NO ENCONTRADO',
+    //     total: totalHidden ? totalHidden.value : 'NO ENCONTRADO'
+    // });
 
     // Elementos display
     const displaySubtotal = document.getElementById('display-subtotal-valor');
@@ -33,12 +32,12 @@ function debugElementos() {
     const displayImpuesto = document.getElementById('display-impuesto-valor');
     const displayTotal = document.getElementById('display-total-valor');
 
-    console.log('Elementos Display:', {
-        subtotal: displaySubtotal ? displaySubtotal.textContent : 'NO ENCONTRADO',
-        descuento: displayDescuento ? displayDescuento.textContent : 'NO ENCONTRADO',
-        impuesto: displayImpuesto ? displayImpuesto.textContent : 'NO ENCONTRADO',
-        total: displayTotal ? displayTotal.textContent : 'NO ENCONTRADO'
-    });
+    // console.log('Elementos Display:', {
+    //     subtotal: displaySubtotal ? displaySubtotal.textContent : 'NO ENCONTRADO',
+    //     descuento: displayDescuento ? displayDescuento.textContent : 'NO ENCONTRADO',
+    //     impuesto: displayImpuesto ? displayImpuesto.textContent : 'NO ENCONTRADO',
+    //     total: displayTotal ? displayTotal.textContent : 'NO ENCONTRADO'
+    // });
 
     // Elementos sticky
     const stickySubtotal = document.getElementById('sticky-subtotal');
@@ -46,14 +45,13 @@ function debugElementos() {
     const stickyImpuestos = document.getElementById('sticky-impuestos');
     const stickyTotal = document.getElementById('sticky-total');
 
-    console.log('Elementos Sticky:', {
-        subtotal: stickySubtotal ? stickySubtotal.textContent : 'NO ENCONTRADO',
-        descuento: stickyDescuentos ? stickyDescuentos.textContent : 'NO ENCONTRADO',
-        impuesto: stickyImpuestos ? stickyImpuestos.textContent : 'NO ENCONTRADO',
-        total: stickyTotal ? stickyTotal.textContent : 'NO ENCONTRADO'
-    });
+    // console.log('Elementos Sticky:', {
+    //     subtotal: stickySubtotal ? stickySubtotal.textContent : 'NO ENCONTRADO',
+    //     descuento: stickyDescuentos ? stickyDescuentos.textContent : 'NO ENCONTRADO',
+    //     impuesto: stickyImpuestos ? stickyImpuestos.textContent : 'NO ENCONTRADO',
+    //     total: stickyTotal ? stickyTotal.textContent : 'NO ENCONTRADO'
+    // });
 
-    console.log('=== FIN DEBUG ===');
 }
 
 /**
@@ -139,22 +137,18 @@ function actualizarStickyAhora() {
     if (displaySubtotal && displaySubtotal.textContent !== '$0.00') {
         const cleanText = displaySubtotal.textContent.replace(/[$\s]/g, '').trim();
         finalSubtotal = parseColombianCurrency(cleanText) || subtotal;
-        console.log('Subtotal parseado:', cleanText, 'resultado:', finalSubtotal);
     }
     if (displayDescuento && displayDescuento.textContent !== '$0.00') {
         const cleanText = displayDescuento.textContent.replace(/[$\s]/g, '').trim();
         finalDescuento = parseColombianCurrency(cleanText) || descuento;
-        console.log('Descuento parseado:', cleanText, 'resultado:', finalDescuento);
     }
     if (displayImpuesto && displayImpuesto.textContent !== '$0.00') {
         const cleanText = displayImpuesto.textContent.replace(/[$\s]/g, '').trim();
         finalImpuesto = parseColombianCurrency(cleanText) || impuesto;
-        console.log('Impuesto parseado:', cleanText, 'resultado:', finalImpuesto);
     }
     if (displayTotal && displayTotal.textContent !== '$0.00') {
         const cleanText = displayTotal.textContent.replace(/[$\s]/g, '').trim();
         finalTotal = parseColombianCurrency(cleanText) || total;
-        console.log('Total parseado:', cleanText, 'resultado:', finalTotal);
     }
 
     // Actualizar sticky
@@ -168,7 +162,6 @@ function actualizarStickyAhora() {
     if (stickyImpuestos) stickyImpuestos.textContent = formatCurrency(finalImpuesto);
     if (stickyTotal) stickyTotal.textContent = formatCurrency(finalTotal);
 
-    console.log('Sticky actualizado:', { finalSubtotal, finalDescuento, finalImpuesto, finalTotal });
 }
 
 /**
@@ -188,7 +181,6 @@ function iniciarActualizacionSticky() {
         const valorActual = stickySubtotal ? stickySubtotal.textContent : '$0,00';
 
         if (valorActual !== '$0,00' && valorActual !== '$0.00') {
-            console.log('✅ Valores sticky cargados correctamente, deteniendo actualizaciones automáticas');
             clearInterval(stickyInterval);
             stickyInterval = null;
         }
@@ -196,7 +188,6 @@ function iniciarActualizacionSticky() {
         // Parar después de intentos máximos
         intentosActualizacion++;
         if (intentosActualizacion >= maxIntentos) {
-            console.log('🔄 Máximo de intentos alcanzado, deteniendo actualizaciones automáticas');
             clearInterval(stickyInterval);
             stickyInterval = null;
         }
@@ -208,13 +199,11 @@ window.detenerActualizacionesSticky = function() {
     if (stickyInterval) {
         clearInterval(stickyInterval);
         stickyInterval = null;
-        console.log('🛑 Actualizaciones sticky detenidas manualmente');
     }
 };
 
 // Función global para reiniciar actualizaciones si es necesario
 window.reiniciarActualizacionesSticky = function() {
-    console.log('🔄 Reiniciando actualizaciones sticky...');
     iniciarActualizacionSticky();
 };
 

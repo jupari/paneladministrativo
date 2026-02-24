@@ -10,6 +10,7 @@ use App\Models\Categoria;
 use App\Models\ItemPropio;
 use App\Services\CotizacionTotalesService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class CotizacionUtilidadController extends Controller
 {
@@ -18,61 +19,164 @@ class CotizacionUtilidadController extends Controller
         $data = $request->validate([
             'cotizacion_id' => 'required|exists:ord_cotizacion,id',
             'categoria_id'  => 'required|exists:categorias,id',
-            'item_propio_id'=> 'required|string', // Permite tanto items propios como cargo_X
+            'item_propio_id'=> 'sometimes|string', // Para compatibilidad con versión anterior (un solo item)
+            'item_propio_ids'=> 'sometimes|array', // Para múltiples items
+            'item_propio_ids.*'=> 'string', // Validar cada item del array
+            'cargo_ids' => 'sometimes|array', // Para cargos en nómina
+            'cargo_ids.*' => 'string', // Validar cada cargo del array
             'tipo'          => 'required|in:porcentaje,valor',
             'valor'         => 'required|numeric|min:0',
         ]);
 
-        // Verificar que existan productos que coincidan con ambos criterios
-        $cotizacion = Cotizacion::findOrFail($data['cotizacion_id']);
-        $hayProductos = false;
-
-        if (strpos($data['item_propio_id'], 'cargo_') === 0) {
-            // Es un cargo, verificar en parametrización con categoría
-            $cargoId = str_replace('cargo_', '', $data['item_propio_id']);
-            $hayProductos = $cotizacion->productos()
-                ->where('categoria_id', $data['categoria_id'])
-                ->whereHas('parametrizacion', function($query) use ($cargoId) {
-                    $query->where('cargo_id', $cargoId);
-                })
-                ->exists();
+        // Determinar si son múltiples items o uno solo (compatibilidad)
+        $itemsPropiosIds = [];
+        $cargoIds = [];
+        if (isset($data['item_propio_ids']) && is_array($data['item_propio_ids'])) {
+            $itemsPropiosIds = $data['item_propio_ids'];
+        } elseif (isset($data['item_propio_id'])) {
+            $itemsPropiosIds = [$data['item_propio_id']];
         } else {
-            // Es un item propio normal, verificar ambos campos
-            $hayProductos = $cotizacion->productos()
-                ->where('categoria_id', $data['categoria_id'])
-                ->where('item_propio_id', $data['item_propio_id'])
-                ->exists();
+            if (isset($data['cargo_ids']) && is_array($data['cargo_ids'])) {
+                $cargoIds = array_map(function($cargoId) {
+                    return $cargoId; // Prefijo para diferenciar cargos
+                }, $data['cargo_ids']);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Debe seleccionar al menos un item propio o cargo'
+                ], 422);
+            }
         }
 
-        if (!$hayProductos) {
+        $cotizacion = Cotizacion::findOrFail($data['cotizacion_id']);
+        $utilidadesCreadas = [];
+        $itemsSinProductos = [];
+        $itemsDuplicados = [];
+
+        if (!empty($itemsPropiosIds)) {
+            foreach ($itemsPropiosIds as $itemPropioId) {
+                // Verificar que existan productos que coincidan con ambos criterios
+                $hayProductos = false;
+
+                if (strpos($itemPropioId, 'cargo_') === 0) {
+                    // Es un cargo, verificar en parametrización con categoría
+                    $cargoId = str_replace('cargo_', '', $itemPropioId);
+                    $hayProductos = $cotizacion->productos()
+                        ->where('categoria_id', $data['categoria_id'])
+                        ->whereHas('parametrizacion', function($query) use ($cargoId) {
+                            $query->where('cargo_id', $cargoId);
+                        })
+                        ->exists();
+                } else {
+                    // Es un item propio normal, verificar ambos campos
+                    $hayProductos = $cotizacion->productos()
+                        ->where('categoria_id', $data['categoria_id'])
+                        ->where('item_propio_id', $itemPropioId)
+                        ->exists();
+                }
+
+                if (!$hayProductos) {
+                    $itemsSinProductos[] = $itemPropioId;
+                    continue;
+                }
+
+                // Verificar utilidad duplicada (misma categoría + item propio)
+                $existeUtilidad = CotizacionUtilidad::where('cotizacion_id', $data['cotizacion_id'])
+                    ->where('categoria_id', $data['categoria_id'])
+                    ->where('item_propio_id', $itemPropioId)
+                    ->exists();
+
+                if ($existeUtilidad) {
+                    $itemsDuplicados[] = $itemPropioId;
+                    continue;
+                }
+
+                // Crear la utilidad
+                $utilidad = CotizacionUtilidad::create([
+                    'cotizacion_id' => $data['cotizacion_id'],
+                    'categoria_id'  => $data['categoria_id'],
+                    'item_propio_id'=> $itemPropioId,
+                    'tipo'          => $data['tipo'],
+                    'valor'         => $data['valor'],
+                ]);
+
+                $utilidadesCreadas[] = $utilidad;
+            }
+        }else if(!empty($cargoIds)){
+            foreach ($cargoIds as $cargoId) {
+                // Primero verificar productos en la cotización
+                $productosEnCotizacion = $cotizacion->productos()
+                    ->where('categoria_id', $data['categoria_id'])
+                    ->get();
+
+                // Verificar que existan productos que coincidan con ambos criterios
+                $queryProductos = $cotizacion->productos()
+                    ->where('categoria_id', $data['categoria_id'])
+                    ->whereHas('parametrizacion', function($query) use ($cargoId) {
+                        $query->where('cargo_id', $cargoId);
+                    });
+
+                $hayProductos = $queryProductos->exists();
+                if (!$hayProductos) {
+                    $itemsSinProductos[] = $cargoId;
+                    continue;
+                }
+
+                // Verificar utilidad duplicada (misma categoría + cargo)
+                $existeUtilidad = CotizacionUtilidad::where('cotizacion_id', $data['cotizacion_id'])
+                    ->where('categoria_id', $data['categoria_id'])
+                    ->where('cargo_id', $cargoId)
+                    ->exists();
+
+                if ($existeUtilidad) {
+                    $itemsDuplicados[] = $cargoId;
+                    continue;
+                }
+
+                // Crear la utilidad
+                $utilidad = CotizacionUtilidad::create([
+                    'cotizacion_id' => $data['cotizacion_id'],
+                    'categoria_id'  => $data['categoria_id'],
+                    'cargo_id'      => $cargoId,
+                    'tipo'          => $data['tipo'],
+                    'valor'         => $data['valor'],
+                ]);
+
+                $utilidadesCreadas[] = $utilidad;
+            }
+        }
+
+        // Preparar mensaje de respuesta
+        $mensaje = '';
+        $success = count($utilidadesCreadas) > 0;
+
+        if (count($utilidadesCreadas) > 0) {
+            $mensaje .= "Se aplicaron " . count($utilidadesCreadas) . " utilidad(es) correctamente.";
+        }
+
+        if (count($itemsSinProductos) > 0) {
+            $mensaje .= " " . count($itemsSinProductos) . " item(s) no tienen productos en la cotización.";
+        }
+
+        if (count($itemsDuplicados) > 0) {
+            $mensaje .= " " . count($itemsDuplicados) . " item(s) ya tenían utilidades aplicadas.";
+        }
+
+        if (!$success) {
             return response()->json([
                 'success' => false,
-                'message' => 'No hay productos en la cotización que coincidan con la categoría e item propio seleccionados'
+                'message' => 'No se pudo aplicar ninguna utilidad: ' . $mensaje
             ], 422);
         }
-
-        // Verificar utilidad duplicada (misma categoría + item propio)
-        $existeUtilidad = CotizacionUtilidad::where('cotizacion_id', $data['cotizacion_id'])
-            ->where('categoria_id', $data['categoria_id'])
-            ->where('item_propio_id', $data['item_propio_id'])
-            ->exists();
-
-        if ($existeUtilidad) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Ya existe una utilidad aplicada para esta combinación de categoría e item propio'
-            ], 422);
-        }
-
-        CotizacionUtilidad::create($data);
 
         // Recargar cotización con todas las relaciones necesarias
         $cotizacion = Cotizacion::with(['productos.itemPropio', 'productos.producto', 'utilidades.categoria', 'utilidades.itemPropio'])
             ->findOrFail($data['cotizacion_id']);
 
-        \Log::info('Recalculando totales con utilidades', [
+        Log::info('Recalculando totales con utilidades múltiples', [
             'cotizacion_id' => $cotizacion->id,
-            'utilidades_count' => $cotizacion->utilidades->count(),
+            'utilidades_creadas' => count($utilidadesCreadas),
+            'utilidades_total' => $cotizacion->utilidades->count(),
             'productos_count' => $cotizacion->productos->count()
         ]);
 
@@ -80,8 +184,9 @@ class CotizacionUtilidadController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Utilidad aplicada correctamente',
-            'data'    => $cotizacion->fresh(['productos', 'utilidades'])
+            'message' => trim($mensaje),
+            'data'    => $cotizacion->fresh(['productos', 'utilidades']),
+            'utilidades_creadas' => count($utilidadesCreadas)
         ]);
     }
 
@@ -211,7 +316,7 @@ class CotizacionUtilidadController extends Controller
                 // Convertir a formato consistent con items propios y agregar a la colección
                 foreach ($cargosParametrizacion as $cargo) {
                     $itemsPropios->push((object)[
-                        'id' => 'cargo_' . $cargo->id, // Prefijo para diferenciar de items propios
+                        'id' => $cargo->id, // Prefijo para diferenciar de items propios
                         'nombre' => $cargo->nombre . ' (Cargo)',
                         'codigo' => $cargo->codigo,
                         'tipo' => 'cargo' // Campo adicional para identificar el tipo
@@ -265,7 +370,7 @@ class CotizacionUtilidadController extends Controller
                 // Agregar cargos a la colección
                 foreach ($cargosParametrizacion as $cargo) {
                     $itemsPropios->push((object)[
-                        'id' => 'cargo_' . $cargo->id,
+                        'id' => $cargo->id,
                         'nombre' => $cargo->nombre . ' (Cargo)',
                         'codigo' => $cargo->codigo ?? '',
                         'tipo' => 'cargo'
