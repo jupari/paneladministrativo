@@ -29,12 +29,14 @@
         <div class="tab-content mt-3">
         {{-- TAB 1: Órdenes --}}
         <div class="tab-pane fade show active" id="orders-pane" role="tabpanel">
-            <div class="col-md-1 mb-2">
-            <button class="btn btn-primary btn-block" onclick="regOrder()" title="Crear Orden">
-                <i class="fas fa-plus"></i>
-            </button>
-            </div>
-
+            @if(auth()->user()->can('ordenes.create'))
+                <div class="col-md-1 mb-2">
+                <button class="btn btn-primary btn-block" onclick="regOrder()" title="Crear Orden">
+                    <i class="fas fa-plus"></i>
+                </button>
+                </div>
+            @endif
+             <div class="col-md-12 my-3">
             <div class="table-responsive">
             <table id="orders-table" class="table table-bordered table-striped">
                 <thead>

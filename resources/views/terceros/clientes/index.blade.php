@@ -28,7 +28,7 @@
             <h4>Clientes</h4>
         </div>
         <div class="card-body" >
-            @if(auth()->user()->can('clientes.index'))
+            @if(auth()->user()->can('clientes.create'))
                 <div class="col-md-1">
                 <button type="button" onclick="regCli()" class="btn btn-primary btn-block mb-1" data-toggle="tooltip" data-placement="top" title="Crear Cliente">
                     <i class="fas fa-user-plus"></i>

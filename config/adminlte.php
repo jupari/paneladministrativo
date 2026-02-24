@@ -340,15 +340,15 @@ return [
             'submenu' => [
                 [
                     'text' => 'Sedes / Sucursales',
-                    'url' => '#',
+                    'route' => 'admin.branches.index',
                     'icon' => 'fas fa-store-alt text-secondary',
-                    'classes' => 'disabled',
+                    'can' => 'branches.index',
                 ],
                 [
                     'text' => 'Centros de Costo',
-                    'url' => '#',
+                    'route' => 'admin.costCenters.index',
                     'icon' => 'fas fa-network-wired text-secondary',
-                    'classes' => 'disabled',
+                    'can' => 'centro_costo.index',
                 ],
             ],
         ],

@@ -18,12 +18,13 @@
 <div class="card">
   <div class="card-header"><h4>Operaciones</h4></div>
   <div class="card-body">
-    <div class="col-md-1 mb-2">
-      <button type="button" onclick="regOperation()" class="btn btn-primary btn-block" title="Crear Operación">
-        <i class="fas fa-plus"></i>
-      </button>
-    </div>
-
+    @if(auth()->user()->can('operaciones.create'))
+        <div class="col-md-1 mb-2">
+        <button type="button" onclick="regOperation()" class="btn btn-primary btn-block" title="Crear Operación">
+            <i class="fas fa-plus"></i>
+        </button>
+        </div>
+    @endif
     <div class="table-responsive">
       <table id="operations-table" class="table table-bordered table-striped">
         <thead>

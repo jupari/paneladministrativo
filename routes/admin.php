@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\admin\ConfigAccountController;
 use App\Http\Controllers\Admin\CuentaController;
 use App\Http\Controllers\Admin\CuentaMadreController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\Admin\EstadoController;
 use App\Http\Controllers\Admin\OutlookController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CompanyController;
+use App\Http\Controllers\Admin\CostCenterController;
 use App\Http\Controllers\Admin\UsuarioRolesController;
 use App\Http\Controllers\Admin\RolesPermisosController;
 use App\Http\Controllers\Contratos\Cargos\CargoController;
@@ -668,6 +670,26 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::post('admin.produccion.orders.operations.update/{id}', [ProdOrderOperationController::class, 'update'])->name('admin.produccion.orders.operations.update');
         Route::get('admin.produccion.orders.operations.list', [ProdOrderOperationController::class, 'listByOrder'])->name('admin.produccion.orders.operations.list');
     });
+
+    // Sucursales
+    Route::controller(BranchController::class)->group(function () {
+        Route::get('admin.organization.branches', [BranchController::class,'index'])->name('admin.branches.index');
+        Route::post('admin.organization.branches.store', [BranchController::class,'store'])->name('admin.branches.store');
+        Route::get('admin.organization.branches.edit/{id}', [BranchController::class,'edit'])->name('admin.branches.edit');
+        Route::post('admin.organization.branches.update/{id}', [BranchController::class,'update'])->name('admin.branches.update');
+        Route::get('admin.organization.branches.list', [BranchController::class,'list'])->name('admin.branches.list');
+    });
+
+    // Centros de costo
+    Route::controller(CostCenterController::class)->group(function () {
+        Route::get('admin.organization.cost-centers', [CostCenterController::class,'index'])->name('admin.costCenters.index');
+        Route::post('admin.organization.cost-centers.store', [CostCenterController::class,'store'])->name('admin.costCenters.store');
+        Route::get('admin.organization.cost-centers.edit/{id}', [CostCenterController::class,'edit'])->name('admin.costCenters.edit');
+        Route::post('admin.organization.cost-centers.update/{id}', [CostCenterController::class,'update'])->name('admin.costCenters.update');
+        Route::get('admin.organization.cost-centers.list', [CostCenterController::class,'list'])->name('admin.costCenters.list');
+    });
+
+
 
 
 

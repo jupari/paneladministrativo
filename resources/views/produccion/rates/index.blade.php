@@ -18,12 +18,13 @@
 <div class="card">
   <div class="card-header"><h4>Tarifas (Producto + Operación)</h4></div>
   <div class="card-body">
-
+    @if(auth()->user()->can('tarifas.create'))
     <div class="col-md-1 mb-2">
       <button type="button" onclick="regRate()" class="btn btn-primary btn-block" title="Crear Tarifa">
         <i class="fas fa-plus"></i>
       </button>
     </div>
+    @endif
 
     <div class="table-responsive">
       <table id="rates-table" class="table table-bordered table-striped">

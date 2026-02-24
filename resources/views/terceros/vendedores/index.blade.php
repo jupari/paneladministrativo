@@ -28,7 +28,8 @@
             <h4>Vendedores</h4>
         </div>
         <div class="card-body" >
-            @if(auth()->user()->hasRole('Administrator'))
+            @if(auth()->user()->can('vendedores.create'))
+                 <div class="col-md-1">
                 <div class="col-md-1">
                 <button type="button" onclick="regVend()" class="btn btn-primary btn-block mb-1" data-toggle="tooltip" data-placement="top" title="Crear Vendedor">
                     <i class="fas fa-user-plus"></i>
