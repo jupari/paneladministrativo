@@ -258,41 +258,6 @@ async function cargarItemsPorCategoria(categoriaId) {
 }
 
 /**
- * Crea el HTML de una tarjeta de item
- */
-function crearTarjetaItem(item, tipoItem) {
-    const codigo = item.codigo || '';
-    const nombre = item.nombre || '';
-    const tipo = tipoItem === 'cargo' ? 'cargo' : 'item';
-    const tipoClass = tipo === 'cargo' ? 'tipo-cargo' : 'tipo-item';
-    const tipoTexto = tipo === 'cargo' ? 'Cargo' : 'Item';
-    const iconoTipo = tipo === 'cargo' ? 'fas fa-user-tie' : 'fas fa-cube';
-
-    return `
-        <div class="item-card" data-item-id="${item.id}" data-tipo="${tipo}" data-searchable="${codigo.toLowerCase()} ${nombre.toLowerCase()}">
-            <div class="d-flex align-items-center">
-                <input type="checkbox" class="item-checkbox"
-                       id="item_${item.id}"
-                       value="${item.id}"
-                       data-tipo="${item.tipo || ''}"
-                       data-nombre="${nombre}"
-                       data-codigo="${codigo}"
-                       onchange="actualizarEstadoBotonAplicar(); actualizarContadorSeleccionados(); toggleTarjetaSeleccionada(this);">
-
-                <div class="flex-grow-1">
-                    <div class="item-nombre">
-                        <i class="${iconoTipo} mr-2 text-muted"></i>${nombre}
-                    </div>
-                    ${codigo ? `<div class="item-codigo">${codigo}</div>` : ''}
-                </div>
-
-                <span class="item-tipo ${tipoClass}">${tipoTexto}</span>
-            </div>
-        </div>
-    `;
-}
-
-/**
  * Actualiza el estado del botón aplicar utilidad según validación de formulario
  */
 function actualizarEstadoBotonAplicar() {
@@ -437,9 +402,9 @@ async function aplicarUtilidad() {
  */
 async function actualizarTotalesEnInterfaz() {
     try {
-        console.log('🔄 Actualizando totales en la interfaz...');
+        console.log('Actualizando totales en la interfaz...');
 
-        // Primero intentar llamar las funciones existentes de actualización
+        // Intentar llamar las funciones existentes de actualización
         if (typeof actualizarTotalesCotizacion === 'function') {
             console.log('📞 Llamando actualizarTotalesCotizacion...');
             await actualizarTotalesCotizacion();
@@ -680,37 +645,24 @@ $(document).ready(function() {
         limpiarFormulario();
     });
 
-    // Agregar función de debug mejorada (remover en producción)
+    // Agregar función de debug temporal (remover en producción)
     window.debugUtilidades = function() {
-        console.log('=== 🔍 DEBUG UTILIDADES COMPLETO ===');
-        console.log('📋 Información básica:');
-        console.log('  - Cotización ID actual:', cotizacionIdActual);
-        console.log('  - Categorías disponibles:', categoriasDisponibles);
-        console.log('  - Items propios disponibles:', itemsPropiosDisponibles);
+        console.log('=== DEBUG UTILIDADES ===');
+        console.log('Cotización ID actual:', cotizacionIdActual);
+        console.log('Categorías disponibles:', categoriasDisponibles);
+        console.log('Items propios disponibles:', itemsPropiosDisponibles);
 
         // Mostrar funciones disponibles
-        console.log('🔧 Funciones disponibles:');
-        console.log('  - actualizarTotalesCotizacion:', typeof actualizarTotalesCotizacion);
-        console.log('  - actualizarTotalesCompletos:', typeof actualizarTotalesCompletos);
-        console.log('  - cargarProductosGuardados:', typeof cargarProductosGuardados);
-        console.log('  - actualizarStickyAhora:', typeof actualizarStickyAhora);
+        console.log('Funciones disponibles:');
+        console.log('- actualizarTotalesCotizacion:', typeof actualizarTotalesCotizacion);
+        console.log('- cargarProductosGuardados:', typeof cargarProductosGuardados);
 
         // Verificar elementos de totales en DOM
-        console.log('🎯 Elementos de totales encontrados:');
-        const subtotalVal = document.getElementById('subtotal')?.value || 'NO ENCONTRADO';
-        const descuentoVal = document.getElementById('descuento')?.value || 'NO ENCONTRADO';
-        const impuestoVal = document.getElementById('total_impuesto')?.value || 'NO ENCONTRADO';
-        const totalVal = document.getElementById('total')?.value || 'NO ENCONTRADO';
+        console.log('Elementos de totales encontrados:');
+        console.log('- sticky-subtotal:', $('#sticky-subtotal').length ? 'SÍ' : 'NO');
+        console.log('- sticky-total:', $('#sticky-total').length ? 'SÍ' : 'NO');
 
-        console.log('  - subtotal (hidden):', subtotalVal);
-        console.log('  - descuento (hidden):', descuentoVal);
-        console.log('  - impuesto (hidden):', impuestoVal);
-        console.log('  - total (hidden):', totalVal);
-        console.log('  - sticky-subtotal:', $('#sticky-subtotal').length ? $('#sticky-subtotal').text() : 'NO ENCONTRADO');
-        console.log('  - sticky-total:', $('#sticky-total').length ? $('#sticky-total').text() : 'NO ENCONTRADO');
-
-        // Verificar si hay utilidades aplicadas
-        console.log('💰 Estado de utilidades:');
+        // Intentar obtener totales actuales
         if (cotizacionIdActual) {
             fetch(`/admin/admin.cotizaciones.utilidades.obtener/${cotizacionIdActual}`, {
                 headers: { 'Accept': 'application/json' }
@@ -771,8 +723,7 @@ $(document).ready(function() {
         }
     };
 
-    console.log('💰 Sistema de utilidades cargado.');
-    console.log('📞 Comandos disponibles: debugUtilidades() | actualizarTotalesRapido() | testDescuentosConUtilidades()');
+    console.log('Sistema de utilidades cargado. Usar debugUtilidades() para debug.');
 });
 
 /**

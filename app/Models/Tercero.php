@@ -65,6 +65,11 @@ class Tercero extends Model
         return $this->belongsTo(Company::class, 'company_id');
     }
 
+    public function terceroTipo()
+    {
+        return $this->belongsTo(TerceroTipo::class, 'tercerotipo_id');
+    }
+
     public function tipoIdentificacion(){
         return $this->belongsTo(TipoIdentificacion::class, 'tipoidentificacion_id');
     }
@@ -81,10 +86,39 @@ class Tercero extends Model
         return $this->belongsTo(Vendedor::class, 'vendedor_id');
     }
 
+    public function contactos(){
+        return $this->hasMany(TerceroContacto::class, 'tercero_id');
+    }
+
+    public function sucursales(){
+        return $this->hasMany(TerceroSucursal::class, 'tercero_id');
+    }
+
+    // Scopes para filtrar por tipo de tercero
+    public function scopeClientes($query)
+    {
+        return $query->where('tercerotipo_id', 1);
+    }
+
+    public function scopeProveedores($query)
+    {
+        return $query->where('tercerotipo_id', 2);
+    }
+
+    public function scopeEmpleados($query)
+    {
+        return $query->where('tercerotipo_id', 3);
+    }
+
     // Scope para filtrar por empresa
     public function scopeByCompany($query, $companyId)
     {
         return $query->where('company_id', $companyId);
+    }
+
+    public function nominaPayRunParticipants()
+    {
+        return $this->morphMany(\App\Models\Nomina\NominaPayRunParticipant::class, 'participant', 'participant_type', 'participant_id');
     }
 
 }

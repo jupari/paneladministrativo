@@ -1,47 +1,35 @@
 let salarioInput;
 
 $(function () {
-
-    // Toast
-    toastr.options = {
-        "closeButton": true,
-        "debug": false,
-        "newestOnTop": false,
-        "progressBar": false,
-        "positionClass": "toast-bottom-right",
-        "preventDuplicates": false,
-        "onclick": null,
-        "showDuration": "300",
-        "hideDuration": "1000",
-        "timeOut": "5000",
-        "extendedTimeOut": "1000",
-        "showEasing": "swing",
-        "hideEasing": "linear",
-        "showMethod": "fadeIn",
+        // Toast
+        toastr.options = {
+            "closeButton": true,
+            "debug": false,
+            "newestOnTop": false,
+            "progressBar": false,
+            "positionClass": "toast-bottom-right",
+            "preventDuplicates": false,
+            "onclick": null,
+            "showDuration": "300",
+            "hideDuration": "1000",
+            "timeOut": "5000",
+            "extendedTimeOut": "1000",
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "fadeIn",
         "hideMethod": "fadeOut"
     }
-
     // Obtener la fecha actual
     let fechaActual = new Date();
-
     // Formatear la fecha al formato "2009-04-19"
     let fechaFormateada = '2009-' + ('0' + (fechaActual.getMonth() + 1)).slice(-2) + '-' + ('0' + fechaActual.getDate()).slice(-2);
-    // Escucha el evento de cierre de la ventana modal
-    $('#myModal').on('hidden.bs.modal', function () {
-        // Activa la primera pestaña al cerrar la ventana modal
-        $('#custom-content-below-home-tab').tab('show');
-    });
-     //carga de la datatable
     Cargar();
     //variable global
-
     loadLibrerias();
+    loadDepartamentos(window.paises);
 });
 
-//se declara la variable del modal
-var myModal = new bootstrap.Modal(document.getElementById('ModalEmpleado'), {
-    keyboard: false
-})
+
 
 function loadLibrerias()
 {
@@ -93,9 +81,13 @@ function Cargar() {
                 { data: 'created_at', name: 'created_at'},
                 { data: 'acciones', name: 'acciones', className: 'exclude'},
             ],
-            order: [[1, "asc"]],
+            order: [[1, "desc"]],
             pageLength: 10,
             lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "Todo(s)"]],
+            //ocultar la columna con el name id
+            columnDefs: [
+                { targets: 1, visible: false }
+            ],
         }
     );
     // table.ajax.reload();
@@ -165,7 +157,8 @@ async function showCustomEmpleado(btn) {
             'ubicacion',
             'tipo_contrato',
             'ciudad_residencia',
-            'tipo_identificacion_id'
+            'tipo_identificacion_id',
+            'ciudad_id',
         ];
 
         usuarioFields.forEach(field => {
@@ -186,7 +179,6 @@ async function showCustomEmpleado(btn) {
         const sucursalId = usr.sucursal_id;
         await getSucursal(clienteId, sucursalId);
 
-        console.log('✅ Sucursal correctamente cargada y seleccionada');
     } catch (error) {
         console.error('❌ Error al cargar el empleado o sucursal:', error);
     }
@@ -194,23 +186,24 @@ async function showCustomEmpleado(btn) {
 
 //Registrar usuario
 function regEmpleado() {
+
     $('#ModalEmpleado').modal('show');
-    $('#exampleModalLabel').html('Registrar Empleado');
+    $('#modal-title-text').html('Registrar Empleado');
+
     // LIMPIAR CAMPOS
     cleanInput();
-     // FIN LIMPIAR CAMPOS
     limpiarValidaciones();
-     let r = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
-        '<button type="button" class="btn btn-primary" onclick="registerEmpleado()"><span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="spinnerRegister"></span>Agregar</button>';
+
+    // Configurar el botón para crear nuevo empleado (limpiar eventos previos)
+    let r = '<button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="resetButton()"><i class="fas fa-times mr-1"></i>Cancelar</button>' +
+        '<button type="button" class="btn btn-primary" onclick="registerEmpleado()"><i class="fas fa-save mr-1"></i><span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="spinnerRegister"></span>Agregar</button>';
 
     $(".modal-footer").html(r);
-
 }
 
 function registerEmpleado() {
-
-    $('#spinnerRegister').addClass('d-none');
-    $('#spinnerRegister').removeClass('d-block');
+    // Configurar estado de loading del botón
+    setButtonLoading();
 
     const route = "/admin/admin.empleados.store";
 
@@ -243,6 +236,7 @@ function registerEmpleado() {
     ajax_data.append('celular', $('#celular').val());
     ajax_data.append('correo', $('#correo').val());
     ajax_data.append('cargo_id', $('#cargo_id').val());
+    ajax_data.append('ciudad_id', $('#ciudad_id').val());
     ajax_data.append('cliente_id', $('#cliente_id').val());
     ajax_data.append('sucursal_id', $('#sucursal_id').val());
     ajax_data.append('ubicacion', $('#ubicacion').val());
@@ -262,15 +256,15 @@ function registerEmpleado() {
         contentType: false, // IMPORTANTE PARA SUBIR IMÁGENES O ARCHIVOS POR AJAX
         processData: false,
     }).then(response => {
-        $('#spinnerRegister').addClass('d-none');
-        $('#spinnerRegister').removeClass('d-block');
+        resetButton();
         Cargar();
-        $('#ModalEmpleado').modal('hide');// Reemplaza con tu lógica de modal
-        toastr.success(response.message); // Muestra el mensaje de éxito
+        $('#ModalEmpleado').modal('hide');
+        showSuccessMessage(response.message || 'Empleado guardado exitosamente');
 
     }).catch(e => {
         // Manejo de errores
-        limpiarValidaciones(); // Reemplaza con tu función de limpieza de validaciones
+        resetButton();
+        limpiarValidaciones();
         const arr = e.responseJSON;
         const toast = arr.errors;
 
@@ -290,19 +284,30 @@ function registerEmpleado() {
 
 // Actualizar usuario
 function upEmpleado(btn) {
+    console.log('📝 Iniciando upEmpleado() para empleado ID:', btn);
+
     $('#ModalEmpleado').modal('show');
-    $('#exampleModalLabel').html('Editar Empleado');
+    $('#modal-title-text').html('Editar Empleado');
+    $('#btn-text').html('Actualizar Empleado');
+
     // LIMPIAR CAMPOS
     cleanInput();
     limpiarValidaciones();
     showCustomEmpleado(btn);
-    // FIN LIMPIAR CAMPOS
-    let u = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
-        '<button id="editar" class="btn btn-primary" onclick="updateEmpleado(' + btn + ')">Guardar</button>';
-    $(".modal-footer").html(u);
+
+      // Configurar el botón para crear nuevo empleado (limpiar eventos previos)
+    let r = '<button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="resetButton()"><i class="fas fa-times mr-1"></i>Cancelar</button>' +
+        '<button type="button" class="btn btn-primary" onclick="updateEmpleado(' + btn + ')"><i class="fas fa-save mr-1"></i><span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="spinnerRegister"></span>Agregar</button>';
+
+    $(".modal-footer").html(r);
+
 }
 
 function updateEmpleado(btn) {
+    console.log('🔄 Iniciando updateEmpleado() para empleado ID:', btn);
+    // Configurar estado de loading del botón
+    setButtonLoading();
+
     const route = `/admin/admin.empleados.update/${btn}`;
     limpiarValidaciones();
     // Crear un objeto FormData para enviar los datos
@@ -330,8 +335,8 @@ function updateEmpleado(btn) {
         'ubicacion',
         'tipo_contrato',
         'ciudad_residencia',
-        'tipo_identificacion_id'
-
+        'tipo_identificacion_id',
+        'ciudad_id'
     ];
 
     // Recorrer los campos y agregarlos al FormData
@@ -361,11 +366,13 @@ function updateEmpleado(btn) {
         processData: false,
     })
     .then(response => {
+        resetButton();
         Cargar();
         $('#ModalEmpleado').modal('hide');
-        toastr.success(response.message);
+        showSuccessMessage(response.message || 'Empleado actualizado exitosamente');
     })
     .catch(e => {
+        resetButton();
         limpiarValidaciones();
         const arr = e.responseJSON;
         const toast = arr.errors;
@@ -417,6 +424,37 @@ function getSucursal(clienteId, sucursalId = null) {
                 reject(error);
             });
     });
+}
+
+function loadDepartamentos(paises) {
+    $('#departamento_id').empty().append('<option value="">Seleccione un departamento</option>');
+    paises.forEach((pais) => {
+        if(pais.nombre === 'Colombia' || pais.nombre === 'COLOMBIA' || pais.nombre === 'colombia') {
+            pais.departamentos.forEach((departamento) => {
+                $('#departamento_id').append(`<option value="${departamento.id}">${departamento.nombre}</option>`);
+            });
+        }
+    });
+}
+
+function getCiudades(departamento_id, selectedCiudad = null) {
+    let departamentoSeleccionado = window.ciudades.filter(ciudad => ciudad.departamento_id == departamento_id);
+    if (!departamentoSeleccionado) return;
+    $('#ciudad_id').empty().append('<option value="">Seleccione una ciudad</option>');
+    departamentoSeleccionado.forEach((ciudad) => {
+        $('#ciudad_id').append(`<option value="${ciudad.id}">${ciudad.nombre}</option>`);
+    });
+    $('#ciudad_id').val(selectedCiudad).change();
+}
+
+function actualizarCiudadResidencia(ciudadId) {
+ const ciudad = $('#ciudad_id option:selected').text();
+ if(ciudadId) {
+     $('#ciudad_residencia').val(ciudad);
+ } else {
+     $('#ciudad_residencia').val('');
+ }
+
 }
 
 function setUbicacion(ubicacion){
@@ -491,4 +529,40 @@ function actualizarValidaciones() {
             setUbicacion(this)
         });
     }
+}
+
+// ========================================
+// FUNCIONES PARA MANEJO DE ESTADO DE BOTONES Y UX
+// ========================================
+
+function setButtonLoading() {
+    const btn = $('#btn-guardar-empleado');
+    btn.prop('disabled', true);
+    btn.html('<i class="fas fa-spinner fa-spin mr-1"></i>Procesando...');
+}
+
+function resetButton() {
+    const btn = $('#btn-guardar-empleado');
+    btn.prop('disabled', false);
+    const isEditing = $('#modal-title-text').text().includes('Editar');
+    const text = isEditing ? 'Actualizar Empleado' : 'Guardar Empleado';
+    const icon = isEditing ? 'fas fa-save' : 'fas fa-save';
+    btn.html(`<i class="${icon} mr-1"></i>${text}`);
+}
+
+// Función para mostrar feedback visual mejorado
+function showSuccessMessage(message) {
+    toastr.success(message, '¡Éxito!', {
+        timeOut: 3000,
+        positionClass: "toast-top-right",
+        showMethod: 'fadeIn'
+    });
+}
+
+function showErrorMessage(message) {
+    toastr.error(message, 'Error', {
+        timeOut: 5000,
+        positionClass: "toast-top-right",
+        showMethod: 'fadeIn'
+    });
 }

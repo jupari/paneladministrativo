@@ -299,11 +299,311 @@ return [
     |
     */
 
+    // 'menu' => [
+    //     // Navbar items:
+    //     [
+    //         'type' => 'navbar-search',
+    //         'text' => 'search',
+    //         'topnav_right' => false,
+    //     ],
+    //     [
+    //         'type' => 'fullscreen-widget',
+    //         'topnav_right' => true,
+    //     ],
+
+    //     // ========================================
+    //     // DASHBOARD PRINCIPAL
+    //     // ========================================
+    //     [
+    //         'text' => 'Dashboard',
+    //         'route' => 'dashboard',
+    //         'icon' => 'fas fa-tachometer-alt text-primary',
+    //         'can' => 'admin.dashboard'
+    //     ],
+
+    //     // ========================================
+    //     // GESTIÓN DE TERCEROS
+    //     // ========================================
+    //     [
+    //         'text' => 'Terceros',
+    //         'icon' => 'fas fa-handshake text-success',
+    //         'can' => ['terceros.index','users.index'],
+    //         'submenu' => [
+    //             [
+    //                 'text' => 'Clientes',
+    //                 'route' => 'admin.clientes.index',
+    //                 'icon' => 'fas fa-users text-success',
+    //                 'can' => 'terceros.index',
+    //             ],
+    //             [
+    //                 'text' => 'Proveedores',
+    //                 'route' => 'admin.proveedores.index',
+    //                 'icon' => 'fas fa-truck text-primary',
+    //                 'can' => 'terceros.index',
+    //             ],
+    //             [
+    //                 'text' => 'Empleados (Terceros)',
+    //                 'route' => 'admin.empleados-terceros.index',
+    //                 'icon' => 'fas fa-user-tie text-info',
+    //                 'can' => 'empleados.index',
+    //             ],
+    //             [
+    //                 'text' => 'Vendedores',
+    //                 'route' => 'admin.vendedores.index',
+    //                 'icon' => 'fas fa-male text-warning',
+    //                 'can' => 'terceros.index',
+    //             ],
+    //             [
+    //                 'text' => 'Ciudades',
+    //                 'route' => 'admin.ubicaciones.index',
+    //                 'icon' => 'fas fa-map-marker-alt text-secondary',
+    //                 'can' => 'configuracion.index',
+    //             ],
+    //         ]
+    //     ],
+
+    //     // ========================================
+    //     // GESTIÓN DE PERSONAL Y CONTRATOS
+    //     // ========================================
+    //     [
+    //         'text' => 'Gestión de Personal',
+    //         'icon' => 'fas fa-user-friends text-info',
+    //         'can' => ['empleados.index','configuracion.index'],
+    //         'submenu' => [
+    //             [
+    //                 'text' => 'Contratos',
+    //                 'route' => 'admin.contratos.index',
+    //                 'icon' => 'fas fa-file-contract text-primary',
+    //                 'can' => 'empleados.index',
+    //             ],
+    //             [
+    //                 'text' => 'Empleados',
+    //                 'route' => 'admin.empleados.index',
+    //                 'icon' => 'fas fa-address-card text-success',
+    //                 'can' => 'empleados.index',
+    //             ],
+    //             [
+    //                 'text' => 'Nómina',
+    //                 'icon' => 'fas fa-money-check-alt text-info',
+    //                 'can' => 'nomina.index',
+    //                 'submenu' => [
+    //                     [
+    //                         'text' => 'Periodos de Nómina',
+    //                         'route' => 'admin.nomina.payruns.index',
+    //                         'icon' => 'fas fa-calendar-check',
+    //                         'icon_color' => 'info',
+    //                         'can' => 'nomina.procesos.index',
+    //                     ],
+    //                     [
+    //                         'text' => 'Novedades de Nómina',
+    //                         'route' => 'admin.nomina.novelties.index',
+    //                         'icon' => 'fas fa-exclamation-triangle',
+    //                         'icon_color' => 'danger',
+    //                         'can' => 'nomina.novedades.index',
+    //                     ],
+    //                     [
+    //                         'text' => 'Conceptos de Nómina',
+    //                         'route' => 'admin.nomina.concepts.index',
+    //                         'icon' => 'fas fa-list',
+    //                         'icon_color' => 'warning',
+    //                         // Admite ambos nombres de permiso por compatibilidad
+    //                         'can' => ['nomina.conceptos.index','nomina.concepts.index'],
+    //                     ],
+    //                     [
+    //                         'text' => 'Reportes de Nómina',
+    //                         'route' => 'admin.nomina.reports.participants.index',
+    //                         'icon' => 'fas fa-chart-bar',
+    //                         'icon_color' => 'success',
+    //                         'can' => 'nomina.reports.index',
+    //                     ],
+    //                 ],
+    //             ],
+    //             [
+    //                 'text' => 'Cargos',
+    //                 'route' => 'admin.cargos.index',
+    //                 'icon' => 'fas fa-briefcase text-warning',
+    //                 'can' => 'empleados.index',
+    //             ],
+    //             [
+    //                 'text' => 'Plantillas',
+    //                 'route' => 'admin.plantillas.index',
+    //                 'icon' => 'fas fa-file-alt text-info',
+    //                 'can' => 'configuracion.index',
+    //             ],
+    //         ]
+    //     ],
+
+    //     // ========================================
+    //     // COTIZACIONES Y VENTAS
+    //     // ========================================
+    //     [
+    //         'text' => 'Cotizaciones',
+    //         'icon' => 'fas fa-calculator text-primary',
+    //         'can' => ['cotizaciones.index'],
+    //         'submenu' => [
+    //             [
+    //                 'text' => 'Nueva Cotización',
+    //                 'route' => 'admin.cotizaciones.index',
+    //                 'icon' => 'fas fa-plus-circle text-success',
+    //                 'can' => 'cotizaciones.index',
+    //             ],
+    //             [
+    //                 'text' => 'Solicitudes de Aprobación',
+    //                 'route' => 'admin.cotizaciones.solicitudes.index',
+    //                 'icon' => 'fas fa-clipboard-check text-warning',
+    //                 'can' => 'cotizaciones.index',
+    //             ],
+    //         ]
+    //     ],
+    //     [
+    //         'text' => 'Producción (Taller)',
+    //         'icon' => 'fas fa-industry text-primary',
+    //         // si aún no tienes permisos, puedes quitar 'can' o ponerlo amplio.
+    //         'can' => ['nomina.index','empleados.index','configuracion.index'],
+    //         'submenu' => [
+    //             [
+    //                 'text' => 'Órdenes de Producción',
+    //                 'route' => 'admin.produccion.orders.index',
+    //                 'icon' => 'fas fa-clipboard-list',
+    //                 'icon_color' => 'primary',
+    //                 // 'can' => 'produccion.orders.index', // opcional si ya manejas permisos
+    //             ],
+    //             [
+    //                 'text' => 'Logs de Producción',
+    //                 'route' => 'admin.produccion.logs.index',
+    //                 'icon' => 'fas fa-list',
+    //                 'icon_color' => 'info',
+    //                 // 'can' => 'produccion.logs.index',
+    //             ],
+    //             [
+    //                 'text' => 'Liquidación Destajo',
+    //                 'route' => 'admin.produccion.settlements.index',
+    //                 'icon' => 'fas fa-money-check-alt',
+    //                 'icon_color' => 'success',
+    //                 // 'can' => 'produccion.settlements.index',
+    //             ],
+
+    //             // ---------------------------
+    //             // Opcionales (si ya los creas)
+    //             // ---------------------------
+    //             [
+    //                 'text' => 'Operaciones',
+    //                 'route' => 'admin.produccion.operations.index',
+    //                 'icon' => 'fas fa-tasks',
+    //                 'icon_color' => 'warning',
+    //                 // 'can' => 'produccion.operations.index',
+    //             ],
+    //             [
+    //                 'text' => 'Tarifas por Producto',
+    //                 'route' => 'admin.produccion.rates.index',
+    //                 'icon' => 'fas fa-tags',
+    //                 'icon_color' => 'secondary',
+    //                 // 'can' => 'produccion.rates.index',
+    //             ],
+    //         ],
+    //     ],
+
+    //     // ========================================
+    //     // PARAMETRIZACIÓN
+    //     // ========================================
+    //     [
+    //         'text' => 'Parametrización',
+    //         'icon' => 'fas fa-cogs text-secondary',
+    //         'can' => ['configuracion.index'],
+    //         'submenu' => [
+    //             [
+    //                 'text' => 'Parámetros de Liquidación',
+    //                 'icon' => 'fas fa-calculator text-primary',
+    //                 'route' => 'admin.parametrizacion.index',
+    //                 'can' => 'configuracion.index',
+    //             ],
+    //             [
+    //                 'text' => 'Categorías',
+    //                 'icon' => 'fas fa-tags text-success',
+    //                 'route' => 'admin.categoria.index',
+    //                 'can' => 'configuracion.index',
+    //             ],
+    //             [
+    //                 'text' => 'Novedades',
+    //                 'icon' => 'fas fa-bell text-warning',
+    //                 'route' => 'admin.novedad.index',
+    //                 'can' => 'configuracion.index',
+    //             ],
+    //             [
+    //                 'text' => 'Items Propios',
+    //                 'icon' => 'fas fa-box text-info',
+    //                 'route' => 'admin.items-propios.index',
+    //                 'can' => 'configuracion.index',
+    //             ],
+    //             [
+    //                 'text' => 'Parámetros del Sistema',
+    //                 'route' => 'admin.elementos.index',
+    //                 'icon' => 'fas fa-wrench text-secondary',
+    //                 'can' => 'configuracion.index',
+    //             ],
+    //         ]
+    //     ],
+
+    //     // ========================================
+    //     // CONFIGURACIÓN DEL SISTEMA
+    //     // ========================================
+    //     [
+    //         'text' => 'Configuración Gral',
+    //         'icon' => 'fas fa-tools text-dark',
+    //         'can' => ['users.index','roles.index','configuracion.index','permission.index'],
+    //         'submenu' => [
+    //             [
+    //                 'text' => 'Usuarios',
+    //                 'route' => 'admin.users.index',
+    //                 'icon' => 'fas fa-users text-primary',
+    //                 'can' => 'users.index',
+    //             ],
+    //             [
+    //                 'text' => 'Roles',
+    //                 'route' => 'admin.roles.index',
+    //                 'icon' => 'fas fa-user-tag text-success',
+    //                 'can' => 'roles.index'
+    //             ],
+    //             [
+    //                 'text' => 'Permisos',
+    //                 'route' => 'admin.permission.index',
+    //                 'icon' => 'fas fa-key text-warning',
+    //                 'can' => 'permission.index',
+    //             ],
+    //         ]
+    //     ],
+
+    //     // ========================================
+    //     // COMUNICACIÓN
+    //     // ========================================
+    //     [
+    //         'text' => 'Comunicación',
+    //         'icon' => 'fas fa-envelope text-info',
+    //         'submenu' => [
+    //             [
+    //                 'text' => 'Gestión de Emails',
+    //                 'route' => 'admin.emails.index',
+    //                 'icon' => 'fas fa-mail-bulk text-primary',
+    //             ],
+    //         ]
+    //     ],
+
+    //     // ========================================
+    //     // EMPRESAS
+    //     // ========================================
+    //     [
+    //         'text' => 'Empresas',
+    //         'route' => 'admin.companies.index',
+    //         'icon' => 'fas fa-building text-success',
+    //         'can' => 'companies.index',
+    //     ],
+    // ],
+
     'menu' => [
-        // Navbar items:
+        // Navbar
         [
             'type' => 'navbar-search',
-            'text' => 'search',
+            'text' => 'Buscar',
             'topnav_right' => false,
         ],
         [
