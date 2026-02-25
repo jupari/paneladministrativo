@@ -53,6 +53,7 @@ use App\Http\Controllers\Inventario\SaldoController;
 use App\Http\Controllers\Nomina\NominaConceptoController;
 use App\Http\Controllers\Nomina\NominaNovedadController;
 use App\Http\Controllers\Nomina\NominaPayRunController;
+use App\Http\Controllers\Nomina\NominaPayslipController;
 use App\Http\Controllers\Nomina\NominaReportController;
 use App\Http\Controllers\Produccion\procesos\ProcesoController;
 use App\Http\Controllers\Produccion\procesos\ProcesoDetController;
@@ -610,6 +611,12 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::get('admin.nomina.reports.lines', [NominaReportController::class, 'lines'])->name('admin.nomina.reports.lines');
     });
 
+    Route::controller(NominaPayslipController::class)->group(function () {
+        Route::get('admin.nomina.payruns.payslips', [NominaPayslipController::class, 'index'])->name('admin.nomina.payruns.payslips.index');
+        Route::get('admin.nomina.payruns.payslips.list/{payRunId}', [NominaPayslipController::class, 'list'])->name('admin.nomina.payruns.payslips.list'); // select
+        Route::get('admin.nomina.payruns.payslips.show/{payRun}/{participantType}/{participantId}', [NominaPayslipController::class, 'show'])->name('admin.nomina.payruns.payslips.show');
+    });
+
 
     // Órdenes
     Route::controller(ProdOrderController::class)->group(function () {
@@ -688,9 +695,6 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::post('admin.organization.cost-centers.update/{id}', [CostCenterController::class,'update'])->name('admin.costCenters.update');
         Route::get('admin.organization.cost-centers.list', [CostCenterController::class,'list'])->name('admin.costCenters.list');
     });
-
-
-
 
 
 });

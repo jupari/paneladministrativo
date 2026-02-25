@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Nomina;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Nomina\StoreNominaPayRunRequest;
+use App\Models\Empleado;
 use App\Models\Nomina\NominaPayRun;
 use App\Services\Nomina\NominaEngineService;
 use App\Services\Nomina\NominaPayRunService;
@@ -38,13 +39,14 @@ class NominaPayRunController extends Controller
         return (int) $companyId;
     }
 
-   public function index(Request $request)
+    public function index(Request $request)
     {
         $companyId = $this->getCompanyId();
 
         $query = NominaPayRun::query()
+            ->with('participants') // para mostrar cantidad de participantes
             ->where('company_id', $companyId)
-            ->select(['id', 'run_type', 'period_start', 'period_end', 'pay_date', 'status', 'created_at'])
+            ->select(['id', 'run_type', 'period_start', 'period_end', 'pay_date', 'status', 'created_at', 'updated_at'])
             ->orderByDesc('id');
         if ($request->ajax()) {
             return DataTables::of($query)
@@ -81,7 +83,18 @@ class NominaPayRunController extends Controller
                                         <i class='fas fa-calculator'></i>
                                     </button>";
 
-                        return $btnEdit . $btnCalc;
+                        // Armamos el enlace en pasos para evitar problemas de comillas
+                        $payslipUrl = route('admin.nomina.payruns.payslips.show', [
+                            'payRun' => $r->id,
+                            'participantType' => $r->run_type,
+                            'participantId' => $r->participants->count() > 0 ? $r->participants->first()->participant_id : 0, // ejemplo con el primer participante
+                        ]);
+
+                        $btnImprimir = "<a target='_blank' class='btn btn-sm btn-secondary' href='" . $payslipUrl . "'>"
+                            . "<i class='fas fa-print'></i>"
+                            . "</a>";
+
+                        return $btnEdit . $btnCalc . $btnImprimir;
                     })
                     ->rawColumns(['status', 'acciones'])
                     ->make(true);

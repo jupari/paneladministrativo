@@ -135,7 +135,7 @@ class NominaEngineService
 
     public function calculate(NominaPayRun $payRun): void
     {
-        if (in_array($payRun->status, ['DRAFT','CALCULATED'], true)) {
+        if (!in_array($payRun->status, ['DRAFT','CALCULATED'], true)) {
             throw new \RuntimeException("No se puede calcular en estado {$payRun->status}");
         }
 
@@ -161,6 +161,11 @@ class NominaEngineService
                 })
                 ->get()
                 ->groupBy('nomina_concept_id');
+
+                Log::info('Reglas cargadas para cálculo', [
+                    'pay_run_id' => $payRun->id,
+                    'rules_count' => $rules->count(),
+                ]);
 
             foreach ($participants as $p) {
 
@@ -270,6 +275,39 @@ class NominaEngineService
 
                     $honConcept = $conceptsByCode->get('CON_HONORARIOS');
                     $honConceptId = $honConcept?->id;
+                    $destajoConcept = $conceptsByCode->get('LAB_DESTAJO');
+                    Log::info('Calculando para contratista', [
+                        'participant_id' => $p->participant_id,
+                        'hon_concept_exists' => $honConcept ? 'YES' : 'NO',
+                        'destajo_concept_exists' => $destajoConcept ? json_encode($destajoConcept) : 'NO',
+                    ]);
+                    // ✅ Pago por destajo para contratistas (concepto LAB_DESTAJO definido como DEVENGADO no salarial)
+                    if ($destajoConcept) {
+                        $destajoNov = $novelties->where('nomina_concept_id', $destajoConcept->id);
+                        $destajoAmount = (float) $destajoNov->sum(fn($n) => (float) ($n->amount ?? 0));
+                        Log::info('Cálculo de destajo', [
+                            'destajo_concept_id' => $destajoConcept->id,
+                            'destajo_novelties_count' => $destajoNov->count(),
+                            'destajo_amount' => $destajoAmount,
+                        ]);
+                        if ($destajoAmount > 0) {
+                            $lines[] = $this->line(
+                                $payRun,
+                                $p,
+                                $destajoConcept->id,
+                                1,
+                                $destajoAmount,
+                                1,
+                                $destajoAmount,
+                                'ADD',
+                                'NOVELTY',
+                                'Pago por destajo'
+                            );
+                        }
+
+                        // Evita duplicar las mismas novedades en el bucle general
+                        $novelties = $novelties->reject(fn($n) => (int)$n->nomina_concept_id === (int)$destajoConcept->id)->values();
+                    }
 
                     // Honorarios deben venir por novedad (suma)
                     $hon = 0.0;
@@ -319,10 +357,23 @@ class NominaEngineService
                     // Retenciones sobre honorarios
                     $lines = array_merge($lines, $this->percentLine($payRun, $p, $conceptsByCode->get('CON_DED_RETEFUENTE'), $rules, $hon, 'SUB'));
                     $lines = array_merge($lines, $this->percentLine($payRun, $p, $conceptsByCode->get('CON_DED_RETEICA'), $rules, $hon, 'SUB'));
+
+                    Log::info('Lineas', [
+                        'lines_count' => count($lines),
+                    ]);
                 }
 
                 // Persistir líneas
                 foreach ($lines as $l) {
+                    Log::info('Persistiendo línea de nómina', [
+                        'pay_run_id' => $l['pay_run_id'],
+                        'participant_type' => $l['participant_type'],
+                        'participant_id' => $l['participant_id'],
+                        'concept_id' => $l['nomina_concept_id'],
+                        'amount' => $l['amount'],
+                        'direction' => $l['direction'],
+                        'source' => $l['source'],
+                    ]);
                     NominaPayRunLine::create($l);
                 }
 

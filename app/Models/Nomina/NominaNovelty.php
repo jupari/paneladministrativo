@@ -22,6 +22,8 @@ class NominaNovelty extends Model
         'status',          // PENDING | APPLIED | CANCELLED
         'support_file_id',
         'meta',
+        'pay_run_id',     // nullable, se llena al aplicar a un payrun específico
+        'source_ref',     // referencia al origen de la novedad (ej: id de una incidencia, o un registro externo)
     ];
 
     protected $casts = [
