@@ -44,7 +44,6 @@ use App\Http\Controllers\Produccion\ProdOperationController;
 use App\Http\Controllers\Produccion\ProdRateController;
 use App\Http\Controllers\Produccion\ProdOrderOperationController;
 use App\Http\Controllers\Produccion\ProdReportController;
-
 use App\Http\Controllers\ItemPropio\ItemPropioController;
 use App\Http\Controllers\Produccion\MaterialController;
 use App\Http\Controllers\Inventario\MovimientoController;
