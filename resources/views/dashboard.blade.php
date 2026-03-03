@@ -1,138 +1,133 @@
 @extends('adminlte::page')
 
-@section('title', 'Dashboard')
-
-@section('plugin.Datatables')
+@section('title', 'Inicio')
 
 @section('content_header')
-    <h1>Dashboard</h1>
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+        <div>
+            <h1 class="mb-1">Panel de Inicio</h1>
+            <p class="text-muted mb-0">Resumen general y accesos rápidos.</p>
+        </div>
+        <div class="mt-2 mt-md-0">
+            <span class="badge badge-light p-2">
+                <i class="far fa-calendar-alt mr-1"></i> {{ now()->format('d/m/Y') }}
+            </span>
+        </div>
+    </div>
 @stop
 
 @section('content')
+    @php
+        $totalCuentas = collect($resultados)->sum('cantidad');
+    @endphp
+
     <div class="container-fluid">
+        <div class="welcome-banner mb-4">
+            <div>
+                <h4 class="mb-1">Bienvenido, {{ auth()->user()->name ?? 'Usuario' }}</h4>
+                <p class="mb-0 text-muted">Consulta indicadores y entra rápido a los módulos más usados.</p>
+            </div>
+            <div class="welcome-total">
+                <div class="text-muted">Total de cuentas</div>
+                <div class="h3 mb-0">{{ $totalCuentas }}</div>
+            </div>
+        </div>
+
+        @if(empty($resultados))
+            <div class="alert alert-info">
+                No hay indicadores disponibles por ahora.
+            </div>
+        @endif
 
         <div class="row">
             @foreach ($resultados as $item)
-            <div class="col-lg-3 col-6">
-                <div class="small-box bg-{{$item->color}}">
-                    <div class="inner">
-                        <h3>{{$item->cantidad}}</h3>
-                        <p>{{$item->estado}}</p>
+                <div class="col-lg-3 col-sm-6">
+                    <div class="small-box bg-{{ $item->color }}">
+                        <div class="inner">
+                            <h3>{{ $item->cantidad }}</h3>
+                            <p>{{ $item->estado }}</p>
+                        </div>
+                        <div class="icon">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
                     </div>
-                    <div class="icon">
-                        <i class="ion ion-bag"></i>
-                    </div>
-                    {{-- <a href="#" class="small-box-footer">Más info <i class="fas fa-arrow-circle-right"></i></a> --}}
                 </div>
-            </div>
             @endforeach
-
-            {{-- <div class="col-lg-3 col-6">
-
-                <div class="small-box bg-success">
-                    <div class="inner">
-                        <h3>53<sup style="font-size: 20px">%</sup></h3>
-                        <p>Bounce Rate</p>
-                    </div>
-                    <div class="icon">
-                        <i class="ion ion-stats-bars"></i>
-                    </div>
-                    <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
-                </div>
-            </div>
-
-            <div class="col-lg-3 col-6">
-
-                <div class="small-box bg-warning">
-                    <div class="inner">
-                        <h3>44</h3>
-                        <p>User Registrations</p>
-                    </div>
-                    <div class="icon">
-                        <i class="ion ion-person-add"></i>
-                    </div>
-                    <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
-                </div>
-            </div>
-
-            <div class="col-lg-3 col-6">
-
-                <div class="small-box bg-danger">
-                    <div class="inner">
-                        <h3>65</h3>
-                        <p>Unique Visitors</p>
-                    </div>
-                    <div class="icon">
-                        <i class="ion ion-pie-graph"></i>
-                    </div>
-                    <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
-                </div>
-            </div> --}}
-
         </div>
 
-        <div class="col-md-12">
-            <div class="card">
-                {{-- <div class="card-header border-transparent">
-                    <h3 class="card-title">Indicadores</h3>
-                    <div class="card-tools">
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                        <button type="button" class="btn btn-tool" data-card-widget="remove">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Accesos rápidos</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @can('cotizaciones.index')
+                        <div class="col-md-3 col-6 mb-3">
+                            <a href="{{ route('admin.cotizaciones.index') }}" class="quick-link">
+                                <i class="fas fa-file-invoice"></i>
+                                <span>Cotizaciones</span>
+                            </a>
+                        </div>
+                    @endcan
+                    @can('nomina.index')
+                        <div class="col-md-3 col-6 mb-3">
+                            <a href="{{ route('admin.nomina.payruns.index') }}" class="quick-link">
+                                <i class="fas fa-file-invoice-dollar"></i>
+                                <span>Nómina</span>
+                            </a>
+                        </div>
+                    @endcan
+                    @can('configuracion.index')
+                        <div class="col-md-3 col-6 mb-3">
+                            <a href="{{ route('admin.produccion.orders.index') }}" class="quick-link">
+                                <i class="fas fa-industry"></i>
+                                <span>Producción</span>
+                            </a>
+                        </div>
+                    @endcan
+                    @can('users.index')
+                        <div class="col-md-3 col-6 mb-3">
+                            <a href="{{ route('admin.users.index') }}" class="quick-link">
+                                <i class="fas fa-users-cog"></i>
+                                <span>Usuarios</span>
+                            </a>
+                        </div>
+                    @endcan
                 </div>
-                {{-- <div class="card-body my-3">
-                    <div class="table-responsive">
-                        <table class="table m-0" id="table-res">
-                            <thead>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Estados de cuentas</h3>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Estado</th>
+                                <th class="text-right">Cantidad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($resultados as $item)
                                 <tr>
-                                    <th>#</th>
-                                    <th>Cuenta</th>
-                                    <th>Usuario</th>
-                                    <th>Fecha de Asignación</th>
-                                    <th>Tiempo trasncurrido</th>
-                                    <th>Estado</th>
-                                    <th>Acciones</th>
+                                    <td>
+                                        <span class="badge badge-{{ $item->color }}">{{ $item->estado }}</span>
+                                    </td>
+                                    <td class="text-right">{{ $item->cantidad }}</td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($resCuentas as $item)
-                                    <tr>
-                                        <td>{{ ($loop->index)+1 }}</td>
-                                        <td>{{ $item->nombre_cuenta }}</td>
-                                        <td>{{ $item->usuario->name }}</td>
-                                        <td>{{ \Carbon\Carbon::parse($item->fecha_asig)->format('d/m/Y') }}</td>
-                                        <td>{{ 30-(intval($item->tiempo)==0?0:intval($item->tiempo)) }} de 30 día(s)</td>
-                                        <td><span class="badge badge-{{ $item->estado->color }}">{{ $item->estado->estado }}</span></td>
-                                        <td>
-                                            @if($item->estado->estado=='Asignadas' && !$userAdmin)
-                                                <button type="button" onclick="consultarCorreosCodigoAcceso('{{ $item->nombre_cuenta }}')" class="btn btn-info btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Ver código de acceso temporal"><i class="fas fa-envelope"></i></button>
-                                                <button type="button" onclick="consultarCorreosReestablecimiento('{{ $item->nombre_cuenta }}')" class="btn btn-warning btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Ver restablecimiento de contraseña"><i class="fas fa-key"></i></button>
-                                                <button type="button" onclick="upCuenta('{{ $item->id }}')" class="btn btn-secondary btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Editar el password del usuario"><i class="fas fa-pencil-alt"></i></button>
-                                            @endif
-                                            @if($userAdmin)
-                                                <button type="button" onclick="consultarCorreosCodigoAcceso('{{ $item->nombre_cuenta }}')" class="btn btn-info btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Ver código de acceso temporal"><i class="fas fa-envelope"></i></button>
-                                                <button type="button" onclick="consultarCorreosReestablecimiento('{{ $item->nombre_cuenta }}')" class="btn btn-warning btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Ver restablecimiento de contraseña"><i class="fas fa-key"></i></button>
-                                                <button type="button" onclick="upCuenta('{{ $item->id }}')" class="btn btn-secondary btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Editar el password del usuario"><i class="fas fa-pencil-alt"></i></button>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @endforeach
-                              </tbody>
-                        </table>
-                    </div>
+                            @empty
+                                <tr>
+                                    <td colspan="2" class="text-center text-muted">Sin datos para mostrar.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
-                <div class="card-footer clearfix">
-                    <a href="javascript:void(0)" class="btn btn-sm btn-info float-left">Place New Order</a>
-                    <a href="javascript:void(0)" class="btn btn-sm btn-secondary float-right">View All Orders</a>
-                </div> --}}
-
             </div>
         </div>
-
     </div>
 @stop
 
@@ -140,47 +135,65 @@
 @include('admin.emailreader.email')
 
 @section('css')
-    {{-- Add here extra stylesheets --}}
-    {{-- <link rel="stylesheet" href="/css/admin_custom.css"> --}}
-    <style>
-        .email {
-            background: #fff;
-            margin: 5px 0;
-            padding: 5px;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .email h2 {
-            margin: 0 0 5px;
-        }
-        .email p {
-            margin: 5px 0;
-        }
-        .email .info {
-            color: #555;
-            font-size: 0.9em;
-        }
-        .email .attachments {
-            color: #d9534f;
-        }
-    </style>
-@stop
+<style>
+    .welcome-banner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        padding: 16px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #ffffff 0%, #eef4ff 100%);
+        border: 1px solid #dfe7f7;
+    }
 
-{{-- @section('js')
-    <script>
-        $(function(){
-            $('#table-res').DataTable({
-                "language": {
-                    "url": "/assets/js/spanish.json"
-                },
-                paging: false,
-                pageLength: 8,
-                lengthMenu: [[2, 4, 6, 8, 10, -1], [2, 4, 6, 8, 10, "Todo(s)"]],
-        });
-        })
-    </script>
-@stop --}}
+    .welcome-total {
+        min-width: 160px;
+        text-align: right;
+    }
+
+    .quick-link {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 110px;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        color: #1f2937;
+        text-decoration: none;
+        transition: all .2s ease;
+    }
+
+    .quick-link:hover {
+        transform: translateY(-2px);
+        text-decoration: none;
+        color: #0d6efd;
+        border-color: #bfd5ff;
+        box-shadow: 0 8px 18px rgba(13, 110, 253, .12);
+    }
+
+    .quick-link i {
+        font-size: 1.25rem;
+    }
+
+    @media (max-width: 767px) {
+        .welcome-banner {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .welcome-total {
+            text-align: left;
+            min-width: auto;
+        }
+    }
+</style>
+@stop
 
 @section('js')
-        <script src="{{asset('assets/js/dashboard/dashboard.js') }}" type="text/javascript"></script>
+    <script src="{{ asset('assets/js/dashboard/dashboard.js') }}" type="text/javascript"></script>
 @stop
+

@@ -36,6 +36,16 @@ use App\Http\Controllers\Produccion\FichaTecnicaController;
 use App\Http\Controllers\Produccion\FichaTecnicaBocetoController;
 use App\Http\Controllers\Produccion\FichaTecnicaMaterialController;
 use App\Http\Controllers\Produccion\FichaTecnicaProcesoController;
+<<<<<<< Updated upstream
+=======
+use App\Http\Controllers\Produccion\ProdOrderController;
+use App\Http\Controllers\Produccion\ProdProductionLogController;
+use App\Http\Controllers\Produccion\ProdSettlementController;
+use App\Http\Controllers\Produccion\ProdOperationController;
+use App\Http\Controllers\Produccion\ProdRateController;
+use App\Http\Controllers\Produccion\ProdOrderOperationController;
+use App\Http\Controllers\Produccion\ProdReportController;
+>>>>>>> Stashed changes
 use App\Http\Controllers\ItemPropio\ItemPropioController;
 use App\Http\Controllers\Produccion\MaterialController;
 use App\Http\Controllers\Inventario\MovimientoController;
@@ -213,7 +223,15 @@ Route::middleware(['auth', 'company.license'])->group(function () {
     Route::controller(ParametrizacionController::class)->group(function () {
         Route::get('admin.parametrizacion.index', [ParametrizacionController::class, 'index'])->name('admin.parametrizacion.index');
         Route::post('admin.parametrizacion.storenovedades', [ParametrizacionController::class, 'storeNovedades'])->name('admin.parametrizacion.storenovedades');
+        Route::delete('admin.parametrizacion.deletenovedad/{id}', [ParametrizacionController::class, 'deleteNovedad'])->name('admin.parametrizacion.deletenovedad');
+        Route::delete('admin.parametrizacion.deletecosto/{id}', [ParametrizacionController::class, 'deleteCosto'])->name('admin.parametrizacion.deletecosto');
         Route::post('admin.parametrizacion.storecostos', [ParametrizacionController::class, 'storeCostos'])->name('admin.parametrizacion.storecostos');
+        Route::post('admin.parametrizacion.generar_tabla_precios', [ParametrizacionController::class, 'generarTablaPrecios'])
+                    ->name('admin.parametrizacion.generar_tabla_precios');
+        Route::get('admin.parametrizacion.tabla_precios', [ParametrizacionController::class, 'tablaPreciosData'])
+                ->name('admin.parametrizacion.tabla_precios');
+        Route::post('admin.parametrizacion.generar_tabla_precios', [ParametrizacionController::class, 'generarTablaPrecios'])
+                ->name('admin.parametrizacion.generar_tabla_precios');
     });
 
     Route::controller(CategoriaController::class)->group(function () {
@@ -539,4 +557,140 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::put('admin.proveedores.update/{proveedor}', [ProveedorController::class, 'update'])->name('admin.proveedores.update');
         Route::delete('admin.proveedores.destroy/{proveedor}', [ProveedorController::class, 'destroy'])->name('admin.proveedores.destroy');
     });
+<<<<<<< Updated upstream
+=======
+
+
+    Route::controller(NominaPayRunController::class)->group(function () {
+        Route::get('admin.nomina.payruns.index', [NominaPayRunController::class, 'index'])->name('admin.nomina.payruns.index');
+        Route::post('admin.nomina.payruns.store', [NominaPayRunController::class, 'store'])->name('admin.nomina.payruns.store');
+        Route::get('admin.nomina.payruns.show/{id}', [NominaPayRunController::class, 'show'])->name('admin.nomina.payruns.show');
+        Route::post('admin.nomina.payruns.update/{id}', [NominaPayRunController::class, 'update'])->name('admin.nomina.payruns.update');
+        Route::post('admin.nomina.payruns.calculate/{id}', [NominaPayRunController::class, 'calculate'])->name('admin.nomina.payruns.calculate');
+        Route::get('admin.nomina.payruns.list', [NominaPayRunController::class, 'list'])->name('admin.nomina.payruns.list');
+    });
+
+
+    Route::controller(NominaNovedadController::class)->group(function () {
+        Route::get('admin.nomina.novelties.index', [NominaNovedadController::class, 'index'])->name('admin.nomina.novelties.index');
+        Route::get('admin.nomina.novelties.participants', [NominaNovedadController::class, 'participants'])->name('admin.nomina.novelties.participants');
+        Route::post('admin.nomina.novelties.store', [NominaNovedadController::class, 'store'])->name('admin.nomina.novelties.store');
+        Route::get('admin.nomina.novelties.edit/{id}', [NominaNovedadController::class, 'edit'])->name('admin.nomina.novelties.edit');
+        Route::post('admin.nomina.novelties.update/{id}', [NominaNovedadController::class, 'update'])->name('admin.nomina.novelties.update');
+        Route::post('admin.nomina.novelties.recalculate-destajo', [NominaNovedadController::class, 'recalculateDestajo'])
+                ->name('admin.nomina.novelties.recalculateDestajo');
+        Route::post('admin.nomina.novelties.recalculate-destajo-settlements', [NominaNovedadController::class, 'recalculateDestajoFromSettlements'])
+                ->name('admin.nomina.novelties.recalculateDestajoFromSettlements');
+        Route::post('admin.nomina.novelties.duplicate/{id}', [NominaNovedadController::class, 'duplicate'])
+                ->name('admin.nomina.novelties.duplicate');
+    });
+
+    Route::controller(NominaConceptoController::class)->group(function () {
+        Route::get('admin.nomina.concepts.index', [NominaConceptoController::class, 'index'])->name('admin.nomina.concepts.index');
+        Route::post('admin.nomina.concepts.store', [NominaConceptoController::class, 'store'])->name('admin.nomina.concepts.store');
+        Route::get('admin.nomina.concepts.edit/{id}', [NominaConceptoController::class, 'edit'])->name('admin.nomina.concepts.edit');
+        Route::post('admin.nomina.concepts.update/{id}', [NominaConceptoController::class, 'update'])->name('admin.nomina.concepts.update');
+        Route::get('admin.nomina.concepts.list', [NominaConceptoController::class, 'list'])->name('admin.nomina.concepts.list');
+    });
+
+    // routes/web.php (o routes/admin.php)
+
+    Route::controller(NominaReportController::class)->group(function () {
+        Route::get('admin.nomina.reports.participants.index', [NominaReportController::class, 'index'])->name('admin.nomina.reports.participants.index');
+        Route::get('admin.nomina.reports.payruns.list', [NominaReportController::class, 'payRunsList'])->name('admin.nomina.reports.payruns.list'); // select
+        Route::get('admin.nomina.reports.lines', [NominaReportController::class, 'lines'])->name('admin.nomina.reports.lines');
+    });
+
+    Route::controller(ProdReportController::class)->group(function () {
+        Route::get('admin.produccion.reports.summary.period', [ProdReportController::class, 'summaryByPeriod'])->name('admin.produccion.reports.summary.period');
+        Route::get('admin.produccion.reports.operating-costs.period', [ProdReportController::class, 'operatingCostsByPeriod'])->name('admin.produccion.reports.operating-costs.period');
+    });
+
+    Route::controller(NominaPayslipController::class)->group(function () {
+        Route::get('admin.nomina.payruns.payslips', [NominaPayslipController::class, 'index'])->name('admin.nomina.payruns.payslips.index');
+        Route::get('admin.nomina.payruns.payslips.list/{payRunId}', [NominaPayslipController::class, 'list'])->name('admin.nomina.payruns.payslips.list'); // select
+        Route::get('admin.nomina.payruns.payslips.show/{payRun}/{participantType}/{participantId}', [NominaPayslipController::class, 'show'])->name('admin.nomina.payruns.payslips.show');
+    });
+
+
+    // Órdenes
+    Route::controller(ProdOrderController::class)->group(function () {
+        Route::get('admin.produccion.orders.index', [ProdOrderController::class, 'index'])->name('admin.produccion.orders.index');
+        Route::post('admin.produccion.orders.store', [ProdOrderController::class, 'store'])->name('admin.produccion.orders.store');
+        Route::get('admin.produccion.orders.edit/{id}', [ProdOrderController::class, 'edit'])->name('admin.produccion.orders.edit');
+        Route::post('admin.produccion.orders.update/{id}', [ProdOrderController::class, 'update'])->name('admin.produccion.orders.update');
+    });
+
+    // Logs
+    Route::controller(ProdProductionLogController::class)->group(function () {
+        Route::get('admin.produccion.logs.index', [ProdProductionLogController::class, 'index'])->name('admin.produccion.logs.index');
+        Route::post('admin.produccion.logs.store', [ProdProductionLogController::class, 'store'])->name('admin.produccion.logs.store');
+        Route::get('admin.produccion.logs.edit/{id}', [ProdProductionLogController::class, 'edit'])->name('admin.produccion.logs.edit');
+        Route::post('admin.produccion.logs.update/{id}', [ProdProductionLogController::class, 'update'])->name('admin.produccion.logs.update');
+        Route::get('admin.produccion.employees.list', [ProdProductionLogController::class, 'employeesList'])->name('admin.produccion.employees.list');
+    });
+
+    // Liquidación
+    Route::controller(ProdSettlementController::class)->group(function () {
+        Route::get('admin.produccion.settlements.index', [ProdSettlementController::class, 'index'])->name('admin.produccion.settlements.index');
+        Route::post('admin.produccion.settlements.calculate/{orderId}', [ProdSettlementController::class, 'calculate'])->name('admin.produccion.settlements.calculate');
+        Route::post('admin.produccion.settlements.send_to_nomina/{orderId}', [ProdSettlementController::class, 'sendToNomina'])->name('admin.produccion.settlements.send_to_nomina');
+        Route::get('admin.produccion.orders.list', [ProdSettlementController::class, 'ordersList'])->name('admin.produccion.orders.list');
+    });
+
+    // Helpers para selects
+    Route::controller(ProdOrderController::class)->group(function () {
+        Route::get('admin.produccion.orders', [ProdOrderController::class, 'index'])->name('admin.produccion.orders.index');
+        Route::get('admin.produccion.products.list', [ProdOrderController::class, 'productsList'])->name('admin.produccion.products.list');
+        Route::get('admin.produccion.operations.list', [ProdOrderController::class, 'operationsList'])->name('admin.produccion.operations.list');
+        Route::get('admin.produccion.employees.select2', [ProdOrderController::class, 'operationsSelect2'])->name('admin.produccion.employees.select2');
+    });
+
+    // CRUD Operaciones
+    Route::controller(ProdOperationController::class)->group(function () {
+        Route::get('admin.produccion.operations.index', [ProdOperationController::class, 'index'])->name('admin.produccion.operations.index');
+        Route::post('admin.produccion.operations.store', [ProdOperationController::class, 'store'])->name('admin.produccion.operations.store');
+        Route::get('admin.produccion.operations.edit/{id}', [ProdOperationController::class, 'edit'])->name('admin.produccion.operations.edit');
+        Route::post('admin.produccion.operations.update/{id}', [ProdOperationController::class, 'update'])->name('admin.produccion.operations.update');
+        Route::get('admin.produccion.operations.list', [ProdOperationController::class, 'list'])->name('admin.produccion.operations.list');
+    });
+
+    // CRUD Tarifas (Producto+Operación)
+    Route::controller(ProdRateController::class)->group(function () {
+        Route::get('admin.produccion.rates.index', [ProdRateController::class, 'index'])->name('admin.produccion.rates.index');
+        Route::get('admin.produccion.rates.list', [ProdRateController::class, 'list'])->name('admin.produccion.rates.list');
+        Route::post('admin.produccion.rates.store', [ProdRateController::class, 'store'])->name('admin.produccion.rates.store');
+        Route::get('admin.produccion.rates.edit/{id}', [ProdRateController::class, 'edit'])->name('admin.produccion.rates.edit');
+        Route::post('admin.produccion.rates.update/{id}', [ProdRateController::class, 'update'])->name('admin.produccion.rates.update');
+    });
+
+    // Routing (Operaciones por Orden) -> tab en Órdenes
+    Route::controller(ProdOrderOperationController::class)->group(function () {
+        Route::get('admin.produccion.orders.operations.index', [ProdOrderOperationController::class, 'index'])->name('admin.produccion.orders.operations.index');
+        Route::get('admin.produccion.orders.operations/{orderId}', [ProdOrderOperationController::class, 'show'])->name('admin.produccion.orders.operations.show');
+        Route::post('admin.produccion.orders.operations.store/{orderId}', [ProdOrderOperationController::class, 'store'])->name('admin.produccion.orders.operations.store');
+        Route::get('admin.produccion.orders.operations.edit/{id}', [ProdOrderOperationController::class, 'edit'])->name('admin.produccion.orders.operations.edit');
+        Route::post('admin.produccion.orders.operations.update/{id}', [ProdOrderOperationController::class, 'update'])->name('admin.produccion.orders.operations.update');
+        Route::get('admin.produccion.orders.operations.list', [ProdOrderOperationController::class, 'listByOrder'])->name('admin.produccion.orders.operations.list');
+    });
+
+    // Sucursales
+    Route::controller(BranchController::class)->group(function () {
+        Route::get('admin.organization.branches', [BranchController::class,'index'])->name('admin.branches.index');
+        Route::post('admin.organization.branches.store', [BranchController::class,'store'])->name('admin.branches.store');
+        Route::get('admin.organization.branches.edit/{id}', [BranchController::class,'edit'])->name('admin.branches.edit');
+        Route::post('admin.organization.branches.update/{id}', [BranchController::class,'update'])->name('admin.branches.update');
+        Route::get('admin.organization.branches.list', [BranchController::class,'list'])->name('admin.branches.list');
+    });
+
+    // Centros de costo
+    Route::controller(CostCenterController::class)->group(function () {
+        Route::get('admin.organization.cost-centers', [CostCenterController::class,'index'])->name('admin.costCenters.index');
+        Route::post('admin.organization.cost-centers.store', [CostCenterController::class,'store'])->name('admin.costCenters.store');
+        Route::get('admin.organization.cost-centers.edit/{id}', [CostCenterController::class,'edit'])->name('admin.costCenters.edit');
+        Route::post('admin.organization.cost-centers.update/{id}', [CostCenterController::class,'update'])->name('admin.costCenters.update');
+        Route::get('admin.organization.cost-centers.list', [CostCenterController::class,'list'])->name('admin.costCenters.list');
+    });
+
+>>>>>>> Stashed changes
 });

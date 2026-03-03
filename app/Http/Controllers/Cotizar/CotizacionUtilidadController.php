@@ -357,16 +357,12 @@ class CotizacionUtilidadController extends Controller
                 stripos($categoria->nombre, 'nómina') !== false
             )) {
                 // Obtener cargos que tienen productos en esta cotización con esta categoría
-                $cargosParametrizacion = \DB::table('ord_cotizacion_productos as ocp')
-                    ->join('parametrizacion as p', 'ocp.parametrizacion_id', '=', 'p.id')
-                    ->join('cargos as c', 'p.cargo_id', '=', 'c.id')
-                    ->where('ocp.cotizacion_id', $cotizacionId)
-                    ->where('ocp.categoria_id', $categoriaId)
-                    ->whereNotNull('ocp.parametrizacion_id')
+                $cargosParametrizacion = \DB::table('cargos_tabla_precios as ocp')
+                    ->join('cargos as c', 'ocp.cargo_id', '=', 'c.id')
+                    ->whereNotNull('ocp.cargo_id')
                     ->select('c.id', 'c.nombre')
                     ->distinct()
                     ->get();
-
                 // Agregar cargos a la colección
                 foreach ($cargosParametrizacion as $cargo) {
                     $itemsPropios->push((object)[

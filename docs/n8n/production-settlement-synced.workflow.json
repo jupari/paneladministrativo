@@ -1,0 +1,187 @@
+{
+  "name": "Production Settlement Synced",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "production-settlement-synced",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "Webhook_1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        280,
+        260
+      ],
+      "webhookId": "production-settlement-synced"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"event_type\"]}}",
+              "operation": "equal",
+              "value2": "production.settlement.synced"
+            }
+          ]
+        }
+      },
+      "id": "IF_ValidEvent",
+      "name": "IF Valid Event",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        520,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\"ok\": true, \"received\": true, \"event_key\": $json[\"source_ref\"] || null} }}",
+        "options": {}
+      },
+      "id": "Respond_Ok",
+      "name": "Respond OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1020,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseCode": 400,
+        "responseBody": "={{ {\"ok\": false, \"message\": \"event_type invalido\"} }}",
+        "options": {}
+      },
+      "id": "Respond_BadRequest",
+      "name": "Respond Bad Request",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        760,
+        380
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "company_id",
+              "name": "company_id",
+              "value": "={{$json[\"company_id\"]}}",
+              "type": "number"
+            },
+            {
+              "id": "order_id",
+              "name": "order_id",
+              "value": "={{$json[\"order_id\"]}}",
+              "type": "number"
+            },
+            {
+              "id": "settlement_id",
+              "name": "settlement_id",
+              "value": "={{$json[\"settlement_id\"]}}",
+              "type": "number"
+            },
+            {
+              "id": "employee_id",
+              "name": "employee_id",
+              "value": "={{$json[\"employee_id\"]}}",
+              "type": "number"
+            },
+            {
+              "id": "amount",
+              "name": "amount",
+              "value": "={{$json[\"amount\"]}}",
+              "type": "number"
+            },
+            {
+              "id": "period_start",
+              "name": "period_start",
+              "value": "={{$json[\"period_start\"]}}",
+              "type": "string"
+            },
+            {
+              "id": "period_end",
+              "name": "period_end",
+              "value": "={{$json[\"period_end\"]}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "Set_Normalize",
+      "name": "Normalize Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        760,
+        180
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "IF Valid Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Valid Event": {
+      "main": [
+        [
+          {
+            "node": "Normalize Payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Bad Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Payload": {
+      "main": [
+        [
+          {
+            "node": "Respond OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3e6e9f35-4f2e-4cb7-a6dc-48e65634bb1e",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "id": "production-settlement-synced",
+  "tags": []
+}
+

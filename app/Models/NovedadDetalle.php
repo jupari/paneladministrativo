@@ -12,8 +12,10 @@ class NovedadDetalle extends Model
     protected $table='novedades_detalle';
     public $timestamps = false;
     protected $fillable=[
-        'nombre',
         'novedad_id',
+        'nombre',
+        'valor_admon',
+        'valor_operativo',
         'created_at',
         'updated_at'
     ];

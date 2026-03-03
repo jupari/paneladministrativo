@@ -1,40 +1,34 @@
+let novedadesTable = null;
+
 $(function () {
-
-    // Toast
     toastr.options = {
-        "closeButton": true,
-        "debug": false,
-        "newestOnTop": false,
-        "progressBar": false,
-        "positionClass": "toast-bottom-right",
-        "preventDuplicates": false,
-        "onclick": null,
-        "showDuration": "300",
-        "hideDuration": "1000",
-        "timeOut": "5000",
-        "extendedTimeOut": "1000",
-        "showEasing": "swing",
-        "hideEasing": "linear",
-        "showMethod": "fadeIn",
-        "hideMethod": "fadeOut"
-    }
+        closeButton: true,
+        debug: false,
+        newestOnTop: false,
+        progressBar: false,
+        positionClass: "toast-bottom-right",
+        preventDuplicates: false,
+        onclick: null,
+        showDuration: "300",
+        hideDuration: "1000",
+        timeOut: "5000",
+        extendedTimeOut: "1000",
+        showEasing: "swing",
+        hideEasing: "linear",
+        showMethod: "fadeIn",
+        hideMethod: "fadeOut"
+    };
 
-    // Obtener la fecha actual
-    let fechaActual = new Date();
-
-    // Formatear la fecha al formato "2009-04-19"
-    let fechaFormateada = '2009-' + ('0' + (fechaActual.getMonth() + 1)).slice(-2) + '-' + ('0' + fechaActual.getDate()).slice(-2);
-
-
-    // // Escucha el evento de cierre de la ventana modal
-    // $('#myModal').on('hidden.bs.modal', function () {
-    //     // Activa la primera pestaña al cerrar la ventana modal
-    //     $('#custom-content-below-home-tab').tab('show');
-    // });
-
-
-     //carga de la datatable
+    // Carga inicial de la tabla y vincula filtros
     Cargar();
+
+    // Filtro por estado (Activos/Inactivos/Todos)
+    $('#estado-filter').on('change', function () {
+        const value = $(this).val();
+        if (novedadesTable) {
+            novedadesTable.column(3).search(value || '', false, false).draw();
+        }
+    });
 });
 
 //se declara la variable del modal
@@ -47,41 +41,41 @@ function Cargar() {
     if ($.fn.DataTable.isDataTable('#novedades-table')) {
         $('#novedades-table').DataTable().destroy();
     }
-    let table = $('#novedades-table').DataTable(
-        {
-            language: {
-                "url": "/assets/js/spanish.json"
-            },
-            responsive: true,
-            dom: "<'row'<'col-sm-6'B><'col-sm-6'f>>" +
-                "<'row'<'col-sm-12'ltr>>" +
-                "<'row'<'col-sm-5'i><'col-sm-7'p>>",
-            buttons: [
-                {
-                    extend: 'excel',
-                    className: 'btn btn-success',
-                    exportOptions: {
-                        columns: ':not(.exclude)'
-                    },
-                    text: '<i class="far fa-file-excel"></i>',
-                    titleAttr: 'Exportar a Excel',
-                    filename: 'reporte_excel'
-                }],
-            ajax: '/admin/admin.novedad.index',
-                columns: [
-                { data: 'DT_RowIndex', name: 'DT_RowIndex', className: 'exclude', orderable: false,searchable: false},
-                { data: 'id', name: 'id'},
-                { data: 'nombre', name: 'nombre'},
-                { data: 'active', name: 'active',className:'text-center'},
-                { data: 'created_at', name: 'created_at'},
-                { data: 'acciones', name: 'acciones', className:'text-center',className: 'exclude'},
-            ],
-            order: [[1, "asc"]],
-            pageLength: 10,
-            lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "Todo(s)"]],
-        }
-    );
-    // table.ajax.reload();
+
+    novedadesTable = $('#novedades-table').DataTable({
+        language: {
+            url: "/assets/js/spanish.json",
+            emptyTable: 'Aún no hay novedades registradas. Usa "Nueva novedad" para crear la primera.'
+        },
+        responsive: true,
+        dom: "<'row'<'col-sm-6'B><'col-sm-6'f>>" +
+            "<'row'<'col-sm-12'ltr>>" +
+            "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+        buttons: [
+            {
+                extend: 'excel',
+                className: 'btn btn-success',
+                exportOptions: {
+                    columns: ':not(.exclude)'
+                },
+                text: '<i class="far fa-file-excel"></i>',
+                titleAttr: 'Exportar a Excel',
+                filename: 'reporte_excel'
+            }
+        ],
+        ajax: '/admin/admin.novedad.index',
+        columns: [
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', className: 'exclude', orderable: false, searchable: false },
+            { data: 'id', name: 'id' },
+            { data: 'nombre', name: 'nombre' },
+            { data: 'active', name: 'active', className: 'text-center' },
+            { data: 'created_at', name: 'created_at' },
+            { data: 'acciones', name: 'acciones', className: 'text-center exclude' },
+        ],
+        order: [[1, "asc"]],
+        pageLength: 10,
+        lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "Todo(s)"]],
+    });
 }
 
 // Limpiar inputs
@@ -139,7 +133,7 @@ function regCargo() {
     cleanInput();
      // FIN LIMPIAR CAMPOS
     limpiarValidaciones();
-     let r = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>' +
+     let r = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
         '<button type="button" class="btn btn-primary" onclick="registerCargo()"><span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="spinnerRegister"></span>Agregar</button>';
 
     $(".modal-footer").html(r);
@@ -183,7 +177,7 @@ function registerCargo() {
         $('#spinnerRegister').addClass('d-none');
         $('#spinnerRegister').removeClass('d-block');
         Cargar();
-        myModal.modal('toggle'); // Reemplaza con tu lógica de modal
+        $('#ModalCargo').modal('hide');
         toastr.success(response.message); // Muestra el mensaje de éxito
 
     }).catch(e => {
@@ -200,7 +194,7 @@ function registerCargo() {
             toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.'); // Muestra el mensaje de error
         } else if (e.status == 403) {
             // Errores de permisos
-            $('#ModalCliente').modal('toggle');
+            $('#ModalCargo').modal('hide');
             toastr.warning(arr.error);
         }
     });
@@ -208,13 +202,13 @@ function registerCargo() {
 
 // Actualizar usuario
 function upCargo(btn) {
-    myModal.modal('show')
+    $('#ModalCargo').modal('show');
     $('#exampleModalLabel').html('Editar Cargo');
     // LIMPIAR CAMPOS
     cleanInput();
     showCustomCargo(btn);
     // FIN LIMPIAR CAMPOS
-    let u = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>' +
+    let u = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
         '<button id="editar" class="btn btn-primary" onclick="updateCargo(' + btn + ')">Guardar</button>';
     $(".modal-footer").html(u);
 }
@@ -256,7 +250,7 @@ function updateCargo(btn) {
     })
     .then(response => {
         Cargar();
-        myModal.modal('toggle');
+        $('#ModalCargo').modal('hide');
         toastr.success(response.message);
     })
     .catch(e => {
@@ -266,13 +260,13 @@ function updateCargo(btn) {
 
         if (e.status === 422) {
             // Errores de validación
-            $('#myModal').data('bs.modal')._config.backdrop = 'static';
+            $('#ModalCargo').data('bs.modal')._config.backdrop = 'static';
             $.each(toast, function(key, value) {
                 $('#error_' + key).text(value[0]);
             });
         toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.');
         } else if (e.status === 403) {
-            myModal.modal('toggle');
+            $('#ModalCargo').modal('hide');
             toastr.warning(arr.message);
         }
     });

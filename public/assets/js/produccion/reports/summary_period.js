@@ -1,0 +1,83 @@
+$(function () {
+    toastr.options = { closeButton: true, positionClass: "toast-bottom-right", timeOut: "5000" };
+
+    // Rango por defecto: mes actual
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const firstDay = `${y}-${m}-01`;
+    const lastDay = new Date(y, now.getMonth() + 1, 0).toISOString().slice(0, 10);
+    $('#filter_from').val(firstDay);
+    $('#filter_to').val(lastDay);
+
+    Cargar();
+});
+
+let prodSummaryTable = null;
+
+function Cargar() {
+    if ($.fn.DataTable.isDataTable('#prod-summary-table')) {
+        $('#prod-summary-table').DataTable().destroy();
+    }
+
+    prodSummaryTable = $('#prod-summary-table').DataTable({
+        language: { url: "/assets/js/spanish.json" },
+        responsive: true,
+        processing: true,
+        serverSide: true,
+        dom: "<'row'<'col-sm-6'B><'col-sm-6'f>>" +
+             "<'row'<'col-sm-12'ltr>>" +
+             "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+        buttons: [{
+            extend: 'excel',
+            className: 'btn btn-success',
+            exportOptions: { columns: ':not(.exclude)' },
+            text: '<i class="far fa-file-excel"></i>',
+            filename: 'reporte_resumen_produccion_periodo'
+        }],
+        ajax: {
+            url: '/admin/admin.produccion.reports.summary.period',
+            data: function (d) {
+                d.from = $('#filter_from').val();
+                d.to = $('#filter_to').val();
+            },
+            dataSrc: function (json) {
+                const s = json.summary || null;
+                $('#sum_qty').text(s ? s.total_qty : '0,00');
+                $('#sum_accepted').text(s ? s.total_accepted : '0,00');
+                $('#sum_rejected').text(s ? s.total_rejected : '0,00');
+                $('#sum_reject_rate').text(s ? s.reject_rate : '0,00%');
+                $('#sum_orders').text(s ? s.total_orders : '0');
+                $('#sum_workers').text(s ? s.total_workers : '0');
+                return json.data;
+            }
+        },
+        columns: [
+            { data: 'DT_RowIndex', orderable: false, searchable: false },
+            { data: 'order_id', className: 'exclude' },
+            { data: 'order_code' },
+            { data: 'producto' },
+            { data: 'objective_qty', className: 'text-right' },
+            { data: 'total_qty', className: 'text-right' },
+            { data: 'total_accepted', className: 'text-right' },
+            { data: 'total_rejected', className: 'text-right' },
+            { data: 'reject_pct', className: 'text-right' },
+            { data: 'progress_pct', className: 'text-right' }
+        ],
+        order: [[1, 'desc']]
+    });
+}
+
+function applyReportFilters() {
+    if (!prodSummaryTable) return;
+
+    const from = $('#filter_from').val();
+    const to = $('#filter_to').val();
+    if (from && to && from > to) {
+        toastr.warning('La fecha Desde no puede ser mayor que Hasta.');
+        return;
+    }
+
+    prodSummaryTable.ajax.reload();
+}
+

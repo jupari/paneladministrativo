@@ -66,6 +66,11 @@ function obtenerCotizacionId() {
         return hiddenInput.value;
     }
 
+    const cotizacionIdEl = document.getElementById('id');
+    if (cotizacionIdEl) {
+        return cotizacionIdEl.value;
+    }
+
     return null;
 }
 

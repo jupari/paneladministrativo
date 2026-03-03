@@ -35,8 +35,8 @@
                 'url' => null
             ],
             [
-                'title' => 'Cotizar',
-                'icon' => 'fas fa-calculator',
+                'title' => 'Listado de Cotizaciones',
+                'icon' => 'fas fa-list',
                 'url' => route('admin.cotizaciones.index')
             ]
         ];
@@ -401,6 +401,11 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="d-flex justify-content-end mb-3">
+                                        <button type="button" class="btn btn-success btn-sm" onclick="guardarImpuestosDescuentosPaso()">
+                                            <i class="fas fa-save mr-1"></i> Guardar Impuestos/Descuentos
+                                        </button>
+                                    </div>
                                     <!-- Sección de Descuentos -->
                                     <div class="card mb-3">
                                         <div class="card-header bg-light">
@@ -628,6 +633,11 @@
                                                 </div>
                                             </div>
                                         </div>
+                                        <div class="d-flex justify-content-end mt-3">
+                                            <button type="button" class="btn btn-success btn-sm" onclick="guardarObservacionesPaso()">
+                                                <i class="fas fa-save mr-1"></i> Guardar Observaciones
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -808,14 +818,14 @@
 
                             <!-- Botones de navegación -->
                             <div class="d-flex justify-content-between mb-4" id="botonesNavegacion" style="display: none !important;">
-                                <button class="btn btn-outline-secondary" id="btnAnterior" disabled>
+                                <button type="button" class="btn btn-outline-secondary" id="btnAnterior" disabled>
                                     <i class="fas fa-chevron-left mr-2"></i>Anterior
                                 </button>
                                 <div class="d-flex gap-2">
-                                    <button class="btn btn-outline-primary" id="btnOmitir">
+                                    <button type="button" class="btn btn-outline-primary" id="btnOmitir">
                                         <i class="fas fa-forward mr-2"></i>Omitir Paso
                                     </button>
-                                    <button class="btn btn-primary" id="btnSiguiente">
+                                    <button type="button" class="btn btn-primary" id="btnSiguiente">
                                         Siguiente<i class="fas fa-chevron-right ml-2"></i>
                                     </button>
                                 </div>
@@ -2036,8 +2046,7 @@
 @stop
 
 @section('js')
-
-     <script>
+    <script>
         // Configurar variables desde el servidor y delegar al coordinador
         document.addEventListener('DOMContentLoaded', function() {
             const config = {
@@ -2056,40 +2065,31 @@
         });
     </script>
 
-    <!--<script src="{{ asset('assets/js/cotizar/documento-protection.js') }}" type="text/javascript"></script>-->
+
     <script
         src="{{ asset('assets/js/cotizar/documento-protection.js') }}?v={{ time() }}"
         type="text/javascript">
     </script>
-    <!--<script src="{{ asset('assets/js/cotizar/documento-base.js') }}" type="text/javascript"></script>-->
     <script
         src="{{ asset('assets/js/cotizar/documento-base.js') }}?v={{ time() }}"
         type="text/javascript">
     </script>
-    <!--<script src="{{ asset('assets/js/cotizar/sticky-summary.js') }}" type="text/javascript"></script>-->
     <script
         src="{{ asset('assets/js/cotizar/sticky-summary.js') }}?v={{ time() }}"
         type="text/javascript">
     </script>
-
-    <!--<script src="{{ asset('assets/js/cotizar/documento-progressive.js') }}" type="text/javascript"></script>-->
     <script
         src="{{ asset('assets/js/cotizar/documento-progressive.js') }}?v={{ time() }}"
         type="text/javascript">
     </script>
-
-    <!--<script src="{{ asset('assets/js/cotizar/documento.js') }}" type="text/javascript"></script>-->
     <script
         src="{{ asset('assets/js/cotizar/documento.js') }}?v={{ time() }}"
         type="text/javascript">
     </script>
-
-    <!--<script src="{{ asset('assets/js/cotizar/documento-coordinator.js') }}" type="text/javascript"></script>-->
     <script
         src="{{ asset('assets/js/cotizar/documento-coordinator.js') }}?v={{ time() }}"
         type="text/javascript">
     </script>
-
     <script
         src="{{ asset('assets/js/cotizar/utilidades.js') }}?v={{ time() }}"
         type="text/javascript">

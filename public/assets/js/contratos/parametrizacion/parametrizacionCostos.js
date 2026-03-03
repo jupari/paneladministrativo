@@ -7,6 +7,7 @@
 // =========================== Config de Endpoints =============================
 const ITEMS_STORE_URL = 'admin.items-propios' // crea ítem
 const SAVE_COSTOS_URL = 'admin.parametrizacion.storecostos' // guarda {tablaCostos:[]}
+const DELETE_COSTO_URL = '/admin/admin.parametrizacion.deletecosto'
 
 // =============================== Helpers ====================================
 // Obtener CSRF token de forma segura
@@ -544,7 +545,7 @@ const columnaAccionesCostos = {
         if (el.closest('.btn-guardar-fila-costo')) {
             await saveDataCostos(row)
         } else if (el.closest('.btn-eliminar-fila-costo')) {
-            row.delete()
+            await deleteCostoRow(row)
         }
     }
 }
@@ -681,6 +682,51 @@ async function saveDataCostos(row = null) {
     await Swal.fire('Error', err.message || 'No se pudo guardar', 'error');
     return false;
   }
+}
+
+async function deleteCostoRow (row) {
+    const data = row?.getData ? row.getData() : row
+    const id = data?.id
+
+    const res = await Swal.fire({
+        title: '¿Eliminar registro?',
+        text: 'Esta acción no se puede deshacer.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true,
+        focusCancel: true
+    })
+
+    if (res.dismiss) return
+
+    // Si no tiene id (fila nueva), solo remover del grid
+    if (!id) {
+        row.delete()
+        return
+    }
+
+    try {
+        const response = await fetch(`${DELETE_COSTO_URL}/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': CSRF
+            }
+        })
+
+        if (!response.ok) {
+            const text = await response.text().catch(() => '')
+            throw new Error(text || 'No se pudo eliminar')
+        }
+
+        row.delete()
+        await Swal.fire('Eliminado', 'El registro fue eliminado correctamente.', 'success')
+    } catch (err) {
+        console.error(err)
+        await Swal.fire('Error', err.message || 'No se pudo eliminar', 'error')
+    }
 }
 
 

@@ -35,6 +35,8 @@ class NovedadController extends Controller
 
         $request->validate([
             'nombre' => 'required|string|max:255',
+            'total_admon' => 'nullable',
+            'total_operativo' => 'nullable',
             'active' => 'required|boolean',
             'detalles' => 'required|array|min:1',
             'detalles.*.nombre' => 'required|string|max:255',
@@ -43,6 +45,8 @@ class NovedadController extends Controller
         $novedad = Novedad::create([
             'nombre' => $request->nombre,
             'active' => $request->active,
+            'total_admon' => $request->total_admon ?? 0,
+            'total_operativo' => $request->total_operativo ?? 0,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -50,12 +54,14 @@ class NovedadController extends Controller
         foreach ($request->detalles as $detalle) {
             $novedad->detalles()->create([
                 'nombre' => $detalle['nombre'],
+                'valor_admon'=> $detalle['valor_admon'] ?? 0,
+                'valor_operativo'=> $detalle['valor_operativo'] ?? 0,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
         }
 
-        return response()->json(['success' => true, 'message' => 'Novedad registrada con éxito']);
+        return response()->json(['success' => true, 'message' => 'Novedad registrada con éxito', 'novedad_id' => $novedad->id ]);
     }
 
     public function edit($id)
@@ -71,6 +77,8 @@ class NovedadController extends Controller
 
         $request->validate([
             'nombre' => 'required|string|max:255',
+            'total_admon' => 'nullable',
+            'total_operativo' => 'nullable',
             'active' => 'required|boolean',
             'detalles' => 'required|array|min:1',
             'detalles.*.nombre' => 'required|string|max:255',
@@ -79,6 +87,8 @@ class NovedadController extends Controller
         $novedad = Novedad::findOrFail($id);
         $novedad->update([
             'nombre' => $request->nombre,
+            'total_admon' => $request->total_admon ?? 0,
+            'total_operativo' => $request->total_operativo ?? 0,
             'active' => $request->active,
             'updated_at' => now()
         ]);
@@ -89,6 +99,8 @@ class NovedadController extends Controller
         foreach ($detalles as $detalle) {
             $novedad->detalles()->create([
                 'nombre' => $detalle['nombre'],
+                'valor_admon'=> $detalle['valor_admon'] ?? 0,
+                'valor_operativo'=> $detalle['valor_operativo'] ?? 0,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

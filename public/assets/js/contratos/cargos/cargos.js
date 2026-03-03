@@ -134,7 +134,7 @@ function regCargo() {
     cleanInput();
      // FIN LIMPIAR CAMPOS
     limpiarValidaciones();
-     let r = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>' +
+     let r = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
         '<button type="button" class="btn btn-primary" onclick="registerCargo()"><span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="spinnerRegister"></span>Agregar</button>';
 
     $(".modal-footer").html(r);
@@ -178,7 +178,7 @@ function registerCargo() {
         $('#spinnerRegister').addClass('d-none');
         $('#spinnerRegister').removeClass('d-block');
         Cargar();
-        myModal.modal('toggle'); // Reemplaza con tu lógica de modal
+        $('#ModalCargo').modal('hide'); // Reemplaza con tu lógica de modal
         toastr.success(response.message); // Muestra el mensaje de éxito
 
     }).catch(e => {
@@ -195,7 +195,7 @@ function registerCargo() {
             toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.'); // Muestra el mensaje de error
         } else if (e.status == 403) {
             // Errores de permisos
-            $('#ModalCliente').modal('toggle');
+            $('#ModalCargo').modal('hide');
             toastr.warning(arr.error);
         }
     });

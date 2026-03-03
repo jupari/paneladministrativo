@@ -1,28 +1,30 @@
 $(function() {
 
-    $('#table-res').DataTable({
-        "language": {
-                "url": "/assets/js/spanish.json"
-        },
-        responsive: true,
-        dom:  "<'row'<'col-sm-6'B><'col-sm-6'f>>" +
-           "<'row'<'col-sm-12'ltr>>" +
-           "<'row'<'col-sm-5'i><'col-sm-7'p>>",
-        buttons: [
-        {
-            extend: 'excel',
-            className: 'btn btn-success',
-            exportOptions: {
-                columns: ':not(.exclude)'
+    if ($('#table-res').length) {
+        $('#table-res').DataTable({
+            "language": {
+                    "url": "/assets/js/spanish.json"
             },
-            text: '<i class="far fa-file-excel"></i>',
-            titleAttr: 'Exportar a Excel',
-            filename: 'reporte_excel'
-        }],
-        order: [[ 1, "asc" ]],
-        pageLength: 8,
-        lengthMenu: [[2, 4, 6, 8, 10, -1], [2, 4, 6, 8, 10, "Todo(s)"]],
-    });
+            responsive: true,
+            dom:  "<'row'<'col-sm-6'B><'col-sm-6'f>>" +
+               "<'row'<'col-sm-12'ltr>>" +
+               "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+            buttons: [
+            {
+                extend: 'excel',
+                className: 'btn btn-success',
+                exportOptions: {
+                    columns: ':not(.exclude)'
+                },
+                text: '<i class="far fa-file-excel"></i>',
+                titleAttr: 'Exportar a Excel',
+                filename: 'reporte_excel'
+            }],
+            order: [[ 1, "asc" ]],
+            pageLength: 8,
+            lengthMenu: [[2, 4, 6, 8, 10, -1], [2, 4, 6, 8, 10, "Todo(s)"]],
+        });
+    }
 
     // Toast
     toastr.options = {
@@ -44,10 +46,12 @@ $(function() {
     }
 
      // Escucha el evento de cierre de la ventana modal
-    $('#myModal').on('hidden.bs.modal', function () {
-        // Activa la primera pestaÃ±a al cerrar la ventana modal
-        $('#custom-content-below-home-tab').tab('show');
-    });
+    if ($('#myModal').length) {
+        $('#myModal').on('hidden.bs.modal', function () {
+            // Activa la primera pestaña al cerrar la ventana modal
+            $('#custom-content-below-home-tab').tab('show');
+        });
+    }
 
 
     //configuracion para ver la informacion del correo

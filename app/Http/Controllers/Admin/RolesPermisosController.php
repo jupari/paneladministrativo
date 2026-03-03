@@ -61,7 +61,7 @@ class RolesPermisosController extends Controller
                 })
                 ->addColumn('acciones', function ($td) {
 
-                    if(Auth::user()->can('permisos.edit')){
+                    if(Auth::user()->can('permission.edit')){
                         $href = '<button type="button" onclick="upPerm('.$td->id.')" class="btn btn-warning btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Editar permiso"><i class="fas fa-pencil-alt"></i></button>&nbsp';
                     }else{
                         $href='';

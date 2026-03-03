@@ -1,163 +1,164 @@
-{{-- <x-guest-layout>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <form method="POST" action="{{ route('login') }}">
-        @csrf
+    <title>Iniciar sesión</title>
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
-        </div>
+    <!-- Fuentes y estilos de la plantilla -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('login-form-08/fonts/icomoon/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('login-form-08/css/owl.carousel.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('login-form-08/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('login-form-08/css/style.css') }}">
+    <style>
+        /* Override plantilla con paleta corporativa */
+        :root {
+            --color-primario: rgb(0, 32, 40);
+            --color-primario-oscuro: rgba(7, 57, 60, 0.9);
+            --color-primario-claro: rgba(149, 213, 178, 0.12);
+            --color-blanco: #ffffff;
+        }
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
+        body {
+            background: linear-gradient(135deg, var(--color-primario-claro), var(--color-blanco)) !important;
+            color: var(--color-primario);
+        }
 
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
+        .content {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
 
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
+        h3, .caption, .forgot-pass, .social-login a {
+            color: var(--color-primario);
+        }
 
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:focus:ring-indigo-600 dark:focus:ring-offset-gray-800" name="remember">
-                <span class="ms-2 text-sm text-gray-600 dark:text-gray-400">{{ __('Remember me') }}</span>
-            </label>
-        </div>
+        .btn-primary {
+            background: var(--color-primario) !important;
+            border-color: var(--color-primario) !important;
+        }
 
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-800" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
+        .btn-primary:hover,
+        .btn-primary:focus,
+        .btn-primary:active {
+            background: var(--color-primario-oscuro) !important;
+            border-color: var(--color-primario-oscuro) !important;
+        }
 
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
-    </form>
-</x-guest-layout> --}}
+        .form-control:focus {
+            border-color: var(--color-primario) !important;
+            box-shadow: 0 0 0 0.2rem rgba(0, 32, 40, 0.25) !important;
+        }
 
+        .control__indicator {
+            border: 2px solid var(--color-primario);
+        }
 
-@extends('adminlte::auth.auth-page', ['auth_type' => 'login'])
+        .control input:checked ~ .control__indicator {
+            background: var(--color-primario);
+            border-color: var(--color-primario);
+        }
 
-@section('adminlte_css_pre')
-    <link rel="stylesheet" href="{{ asset('vendor/icheck-bootstrap/icheck-bootstrap.min.css') }}">
-@stop
+        .social-login a {
+            border-color: var(--color-primario);
+            color: var(--color-primario);
+        }
 
-@php( $login_url = View::getSection('login_url') ?? config('adminlte.login_url', 'login') )
-@php( $register_url = View::getSection('register_url') ?? config('adminlte.register_url', 'register') )
-@php( $password_reset_url = View::getSection('password_reset_url') ?? config('adminlte.password_reset_url', 'password/reset') )
+        .social-login a:hover {
+            background: var(--color-primario);
+            color: var(--color-blanco);
+        }
 
-@if (config('adminlte.use_route_url', false))
-    @php( $login_url = $login_url ? route($login_url) : '' )
-    @php( $register_url = $register_url ? route($register_url) : '' )
-    @php( $password_reset_url = $password_reset_url ? route($password_reset_url) : '' )
-@else
-    @php( $login_url = $login_url ? url($login_url) : '' )
-    @php( $register_url = $register_url ? url($register_url) : '' )
-    @php( $password_reset_url = $password_reset_url ? url($password_reset_url) : '' )
-@endif
+        .text-muted { color: rgba(0, 32, 40, 0.7) !important; }
+    </style>
+</head>
+<body>
+<div class="content">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 order-md-2">
+                <img src="{{ asset('login-form-08/images/LOGO_SYSWORKS_VERTICAL_COLOR.svg') }}" alt="Ilustración" class="img-fluid">
+            </div>
+            <div class="col-md-6 contents">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="mb-4">
+                            <h3>Iniciar sesión</h3>
+                            <p class="mb-4">Accede al panel administrativo con tus credenciales.</p>
+                        </div>
 
-@section('auth_header', __('adminlte::adminlte.login_message'))
+                        @if (session('status'))
+                            <div class="alert alert-success" role="alert">
+                                {{ session('status') }}
+                            </div>
+                        @endif
 
-@section('auth_body')
-    <div class="container-fluid" >
-        <form action="{{ $login_url }}" method="post">
-         @csrf
-            {{-- Email field --}}
-            <div class="input-group mb-3">
-                <input type="email" name="email" class="form-control @error('email') is-invalid @enderror"
-                    value="{{ old('email') }}" placeholder="{{ __('adminlte::adminlte.email') }}" autofocus>
+                        <form action="{{ route('login') }}" method="POST">
+                            @csrf
 
-                <div class="input-group-append">
-                    <div class="input-group-text">
-                        <span class="fas fa-envelope {{ config('adminlte.classes_auth_icon', '') }}"></span>
+                            <div class="form-group first">
+                                <label for="email">Correo electrónico</label>
+                                <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username">
+                                @error('email')
+                                    <span class="invalid-feedback d-block" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+
+                            <div class="form-group last mb-4">
+                                <label for="password">Contraseña</label>
+                                <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" required autocomplete="current-password">
+                                @error('password')
+                                    <span class="invalid-feedback d-block" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+
+                            <div class="d-flex mb-4 align-items-center">
+                                <label class="control control--checkbox mb-0">
+                                    <span class="caption">Recordarme</span>
+                                    <input type="checkbox" name="remember" {{ old('remember') ? 'checked' : '' }}>
+                                    <div class="control__indicator"></div>
+                                </label>
+                                @if (Route::has('password.request'))
+                                    <span class="ml-auto"><a href="{{ route('password.request') }}" class="forgot-pass">¿Olvidaste tu contraseña?</a></span>
+                                @endif
+                            </div>
+
+                            <input type="submit" value="Ingresar" class="btn text-white btn-block btn-primary">
+
+                            <span class="d-block text-left my-4 text-muted">O ingresa con</span>
+
+                            <div class="social-login">
+                                <a href="#" class="facebook" aria-label="Facebook">
+                                    <span class="icon-facebook mr-3"></span>
+                                </a>
+                                {{-- <a href="#" class="twitter" aria-label="Twitter">
+                                    <span class="icon-twitter mr-3"></span>
+                                </a>
+                                <a href="#" class="google" aria-label="Google">
+                                    <span class="icon-google mr-3"></span>
+                                </a> --}}
+                            </div>
+                        </form>
                     </div>
                 </div>
 
-                @error('email')
-                    <span class="invalid-feedback" role="alert">
-                        <strong>{{ $message }}</strong>
-                    </span>
-                @enderror
             </div>
-            {{-- Password field --}}
-            <div class="input-group mb-3">
-                <input type="password" name="password" class="form-control @error('password') is-invalid @enderror"
-                    placeholder="{{ __('adminlte::adminlte.password') }}">
 
-                <div class="input-group-append">
-                    <div class="input-group-text">
-                        <span class="fas fa-lock {{ config('adminlte.classes_auth_icon', '') }}"></span>
-                    </div>
-                </div>
-
-                @error('password')
-                    <span class="invalid-feedback" role="alert">
-                        <strong>{{ $message }}</strong>
-                    </span>
-                @enderror
-            </div>
-            {{-- Login field --}}
-            <div class="row">
-                <div class="col-7">
-                    <div class="icheck-primary" title="{{ __('adminlte::adminlte.remember_me_hint') }}">
-                        <input type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-
-                        <label for="remember">
-                            {{ __('adminlte::adminlte.remember_me') }}
-                        </label>
-                    </div>
-                </div>
-
-                <div class="col-5">
-                    <button type=submit class="btn btn-block {{ config('adminlte.classes_auth_btn', 'btn-flat btn-primary') }}">
-                        <span class="fas fa-sign-in-alt"></span>
-                        {{ __('adminlte::adminlte.sign_in') }}
-                    </button>
-                </div>
-            </div>
-        </form>
+        </div>
     </div>
-@stop
+</div>
 
-@section('auth_footer')
-    {{-- Password reset link --}}
-    {{-- @if($password_reset_url)
-        <p class="my-0">
-            <a href="{{ $password_reset_url }}">
-                {{ __('adminlte::adminlte.i_forgot_my_password') }}
-            </a>
-        </p>
-    @endif --}}
-
-    {{-- Register link --}}
-    {{-- @if($register_url)
-        <p class="my-0">
-            <a href="{{ $register_url }}">
-                {{ __('adminlte::adminlte.register_a_new_membership') }}
-            </a>
-        </p>
-    @endif --}}
-@stop
-
-@section('css')
-<style>
-    .mi-div {
-        width: 300px;
-        height: 200px;
-        background: #3498db, url('assets/img/fondo_syswork.png'); /* Fondo azul y luego la imagen */
-        background-size: cover;
-        background-position: center;
-    }
-</style>
-@stop
+<script src="{{ asset('login-form-08/js/jquery-3.3.1.min.js') }}"></script>
+<script src="{{ asset('login-form-08/js/popper.min.js') }}"></script>
+<script src="{{ asset('login-form-08/js/bootstrap.min.js') }}"></script>
+<script src="{{ asset('login-form-08/js/main.js') }}"></script>
+</body>
+</html>

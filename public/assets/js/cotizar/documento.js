@@ -1,4 +1,4 @@
-﻿// Funciones para controlar el skeleton loader
+// Funciones para controlar el skeleton loader
 function showSkeleton() {
     const skeleton = document.getElementById('skeleton-loader');
     const content = document.getElementById('main-content');
@@ -231,10 +231,12 @@ async function fetchSucursales(terceroId) {
         defaultOption.text = 'Seleccione una sede';
         sedeSelect.appendChild(defaultOption);
 
+        console.log('data.data...sucursales', data.data);
+
         data.data.forEach(sede => {
             const option = document.createElement('option');
             option.value = sede.id;
-            option.text = sede.nombre_sucursal;
+            option.text = sede.nombre_sucursal ? sede.nombre_sucursal : (sede.nombres ? sede.nombres +' '+ (sede.direccion ? sede.direccion : '') : sede.direccion);
             sedeSelect.appendChild(option);
         });
         fetchContactos(terceroId);
@@ -248,6 +250,8 @@ async function fetchSucursales(terceroId) {
 
 async function fetchContactos(terceroId) {
     try {
+        console.log('Entre a fetchContactos...>', terceroId);
+
         const response = await fetch(`/admin/admin.cotizaciones.getContactos/${terceroId}`);
         const data = await response.json();
 
@@ -258,6 +262,8 @@ async function fetchContactos(terceroId) {
         defaultOption.value = '';
         defaultOption.text = 'Seleccione un contacto';
         contactoSelect.appendChild(defaultOption);
+
+        console.log('data.data>>>', data.data);
 
         data.data.forEach(contacto => {
             const option = document.createElement('option');
@@ -802,7 +808,7 @@ function poblarSelectConceptos() {
     if (selectImpuesto) {
         selectImpuesto.innerHTML = '<option value="">Seleccione concepto</option>';
         conceptosDisponibles
-            .filter(concepto => concepto.tipo === 'IMP')
+            .filter(concepto => concepto.tipo === 'IVA' || concepto.tipo === 'IMP')
             .forEach(concepto => {
                 const option = document.createElement('option');
                 option.value = concepto.id;
@@ -951,7 +957,7 @@ async function initImpuestosDescuentos() {
 }
 
 // Función para agregar impuesto o descuento
-function agregarImpuestoDescuento(tipo) {
+async function agregarImpuestoDescuento(tipo) {
     const concepto = document.getElementById(`concepto_${tipo}`)?.value;
     const tipoCalculo = document.getElementById(`tipo_${tipo}`)?.value;
     const valor = parseFloat(document.getElementById(`valor_${tipo}`)?.value) || 0;
@@ -980,6 +986,8 @@ function agregarImpuestoDescuento(tipo) {
     actualizarTablaImpuestosDescuentos();
     limpiarFormularioImpuestoDescuento(tipo);
     actualizarTotalesConImpuestosDescuentos();
+    const cotizacionGuardadaId = document.getElementById('id')?.value;
+    await guardarConceptosCotizacion(cotizacionGuardadaId);
 
     toastr.success(`${tipo.charAt(0).toUpperCase() + tipo.slice(1)} agregado correctamente`);
 }
@@ -1080,7 +1088,7 @@ function limpiarFormularioImpuestoDescuento(tipo) {
 }
 
 // Función para eliminar un impuesto/descuento especí­fico
-function eliminarImpuestoDescuento(id) {
+async function eliminarImpuestoDescuento(id) {
     const initialLength = impuestosDescuentos.length;
     impuestosDescuentos = impuestosDescuentos.filter(item => item.id !== id);
 
@@ -1088,7 +1096,10 @@ function eliminarImpuestoDescuento(id) {
 
     actualizarTablaImpuestosDescuentos();
     actualizarTotalesConImpuestosDescuentos();
-
+    const cotizacionGuardadaId = document.getElementById('id')?.value;
+    if (cotizacionGuardadaId) {
+        await guardarConceptosCotizacion(cotizacionGuardadaId);
+    }
     // Limpiar selección
     const selectAllCheckbox = document.getElementById('select_all_impuestos');
     if (selectAllCheckbox) selectAllCheckbox.checked = false;
@@ -1098,7 +1109,7 @@ function eliminarImpuestoDescuento(id) {
 }
 
 // Función para eliminar seleccionados
-function eliminarSeleccionados() {
+async function eliminarSeleccionados() {
     const checkboxes = document.querySelectorAll('#tbody_impuestos_descuentos .item-checkbox:checked');
     const idsEliminar = Array.from(checkboxes).map(cb => parseInt(cb.getAttribute('data-id')));
 
@@ -1113,6 +1124,10 @@ function eliminarSeleccionados() {
     const selectAllCheckbox = document.getElementById('select_all_impuestos');
     if (selectAllCheckbox) selectAllCheckbox.checked = false;
     toggleEliminarSeleccionados();
+    const cotizacionGuardadaId = document.getElementById('id')?.value;
+    if (cotizacionGuardadaId) {
+        await guardarConceptosCotizacion(cotizacionGuardadaId);
+    }
     toastr.info(`${idsEliminar.length} elemento(s) eliminado(s)`);
 }
 
@@ -1173,14 +1188,9 @@ async function guardarConceptosCotizacion(cotizacionId) {
     try {
         const conceptosParaGuardar = impuestosDescuentos.map(item => ({
             concepto_id: item.concepto,
-            porcentaje: item.tipoCalculo === 'porcentaje' ? item.valor : null,
+            porcentaje: item.tipoCalculo === 'porcentaje' ? item.valor : 0,
             valor: item.valorCalculado
         }));
-
-        //     cotizacion_id: cotizacionId,
-        //     conceptos: conceptosParaGuardar,
-        //     cantidad: conceptosParaGuardar.length
-        // });
 
         const response = await fetch('/admin/admin.cotizaciones.conceptos.store', {
             method: 'POST',
@@ -1196,17 +1206,29 @@ async function guardarConceptosCotizacion(cotizacionId) {
 
         const data = await response.json();
 
-        if (data.success) {
-            if (conceptosParaGuardar.length === 0) {
-            } else {
-            }
-        } else {
-            console.error('Error al guardar conceptos:', data.message);
-            toastr.warning('Cotización guardada, pero hubo problemas con los conceptos');
+        if (!data.success) {
+            throw new Error(data.message || 'No se pudieron guardar los conceptos');
         }
+
+        return true;
     } catch (error) {
         console.error('Error al enviar conceptos:', error);
-        toastr.warning('Cotización guardada, pero hubo problemas con los conceptos');
+        toastr.error('Error al guardar los impuestos y descuentos: ' + error.message);
+        return false;
+    }
+}
+
+// Guardar impuestos/descuentos directamente en el backend desde el paso 1
+async function guardarImpuestosDescuentosPaso() {
+    const cotizacionId = document.getElementById('id')?.value;
+    if (!cotizacionId) {
+        toastr.error('Debe guardar la información básica de la cotización primero.');
+        return;
+    }
+
+    const ok = await guardarConceptosCotizacion(cotizacionId);
+    if (ok) {
+        toastr.success('Impuestos y descuentos guardados en la cotización');
     }
 }
 
@@ -1288,7 +1310,7 @@ async function cargarObservacionesDisponibles() {
 /**
  * Agregar una nueva observación
  */
-function agregarObservacion() {
+async function agregarObservacion() {
     const selectElement = document.getElementById('observacionSelect');
     const observacionId = selectElement.value;
 
@@ -1324,6 +1346,8 @@ function agregarObservacion() {
 
     observaciones.push(nuevaObservacion);
     actualizarTablaObservaciones();
+    const cotizacionGuardadaId = document.getElementById('id')?.value;
+    await guardarObservacionesCotizacion(cotizacionGuardadaId);
 
     // Limpiar selector
     selectElement.value = '';
@@ -1335,9 +1359,11 @@ function agregarObservacion() {
 /**
  * Eliminar una observación
  */
-function eliminarObservacion(id) {
+async function eliminarObservacion(id) {
     observaciones = observaciones.filter(obs => obs.id !== id);
     actualizarTablaObservaciones();
+    const cotizacionGuardadaId = document.getElementById('id')?.value;
+    await guardarObservacionesCotizacion(cotizacionGuardadaId);
     toastr.success('Observación eliminada correctamente');
 }
 
@@ -1503,10 +1529,21 @@ async function guardarCondicionesComerciales() {
         // Guardar en variable local
         condicionesComerciales = condiciones;
 
+        const cotizacionId = document.getElementById('id')?.value;
+        if (!cotizacionId) {
+            toastr.error('Debe guardar la información básica de la cotización primero.');
+            return;
+        }
+
+        // Guardar en backend inmediatamente
+        const ok = await guardarCondicionesCotizacion(cotizacionId);
+
         // Mostrar resumen
         mostrarResumenCondiciones(condiciones);
 
-        toastr.success('Condiciones comerciales guardadas temporalmente. Se guardarán definitivamente al guardar la cotización.');
+        if (ok) {
+            toastr.success('Condiciones comerciales guardadas en la cotización');
+        }
 
     } catch (error) {
         console.error('Error al guardar condiciones comerciales:', error);
@@ -1542,14 +1579,15 @@ async function guardarCondicionesCotizacion(cotizacionId) {
 
         const data = await response.json();
 
-        if (data.success) {
-        } else {
-            console.error('Error al guardar condiciones comerciales:', data.message);
-            toastr.warning('Cotización guardada, pero hubo problemas con las condiciones comerciales');
+        if (!data.success) {
+            throw new Error(data.message || 'No se pudieron guardar las condiciones comerciales');
         }
+
+        return true;
     } catch (error) {
         console.error('Error al enviar condiciones comerciales:', error);
-        toastr.warning('Cotización guardada, pero hubo problemas con las condiciones comerciales');
+        toastr.error('Error al guardar las condiciones comerciales: ' + error.message);
+        return false;
     }
 }
 
@@ -2055,7 +2093,7 @@ function actualizarTablaItemsAcordeon() {
         `;
         return;
     }
-
+    console.log('Actualizando tabla del acordeón con items::::', itemsCotizacion);
     // Agregar filas para cada item y sus subitems
     itemsCotizacion.forEach((item, itemIndex) => {
         // Fila del item principal (NO seleccionable)
@@ -2103,9 +2141,6 @@ function actualizarTablaItemsAcordeon() {
         }
     });
 
-    // Configurar la funcionalidad de selección única
-    configurarSeleccionUnica();
-
     // Aplicar filtro si hay texto de búsqueda
     const searchInput = document.getElementById('buscarItemsAcordeon');
     if (searchInput && searchInput.value.trim() !== '') {
@@ -2113,12 +2148,6 @@ function actualizarTablaItemsAcordeon() {
     }
 }
 
-/**
- * Configurar funcionalidad de selección única en el modal
- */
-function configurarSeleccionUnica() {
-    // No necesita configuración adicional ya que los radio buttons manejan la selección única automáticamente
-}
 
 /**
  * Manejar selección única de subitem
@@ -2492,6 +2521,9 @@ async function cargarItemsPorCategorias() {
             // Procesar y validar los datos del backend
             itemsPropios = result.data.map(item => {
                 // Asegurar que todos los campos son del tipo correcto
+                const tipoItem = String(item.tipo || 'item_propio');
+                const esCargoParam = tipoItem === 'parametrizacion' || tipoItem === 'cargo_tabla';
+
                 return {
                     id: String(item.id || ''),
                     nombre: String(item.nombre || 'Sin nombre'),
@@ -2500,21 +2532,30 @@ async function cargarItemsPorCategorias() {
                     categoria_id: item.categoria_id || null,
                     categoria: {
                         id: item.categoria?.id || item.categoria_id || null,
-                        nombre: String(item.categoria?.nombre || 'Sin categorí­a')
+                        nombre: String(item.categoria?.nombre || 'Sin categoría')
                     },
                     unidad_medida: String(item.unidad_medida || ''),
                     precio: item.precio || 0,
-                    tipo: String(item.tipo || 'item_propio'),
-                    // Datos especí­ficos de parametrización si existen
-                    ...(item.tipo === 'parametrizacion' && {
-                        cargo_id: item.cargo_id || null,
+                    tipo: tipoItem,
+                    // Datos específicos de parametrización / cargos tabla
+                    ...(esCargoParam && {
+                        cargo_id: item.cargo_id || item.cargo?.id || null,
                         cargo: item.cargo ? {
-                            id: item.cargo.id || null,
+                            id: item.cargo.id || item.cargo_id || null,
                             nombre: String(item.cargo.nombre || 'Sin cargo')
                         } : null,
+                    }),
+                    ...(tipoItem === 'parametrizacion' && {
                         valor_porcentaje: Number(item.valor_porcentaje || 0),
                         valor_admon: Number(item.valor_admon || 0),
                         valor_obra: Number(item.valor_obra || 0)
+                    }),
+                    ...(tipoItem === 'cargo_tabla' && {
+                        tabla_precios_id: item.tabla_id || null,
+                        costo_hora: Number(item.costo_hora || 0),
+                        costo_dia: Number(item.costo_dia || 0),
+                        base_costo_hora: Number(item.base_costo_hora || 0),
+                        base_costo_dia: Number(item.base_costo_dia || 0)
                     })
                 };
             });
@@ -2741,8 +2782,9 @@ function generarHtmlItemsPropios(itemsPropios) {
         `;
 
         data.items.forEach(item => {
-            // Determinar el tipo de item y su información especí­fica
-            const esParametrizacion = item.tipo === 'parametrizacion';
+            // Determinar el tipo de item y su información específica
+            const esCargoTabla = item.tipo === 'cargo_tabla';
+            const esParametrizacion = item.tipo === 'parametrizacion' || esCargoTabla;
             const icono = esParametrizacion ? 'fas fa-user-tie' : 'fas fa-cube';
             const tipoClass = esParametrizacion ? 'border-warning' : 'border-primary';
 
@@ -2756,13 +2798,20 @@ function generarHtmlItemsPropios(itemsPropios) {
 
             // Descripción mejorada para parametrización con información del cargo
             let descripcion = String(item.descripcion || 'Sin descripción');
-            if (esParametrizacion && item.cargo && item.cargo.nombre) {
+            if (item.tipo === 'parametrizacion' && item.cargo && item.cargo.nombre) {
                 const cargoNombre = String(item.cargo.nombre);
                 const valorPorcentaje = Number(item.valor_porcentaje || 0);
                 const valorAdmon = Number(item.valor_admon || 0);
                 const valorObra = Number(item.valor_obra || 0);
 
-                descripcion = `ðŸ‘¤ ${cargoNombre} | ${valorPorcentaje}% | Admin: $${valorAdmon.toLocaleString()} | Obra: $${valorObra.toLocaleString()}`;
+                descripcion = `👤 ${cargoNombre} | ${valorPorcentaje}% | Admin: $${valorAdmon.toLocaleString()} | Obra: $${valorObra.toLocaleString()}`;
+            }
+
+            if (esCargoTabla) {
+                const cargoNombre = item.cargo?.nombre || item.nombre;
+                const costoHora = Number(item.costo_hora || 0);
+                const costoDia = Number(item.costo_dia || 0);
+                descripcion = `👤 ${cargoNombre} | Hora: $${costoHora.toLocaleString()} | Día: $${costoDia.toLocaleString()}`;
             }
 
             // Debug logging
@@ -2803,8 +2852,8 @@ function generarHtmlItemsPropios(itemsPropios) {
                                         <br><small class="text-secondary">
                                             ${unidadMedida=='' ? `<span class="badge ${esParametrizacion ? 'bg-warning' : 'bg-info'}">${unidadMedida}</span>` : ''}
                                             ${precio ? `<span class="badge bg-success ml-1">$${precio}</span>` : ''}
-                                            ${esParametrizacion ? `<span class="badge text-white ml-1" style="background-color: #fd7e14;">ðŸ“Š Parametrización</span>` : ''}
-                                            ${esParametrizacion && item.cargo && item.cargo.nombre ? `<span class="badge bg-secondary ml-1">ðŸ‘¤ ${String(item.cargo.nombre)}</span>` : ''}
+                                            ${esParametrizacion ? `<span class="badge text-white ml-1" style="background-color: #fd7e14;">📊 ${esCargoTabla ? 'Tabla precios' : 'Parametrización'}</span>` : ''}
+                                            ${esParametrizacion && item.cargo && item.cargo.nombre ? `<span class="badge bg-secondary ml-1">👤 ${String(item.cargo.nombre)}</span>` : ''}
                                         </small>
                                     </div>
                                 </label>
@@ -4475,7 +4524,9 @@ async function finalizarConfiguracionCostos() {
         item.cotizacion_subitem_id = window.subitemTemporal.subitem.id;
         if(item.categoria.nombre=='NOMINA'){
             item.item_propio_id = null;
-            item.parametrizacion_id = item.id;
+            item.cargo_id = item.cargo?.id || item.cargo_id || null;
+            item.parametrizacion_id = item.tipo === 'parametrizacion' ? item.id : null;
+            item.tabla_precios_id = item.tipo === 'cargo_tabla' ? (item.tabla_precios_id || item.tabla_id || item.id) : null;
         }else{
             item.parametrizacion_id = null;
             item.item_propio_id = item.id;
@@ -5634,6 +5685,9 @@ async function cargarSubitemsDelItem(itemId) {
                         subitemsCell.innerHTML = generarListaSubitems(itemId, data.data || []);
                     }
                 }
+
+                // Mantener sincronizada la tabla principal (refresca también el acordeón)
+                //actualizarTablaItems();
             }
         } else {
             console.error('Error en la respuesta del servidor:', data.message);
@@ -6031,6 +6085,9 @@ async function guardarSubitem(event) {
                     // Para edición, cargarSubitemsDelItem ya actualizó la lista
                 }
             }
+
+            // Refrescar vistas: acordeón (modal) y tabla principal
+            actualizarTablaItems();
 
             toastr.success(isEdit ? 'Subitem actualizado exitosamente' : 'Subitem creado exitosamente');            // Cerrar modal usando jQuery (Bootstrap 4)
             $('#modalCrearSubitem').modal('hide');
@@ -6894,7 +6951,7 @@ function abrirModalAgregarProductos() {
     setTimeout(() => {
         const elementoTotal = document.getElementById('totalGeneral');
         if (elementoTotal) {
-            console.log('📍 Contenido actual del elemento:', elementoTotal.textContent);
+            elementoTotal.textContent = `Total: $${calcularTotalGeneral().toFixed(2)}`;
         }
         // Agregar instrucciones visuales para el usuario
         mostrarInstruccionesSeleccion();
@@ -9721,6 +9778,11 @@ async function cargarValoresDefectoPorTipo(itemId, tipoCosto) {
             if (String(itemId).startsWith('param_')) {
                 idReal = itemId.replace('param_', '');
             }
+        }
+
+        if (itemData.tipo === 'cargo_tabla') {
+            tipoItem = 'cargo_tabla';
+            idReal = itemData.cargo_id || itemId;
         }
 
         console.log(`Cargando valores para item ${itemId} (${tipoItem}) - Tipo costo: ${tipoCosto}`);

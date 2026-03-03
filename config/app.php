@@ -150,6 +150,8 @@ return [
 
     'filtro_email'=>env('FILTRO_EMAIL', 'Tu código de acceso temporal de Netflix'),
 
+    'utilidadPct' => env('UTILIDAD_PCT', 0.315),
+
 
     'urlAuthorize'=>env('urlAuthorize','https://login.microsoftonline.com/common/oauth2/v2.0/authorize'),
     'urlAccessToken'=>env('urlAccessToken','https://login.microsoftonline.com/common/oauth2/v2.0/token'),

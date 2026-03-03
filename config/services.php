@@ -31,4 +31,11 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'n8n' => [
+        'webhook_url' => env('N8N_WEBHOOK_URL', ''),
+        'token' => env('N8N_WEBHOOK_TOKEN', ''),
+        'signing_secret' => env('N8N_SIGNING_SECRET', ''),
+        'timeout_seconds' => env('N8N_TIMEOUT_SECONDS', 10),
+    ],
+
 ];

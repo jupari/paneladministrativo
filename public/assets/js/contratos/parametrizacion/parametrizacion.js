@@ -3,6 +3,8 @@ let tablaNovedades = null
 let primeraCarga = firstTime
 
 const SAVE_NOVEDADES_URL ='/admin/admin.parametrizacion.storenovedades' // guarda {parametrizacion:[]}
+const DELETE_NOVEDAD_URL = '/admin/admin.parametrizacion.deletenovedad'
+const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content
 const categoriasNovedades = Array.isArray(categorias)
     ? categorias.filter(c => c.costos === 0)
     : []
@@ -56,36 +58,24 @@ const columnasFinanzas = [
     {
         title: 'Valor Admon',
         field: 'valor_admon',
-        hozAlign: 'right',
-        editor: 'input',
-        editorParams: {
-            elementAttributes: {
-                inputmode: 'decimal',
-                pattern: '[0-9.]*'
-            }
-        },
-        validator: ['numeric'],
-        formatter: cell => {
-            const v = toNumber(cell.getValue())
-            return Number.isFinite(v) ? fmtMiles.format(v) : ''
-        }
+        hozAlign: 'center',
+        width: 110,
+        formatter: cell => renderTick(cell.getValue()),
+        editor: 'tickCross',
+        editorParams: { tristate: false, indeterminateValue: 0 },
+        mutator: v => (Number(v) === 1 ? 1 : 0),
+        mutatorEdit: v => (Number(v) === 1 ? 1 : 0)
     },
     {
         title: 'Valor Obra',
         field: 'valor_obra',
-        hozAlign: 'right',
-        editor: 'input',
-        editorParams: {
-            elementAttributes: {
-                inputmode: 'decimal',
-                pattern: '[0-9.]*'
-            }
-        },
-        validator: ['numeric'],
-        formatter: cell => {
-            const v = toNumber(cell.getValue())
-            return Number.isFinite(v) ? fmtMiles.format(v) : ''
-        }
+        hozAlign: 'center',
+        width: 110,
+        formatter: cell => renderTick(cell.getValue()),
+        editor: 'tickCross',
+        editorParams: { tristate: false, indeterminateValue: 0 },
+        mutator: v => (Number(v) === 1 ? 1 : 0),
+        mutatorEdit: v => (Number(v) === 1 ? 1 : 0)
     }
 ]
 
@@ -94,6 +84,10 @@ const fmtMiles = new Intl.NumberFormat('es-CO', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
 })
+
+const renderTick = v => (Number(v) === 1
+    ? '<i class="fas fa-check text-success"></i>'
+    : '<i class="fas fa-times text-muted"></i>')
 
 const toNumber = v => {
     if (v === null || v === undefined || v === '') return NaN
@@ -115,12 +109,13 @@ const columnaAcciones = {
     title: 'Acciones',
     formatter: () => `
         <div class="d-flex gap-1">
-            <button class="btn btn-sm btn-success btn-guardar-fila-novedad"><i class="fas fa-save"></i></button>
-            <button class="btn btn-sm btn-danger btn-eliminar-fila-novedad"><i class="fas fa-trash"></i></button>
+            <button class="btn btn-sm btn-success btn-guardar-fila-novedad" title="Guardar fila"><i class="fas fa-save"></i></button>
+            <button class="btn btn-sm btn-info btn-copiar-fila-novedad" title="Copiar a otros cargos"><i class="fas fa-copy"></i></button>
+            <button class="btn btn-sm btn-danger btn-eliminar-fila-novedad" title="Eliminar fila"><i class="fas fa-trash"></i></button>
         </div>
     `,
     hozAlign: 'center',
-    width: 100,
+    width: 150,
     cellClick: async function (e, cell) {
         const row = cell.getRow()
         const el = e.target
@@ -129,8 +124,10 @@ const columnaAcciones = {
 
         if (el.closest('.btn-guardar-fila-novedad')) {
             await saveDataNovedades(row)
+        } else if (el.closest('.btn-copiar-fila-novedad')) {
+            await copiarFilaACargos(row)
         } else if (el.closest('.btn-eliminar-fila-novedad')) {
-            row.delete()
+            await deleteNovedadRow(row)
         }
     }
 }
@@ -217,7 +214,7 @@ async function CargarNovedades (primeraCargan) {
 
     tablaNovedades = new Tabulator('#tabla-parametrizacion', {
         index: '__rid',
-        height: '400px',
+        height: '800px',
         data,
         layout: 'fitColumns',
         columns: [
@@ -249,8 +246,8 @@ function agregarFilaNovedades () {
             cargo_id: null,
             novedad_detalle_id: null,
             valor_porcentaje: '',
-            valor_admon: '',
-            valor_obra: ''
+            valor_admon: 0,
+            valor_obra: 0
         },
         false
     ) // true = insertar al inicio
@@ -316,6 +313,136 @@ async function saveDataNovedades (row = null) {
         await Swal.fire('Error', err.message || 'No se pudo guardar', 'error')
         return false
     }
+}
+
+async function deleteNovedadRow (row) {
+    const data = row?.getData ? row.getData() : row
+    const id = data?.id
+
+    const res = await Swal.fire({
+        title: '¿Eliminar registro?',
+        text: 'Esta acción no se puede deshacer.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true,
+        focusCancel: true
+    })
+
+    if (res.dismiss) return
+
+    // Si no tiene id (fila nueva), solo remover del grid
+    if (!id) {
+        row.delete()
+        return
+    }
+
+    try {
+        const response = await fetch(`${DELETE_NOVEDAD_URL}/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': CSRF_TOKEN
+            }
+        })
+
+        if (!response.ok) {
+            const text = await response.text().catch(() => '')
+            throw new Error(text || 'No se pudo eliminar')
+        }
+
+        row.delete()
+        await Swal.fire('Eliminado', 'El registro fue eliminado correctamente.', 'success')
+    } catch (err) {
+        console.error(err)
+        await Swal.fire('Error', err.message || 'No se pudo eliminar', 'error')
+    }
+}
+
+async function copiarFilaACargos (row) {
+    const data = row?.getData ? row.getData() : row
+    const cargoOrigen = data?.cargo_id
+    const todasFilas = tablaNovedades?.getData?.() || []
+
+    // Construir opciones de cargos (excluye el origen)
+    const opciones = Object.entries(cargos || {})
+        .map(([id, nombre]) => ({ id, nombre }))
+        .filter(o => String(o.id) !== String(cargoOrigen))
+
+    const selectHtml = `
+        <select id="copiar_cargos" class="swal2-select" multiple style="height:180px">
+            ${opciones.map(o => `<option value="${o.id}">${o.nombre}</option>`).join('')}
+        </select>
+        <small class="text-muted">Copiará todas las filas del cargo origen al/los cargos destino.</small>
+    `
+
+    const res = await Swal.fire({
+        title: 'Copiar cargo completo',
+        html: selectHtml,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Copiar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true,
+        focusConfirm: false,
+        didOpen: () => {
+            const el = Swal.getHtmlContainer().querySelector('#copiar_cargos')
+            if (el) el.focus()
+        },
+        preConfirm: () => {
+            const el = document.getElementById('copiar_cargos')
+            const values = Array.from(el?.selectedOptions || []).map(o => o.value)
+            if (!values.length) {
+                Swal.showValidationMessage('Selecciona al menos un cargo destino')
+            }
+            return values
+        }
+    })
+
+    if (res.dismiss || !res.value?.length) return
+
+    const cargosDestino = res.value
+
+    // Filas base: todas las que pertenezcan al cargo origen
+    const filasOrigen = todasFilas.filter(f => String(f.cargo_id) === String(cargoOrigen))
+    if (!filasOrigen.length) {
+        await Swal.fire('Sin filas', 'No hay filas para copiar desde el cargo origen.', 'info')
+        return
+    }
+
+    const nuevasFilas = []
+    let saltadas = 0
+
+    cargosDestino.forEach(cId => {
+        filasOrigen.forEach(fila => {
+            // Evitar duplicar si ya existe misma combinacion cargo+novedad_detalle_id
+            const existe = todasFilas.some(r => String(r.cargo_id) === String(cId) && String(r.novedad_detalle_id) === String(fila.novedad_detalle_id))
+            if (existe) {
+                saltadas++
+                return
+            }
+            nuevasFilas.push({
+                __rid: genRidN(),
+                categoria_id: fila.categoria_id ?? null,
+                cargo_id: cId,
+                novedad_detalle_id: fila.novedad_detalle_id ?? null,
+                valor_porcentaje: fila.valor_porcentaje ?? '',
+                valor_admon: Number(fila.valor_admon) === 1 ? 1 : 0,
+                valor_obra: Number(fila.valor_obra) === 1 ? 1 : 0
+            })
+        })
+    })
+
+    if (nuevasFilas.length) {
+        tablaNovedades.addData(nuevasFilas, true)
+    }
+
+    const mensaje = nuevasFilas.length
+        ? `Se copiaron ${nuevasFilas.length} fila(s).` + (saltadas ? ` ${saltadas} fila(s) ya existían y se omitieron.` : '')
+        : 'No se copiaron filas porque todas ya existían en los cargos destino.'
+
+    await Swal.fire('Copia completada', mensaje, 'success')
 }
 
 function abrirModalCrearItemPropio (cell) {
@@ -386,3 +513,21 @@ function setValorX (nuevoX) {
     valorX = parseFloat(nuevoX) || 0
     table.getRows().forEach(recomputeCostoHora)
 }
+
+// document.getElementById('btn-gen-tabla-precios')?.addEventListener('click', async () => {
+//   try{
+//     const res = await fetch('/admin/admin.parametrizacion.generar_tabla_precios', {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+//       }
+//     });
+//     const json = await res.json();
+//     if(!json.success) throw new Error(json.message || 'Error');
+//     Swal.fire('OK', `${json.message} (Cargos: ${json.count})`, 'success');
+//   }catch(e){
+//     Swal.fire('Error', e.message, 'error');
+//   }
+// });
+

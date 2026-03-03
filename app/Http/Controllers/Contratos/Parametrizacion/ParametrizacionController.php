@@ -12,8 +12,10 @@ use App\Models\Novedad;
 use App\Models\Parametrizacion;
 use App\Models\ParametrizacionCosto;
 use App\Models\UnidadMedida;
+use App\Services\TablaPreciosCargoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class ParametrizacionController extends Controller
@@ -88,6 +90,19 @@ class ParametrizacionController extends Controller
         return response()->json(['message' => 'Novedades guardadas correctamente']);
     }
 
+    public function deleteNovedad($id)
+    {
+        $row = Parametrizacion::find($id);
+
+        if (!$row) {
+            return response()->json(['message' => 'Registro no encontrado'], 404);
+        }
+
+        $row->delete();
+
+        return response()->json(['message' => 'Registro eliminado correctamente']);
+    }
+
     public function storeCostos(parametrizacionCostosRequest $request)
     {
 
@@ -119,4 +134,63 @@ class ParametrizacionController extends Controller
 
         return response()->json(['message' => 'Parametrización de costos guardada correctamente']);
     }
+
+    public function deleteCosto($id)
+    {
+        $row = ParametrizacionCosto::find($id);
+
+        if (!$row) {
+            return response()->json(['message' => 'Registro no encontrado'], 404);
+        }
+
+        $row->delete();
+
+        return response()->json(['message' => 'Registro eliminado correctamente']);
+    }
+
+    public function generarTablaPrecios(TablaPreciosCargoService $service)
+    {
+        $data = $service->generar(true);
+        return response()->json([
+            'success' => true,
+            'message' => 'Tabla de precios por cargo generada correctamente.',
+            'count' => count($data),
+        ]);
+    }
+
+    public function tablaPreciosData(Request $request, TablaPreciosCargoService $service)
+    {
+        // Si ya existe la tabla persistida, puedes leer de BD (más rápido)
+        // Si no existe, devolvemos calculado en caliente
+        if (Schema::hasTable('cargos_tabla_precios')) {
+            $rows = DB::table('cargos_tabla_precios as tp')
+                ->join('cargos as c', 'c.id', '=', 'tp.cargo_id')
+                ->select([
+                    'tp.cargo_id',
+                    'c.nombre as cargo',
+                    'tp.base_costo_dia',
+                    'tp.base_costo_hora',
+                    'tp.hora_ordinaria',
+                    'tp.recargo_nocturno',
+                    'tp.hora_extra_diurna',
+                    'tp.hora_extra_nocturna',
+                    'tp.hora_dominical',
+                    'tp.hora_extra_dominical_diurna',
+                    'tp.hora_extra_dominical_nocturna',
+                    'tp.valor_dia_ordinario',
+                    'tp.utilidad_pct',
+                    'tp.horas_diarias',
+                    'tp.updated_at',
+                ])
+                ->orderBy('c.nombre')
+                ->get();
+
+            return response()->json(['success' => true, 'data' => $rows]);
+        }
+
+        // fallback: calcular sin persistir
+        $data = $service->generar(false);
+        return response()->json(['success' => true, 'data' => $data]);
+    }
+
 }

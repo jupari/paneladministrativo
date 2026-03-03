@@ -1,5 +1,7 @@
 let detalles=[];
 let tabla;
+let detalleEditIndex = null;
+let autoTotales = true;
 $(function () {
 
     // Toast
@@ -23,12 +25,8 @@ $(function () {
     //carga de la datatable
     detalles = novedad.detalles;
     Cargar();
+    bindAutoTotales();
 });
-
-//se declara la variable del modal
-var myModal = new bootstrap.Modal(document.getElementById('ModalCargo'), {
-    keyboard: false
-})
 
 
 function Cargar() {
@@ -37,10 +35,15 @@ function Cargar() {
         columns: [
             { data: null, render: (data, type, row, meta) => meta.row + 1 },
             { data: 'nombre' },
+            { data: 'valor_admon', render: (d) => formatMoney(d) },
+            { data: 'valor_operativo', render: (d) => formatMoney(d) },
             {
                 data: null,
                 render: (data, type, row, meta) =>
-                    `<button type="button" class="btn btn-danger btn-sm" onclick="eliminarDetalle(${meta.row})" data-toggle="tooltip" title="Eliminar"><i class="fas fa-trash"></i></button>`
+                    `<div class="btn-group" role="group">
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="openDetalleModal(${meta.row})" data-toggle="tooltip" title="Editar"><i class="fas fa-pen"></i></button>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="eliminarDetalle(${meta.row})" data-toggle="tooltip" title="Eliminar"><i class="fas fa-trash"></i></button>
+                    </div>`
             }
         ],
         language: {
@@ -65,11 +68,13 @@ function Cargar() {
         pageLength: 10,
         lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "Todo(s)"]],
     });
+    applyAutoTotales();
 }
 
 function eliminarDetalle(index) {
     detalles.splice(index, 1);
     actualizarTabla();
+    updateData();
 }
 
 function updateData() {
@@ -88,6 +93,8 @@ function updateData() {
     formData.append('nombre', $('#nombre').val());
     formData.append('active', activo);
     formData.append("detalles", JSON.stringify(detalles));
+    formData.append('total_admon', $('#total_valor_admon').val());
+    formData.append('total_operativo', $('#total_valor_operativo').val());
     formData.append('_method', 'PUT');
 
     // Limpiar errores anteriores
@@ -125,17 +132,57 @@ function updateData() {
 
 function actualizarTabla() {
     tabla.clear().rows.add(detalles).draw();
+    applyAutoTotales();
 }
 
-function addDetalle(){
-    const formularioDetalle = $('#formDetalle')[0];
-    const nombre = $('input[name="detalle_nombre"]').val();
-    if (nombre.trim()) {
-        detalles.push({ nombre });
-        actualizarTabla();
-        $('#modalDetalle').modal('hide');
-        formularioDetalle.reset();
+function openDetalleModal(index = null) {
+    detalleEditIndex = index;
+    const isEdit = index !== null && detalles[index];
+
+    $('#modalDetalleLabel').text(isEdit ? 'Editar detalle' : 'Agregar detalle');
+    $('#btnDetalleSubmit').text(isEdit ? 'Actualizar' : 'Agregar');
+
+    if (isEdit) {
+        const item = detalles[index];
+        $('#detalle_nombre').val(item.nombre || '');
+        $('#detalle_valor_admon').val(item.valor_admon ?? '');
+        $('#detalle_valor_operativo').val(item.valor_operativo ?? '');
+        $('#detalle_index').val(index);
+    } else {
+        $('#formDetalle')[0].reset();
+        $('#detalle_index').val('');
     }
+
+    $('#modalDetalle').modal('show');
+}
+
+function saveDetalleFromModal() {
+    const nombre = $('#detalle_nombre').val().trim();
+    const valorAdmon = parseFloat($('#detalle_valor_admon').val()) || 0;
+    const valorOperativo = parseFloat($('#detalle_valor_operativo').val()) || 0;
+
+    if (!nombre) {
+        toastr.warning('El nombre del detalle es obligatorio.');
+        return;
+    }
+
+    const payload = {
+        nombre,
+        valor_admon: valorAdmon,
+        valor_operativo: valorOperativo
+    };
+
+    if (detalleEditIndex !== null) {
+        detalles[detalleEditIndex] = payload;
+    } else {
+        detalles.push(payload);
+    }
+
+    actualizarTabla();
+    updateData();
+    $('#modalDetalle').modal('hide');
+    $('#formDetalle')[0].reset();
+    detalleEditIndex = null;
 }
 
 function limpiarValidaciones() {
@@ -147,4 +194,32 @@ function limpiarValidaciones() {
     fields.forEach(field => {
         $('#error_' + field).text('');
     });
+}
+
+function formatMoney(value) {
+    const num = parseFloat(value);
+    if (isNaN(num)) return '0.00';
+    return num.toFixed(2);
+}
+
+function bindAutoTotales() {
+    autoTotales = $('#auto_totales').is(':checked');
+    $('#auto_totales').on('change', function () {
+        autoTotales = $(this).is(':checked');
+        applyAutoTotales();
+    });
+    applyAutoTotales();
+}
+
+function applyAutoTotales() {
+    const totalAdmon = detalles.reduce((acc, d) => acc + (parseFloat(d.valor_admon) || 0), 0);
+    const totalOper = detalles.reduce((acc, d) => acc + (parseFloat(d.valor_operativo) || 0), 0);
+
+    if (autoTotales) {
+        $('#total_valor_admon').val(totalAdmon.toFixed(2)).prop('readonly', true);
+        $('#total_valor_operativo').val(totalOper.toFixed(2)).prop('readonly', true);
+    } else {
+        $('#total_valor_admon').prop('readonly', false);
+        $('#total_valor_operativo').prop('readonly', false);
+    }
 }

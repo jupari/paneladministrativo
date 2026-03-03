@@ -16,7 +16,7 @@ return [
 
     'title' => 'Sysworks',
     'title_prefix' => 'Sysworks',
-    'title_postfix' => '',
+    'title_postfix' => 'Panel Administrativo',
 
     /*
     |--------------------------------------------------------------------------
@@ -414,7 +414,42 @@ return [
         // CONFIGURACIÓN DEL SISTEMA - SUBMENÚ UNIFICADO
         // ========================================
         [
+<<<<<<< Updated upstream
             'text' => 'Configuración',
+=======
+            'text' => 'Reportes Ejecutivos',
+            'icon' => 'fas fa-chart-bar text-success',
+            'can' => ['nomina.index','configuracion.index'],
+            'submenu' => [
+                [
+                    'text' => 'Resumen Nómina (Periodo)',
+                    'route' => 'admin.nomina.reports.participants.index',
+                    'icon' => 'fas fa-chart-pie text-success',
+                    'can' => 'nomina.reports.index',
+                ],
+                [
+                    'text' => 'Resumen Producción (Periodo)',
+                    'route' => 'admin.produccion.reports.summary.period',
+                    'icon' => 'fas fa-industry text-success',
+                    'can' => 'configuracion.index',
+                ],
+                [
+                    'text' => 'Costos Operativos',
+                    'route' => 'admin.produccion.reports.operating-costs.period',
+                    'icon' => 'fas fa-coins text-success',
+                    'can' => 'configuracion.index',
+                ],
+            ],
+        ],
+
+        // ===============================
+        // PARAMETRIZACIÓN
+        // ===============================
+        ['header' => 'PARAMETRIZACIÓN'],
+
+        [
+            'text' => 'Parámetros',
+>>>>>>> Stashed changes
             'icon' => 'fas fa-cogs text-secondary',
             'can' => ['users.index','roles.index','configuracion.index'],
             'submenu' => [

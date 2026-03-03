@@ -14,6 +14,8 @@ use App\Models\Producto;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Validator;
@@ -660,6 +662,19 @@ class CotizacionProductoController extends Controller
                 ]);
             }
 
+            // Traer categorías solicitadas (nombre y bandera costos)
+            $categorias = Categoria::whereIn('id', $categoriaIds)
+                ->where('active', 1)
+                ->select('id', 'nombre', 'costos')
+                ->get();
+
+            // Detectar IDs de categoría NOMINA
+            $categoriasNominaIds = $categorias
+                ->filter(fn($c) => mb_strtoupper($c->nombre) === 'NOMINA')
+                ->pluck('id')
+                ->values()
+                ->toArray();
+
             // Obtener items propios regulares
             $itemsPropios = collect(ItemPropio::whereIn('categoria_id', $categoriaIds)
                 ->where('active', 1)
@@ -677,9 +692,8 @@ class CotizacionProductoController extends Controller
                 }));
 
             // Verificar categorías con costos = 0 y obtener datos de parametrización
-            $categoriasConCostosCero = Categoria::whereIn('id', $categoriaIds)
+            $categoriasConCostosCero = $categorias
                 ->where('costos', 0)
-                ->where('active', 1)
                 ->pluck('id')
                 ->toArray();
 
@@ -722,8 +736,70 @@ class CotizacionProductoController extends Controller
                 });
             }
 
-            // Combinar items propios con items de parametrización
-            $todosLosItems = $itemsPropios->concat($itemsParametrizacion)
+            // Si la categoría NOMINA está presente, evitamos duplicar cargos: solo usamos tabla de precios
+            if (!empty($categoriasNominaIds)) {
+                $itemsParametrizacion = $itemsParametrizacion->reject(function ($item) use ($categoriasNominaIds) {
+                    return in_array($item['categoria_id'], $categoriasNominaIds, true);
+                });
+            }
+
+            // Para categorías NOMINA traer cargos desde cargos_tabla_precios
+            $itemsNomina = collect();
+            if (!empty($categoriasNominaIds) && Schema::hasTable('cargos_tabla_precios')) {
+                $categoriaNominaId = $categoriasNominaIds[0];
+                $categoriaNominaNombre = optional($categorias->firstWhere('id', $categoriaNominaId))->nombre ?? 'NOMINA';
+
+                $cargosTabla = DB::table('cargos_tabla_precios as tp')
+                    ->join('cargos as c', 'c.id', '=', 'tp.cargo_id')
+                    ->where('c.active', 1)
+                    ->select([
+                        'tp.id as tabla_id',
+                        'tp.cargo_id',
+                        'c.nombre as cargo',
+                        'tp.base_costo_dia',
+                        'tp.base_costo_hora',
+                        'tp.hora_ordinaria',
+                        'tp.valor_dia_ordinario',
+                    ])
+                    ->orderBy('c.nombre')
+                    ->get();
+
+                $itemsNomina = $cargosTabla->map(function ($row) use ($categoriaNominaId, $categoriaNominaNombre) {
+                    return [
+                        'id' => $row->cargo_id,
+                        'tabla_id' => $row->tabla_id,
+                        'categoria_id' => $categoriaNominaId,
+                        'nombre' => $row->cargo,
+                        'codigo' => 'CARGO-' . $row->cargo_id,
+                        'orden' => 0,
+                        'unidad_medida' => 'SERVICIO',
+                        'tipo' => 'cargo_tabla',
+                        'precio' => (float) $row->hora_ordinaria,
+                        'categoria' => [
+                            'id' => $categoriaNominaId,
+                            'nombre' => $categoriaNominaNombre,
+                        ],
+                        'cargo' => [
+                            'id' => $row->cargo_id,
+                            'nombre' => $row->cargo,
+                        ],
+                        'costo_hora' => (float) $row->hora_ordinaria,
+                        'costo_dia' => (float) $row->valor_dia_ordinario,
+                        'base_costo_hora' => (float) $row->base_costo_hora,
+                        'base_costo_dia' => (float) $row->base_costo_dia,
+                        'descripcion' => sprintf(
+                            'Hora ordinaria: $%s | Día ordinario: $%s',
+                            number_format($row->hora_ordinaria, 0, '.', ','),
+                            number_format($row->valor_dia_ordinario, 0, '.', ',')
+                        ),
+                    ];
+                });
+            }
+
+            // Combinar items propios con items de parametrización y nómina
+            $todosLosItems = $itemsPropios
+                ->concat($itemsParametrizacion)
+                ->concat($itemsNomina)
                 ->sortBy(['categoria_id', 'orden', 'nombre'])
                 ->values();
 
@@ -1245,7 +1321,7 @@ class CotizacionProductoController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'item_id' => 'required',
-                'tipo_item' => 'required|in:propio,cargo',
+                'tipo_item' => 'required|in:propio,cargo,cargo_tabla',
                 'tipo_costo' => 'required|in:unitario,hora,dia'
             ]);
 
@@ -1302,7 +1378,7 @@ class CotizacionProductoController extends Controller
                         $valores['unidad_medida'] = $itemPropio->unidad_medida ?? '';
                     }
                 }
-            } else {
+            } elseif ($tipoItem === 'cargo') {
                 // Buscar en Parametrizacion para cargos
                 $parametrizacion = \App\Models\Parametrizacion::where('id', $itemId)
                     ->where('active', 1)
@@ -1320,6 +1396,30 @@ class CotizacionProductoController extends Controller
                         case 'dia':
                             // Para cargos se puede usar el valor_porcentaje como base
                             $valores['costo'] = $parametrizacion->valor_porcentaje ?? 0;
+                            break;
+                    }
+                }
+            } elseif ($tipoItem === 'cargo_tabla') {
+                $cargoPrecio = DB::table('cargos_tabla_precios')
+                    ->where(function ($q) use ($itemId) {
+                        $q->where('cargo_id', $itemId)->orWhere('id', $itemId);
+                    })
+                    ->first();
+
+                if ($cargoPrecio) {
+                    $valores['encontrado'] = true;
+                    $valores['unidad_medida'] = 'SERVICIO';
+
+                    switch ($tipoCosto) {
+                        case 'hora':
+                            $valores['costo'] = (float) $cargoPrecio->hora_ordinaria;
+                            break;
+                        case 'dia':
+                            $valores['costo'] = (float) $cargoPrecio->valor_dia_ordinario;
+                            break;
+                        case 'unitario':
+                        default:
+                            $valores['costo'] = (float) $cargoPrecio->hora_ordinaria;
                             break;
                     }
                 }
