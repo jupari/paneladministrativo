@@ -36,8 +36,7 @@ use App\Http\Controllers\Produccion\FichaTecnicaController;
 use App\Http\Controllers\Produccion\FichaTecnicaBocetoController;
 use App\Http\Controllers\Produccion\FichaTecnicaMaterialController;
 use App\Http\Controllers\Produccion\FichaTecnicaProcesoController;
-<<<<<<< Updated upstream
-=======
+
 use App\Http\Controllers\Produccion\ProdOrderController;
 use App\Http\Controllers\Produccion\ProdProductionLogController;
 use App\Http\Controllers\Produccion\ProdSettlementController;
@@ -45,7 +44,7 @@ use App\Http\Controllers\Produccion\ProdOperationController;
 use App\Http\Controllers\Produccion\ProdRateController;
 use App\Http\Controllers\Produccion\ProdOrderOperationController;
 use App\Http\Controllers\Produccion\ProdReportController;
->>>>>>> Stashed changes
+
 use App\Http\Controllers\ItemPropio\ItemPropioController;
 use App\Http\Controllers\Produccion\MaterialController;
 use App\Http\Controllers\Inventario\MovimientoController;
@@ -557,9 +556,6 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::put('admin.proveedores.update/{proveedor}', [ProveedorController::class, 'update'])->name('admin.proveedores.update');
         Route::delete('admin.proveedores.destroy/{proveedor}', [ProveedorController::class, 'destroy'])->name('admin.proveedores.destroy');
     });
-<<<<<<< Updated upstream
-=======
-
 
     Route::controller(NominaPayRunController::class)->group(function () {
         Route::get('admin.nomina.payruns.index', [NominaPayRunController::class, 'index'])->name('admin.nomina.payruns.index');
@@ -692,5 +688,4 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::get('admin.organization.cost-centers.list', [CostCenterController::class,'list'])->name('admin.costCenters.list');
     });
 
->>>>>>> Stashed changes
 });
