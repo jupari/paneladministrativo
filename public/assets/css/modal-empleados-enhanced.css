@@ -1,0 +1,319 @@
+/* CSS Enhanced para Modal de Empleados - Bootstrap 4.6 Compatible */
+
+/* Estilos generales del modal */
+#ModalEmpleado {
+    z-index: 1055;
+}
+
+#ModalEmpleado .modal-dialog {
+    margin: 1.75rem auto;
+    max-width: 1140px;
+}
+
+#ModalEmpleado .modal-content {
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* Header del modal */
+#ModalEmpleado .modal-header {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    color: white;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    padding: 1.25rem 1.5rem;
+}
+
+#ModalEmpleado .modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+#ModalEmpleado .modal-header .close {
+    color: white;
+    opacity: 0.8;
+    text-shadow: none;
+    font-size: 1.5rem;
+    padding: 0;
+    margin: -1rem -1rem -1rem auto;
+}
+
+#ModalEmpleado .modal-header .close:hover {
+    opacity: 1;
+    color: white;
+}
+
+/* Body del modal */
+#ModalEmpleado .modal-body {
+    padding: 0;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+/* Estilo de las tarjetas dentro del modal */
+#ModalEmpleado .card {
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    margin-left: 1.5rem;
+    margin-right: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+#ModalEmpleado .card:last-child {
+    margin-bottom: 1.5rem;
+}
+
+#ModalEmpleado .card-header {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.75rem 1rem;
+    border-radius: 6px 6px 0 0;
+}
+
+#ModalEmpleado .card-header h5 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+#ModalEmpleado .card-body {
+    padding: 1.25rem;
+}
+
+/* Estilos de formulario */
+#ModalEmpleado .form-group {
+    margin-bottom: 1rem;
+}
+
+#ModalEmpleado .form-group label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+#ModalEmpleado .form-control {
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+#ModalEmpleado .form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: 0;
+}
+
+/* Estados de validación */
+#ModalEmpleado .form-control.is-invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+#ModalEmpleado .form-control.is-valid {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+#ModalEmpleado .text-danger {
+    color: #dc3545;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+    display: block;
+}
+
+/* Estilos específicos para campos requeridos */
+#ModalEmpleado .form-group label .text-danger {
+    font-size: inherit;
+    margin-top: 0;
+}
+
+/* Estilos para select2 si se usa */
+#ModalEmpleado .select2-container--default .select2-selection--single {
+    height: calc(1.5em + 1rem + 2px);
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+}
+
+/* Footer del modal */
+#ModalEmpleado .modal-footer {
+    border-top: 1px solid #dee2e6;
+    padding: 1rem 1.5rem;
+    background-color: #f8f9fa;
+    border-radius: 0 0 8px 8px;
+}
+
+#ModalEmpleado .modal-footer .btn {
+    min-width: 110px;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    transition: all 0.15s ease-in-out;
+}
+
+#ModalEmpleado .modal-footer .btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+#ModalEmpleado .modal-footer .btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+}
+
+#ModalEmpleado .modal-footer .btn-info {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: white;
+}
+
+#ModalEmpleado .modal-footer .btn-info:hover {
+    background-color: #138496;
+    border-color: #117a8b;
+}
+
+/* Botón de guardar con estado de carga */
+#ModalEmpleado #btn-guardar-empleado {
+    position: relative;
+}
+
+#ModalEmpleado #btn-guardar-empleado[disabled] {
+    opacity: 0.65;
+}
+
+#ModalEmpleado .spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Alerts y notificaciones */
+#ModalEmpleado .alert {
+    border-radius: 4px;
+    margin: 1rem 1.5rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid transparent;
+}
+
+#ModalEmpleado .alert-info {
+    color: #0c5460;
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+}
+
+/* Responsive */
+@media (max-width: 991.98px) {
+    #ModalEmpleado .modal-dialog {
+        max-width: 95%;
+        margin: 1rem auto;
+    }
+
+    #ModalEmpleado .card {
+        margin-left: 1rem;
+        margin-right: 1rem;
+    }
+
+    #ModalEmpleado .modal-footer {
+        padding: 1rem;
+    }
+
+    #ModalEmpleado .modal-header {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    #ModalEmpleado .modal-dialog {
+        max-width: 100%;
+        margin: 0.5rem;
+    }
+
+    #ModalEmpleado .modal-header .modal-title {
+        font-size: 1.1rem;
+    }
+
+    #ModalEmpleado .card {
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+    }
+
+    #ModalEmpleado .card-body {
+        padding: 1rem;
+    }
+
+    #ModalEmpleado .modal-footer .btn {
+        min-width: 100px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Scroll personalizado para el modal body */
+#ModalEmpleado .modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+#ModalEmpleado .modal-body::-webkit-scrollbar-track {
+    background: #f8f9fa;
+}
+
+#ModalEmpleado .modal-body::-webkit-scrollbar-thumb {
+    background: #ced4da;
+    border-radius: 4px;
+}
+
+#ModalEmpleado .modal-body::-webkit-scrollbar-thumb:hover {
+    background: #adb5bd;
+}
+
+/* Animaciones suaves */
+#ModalEmpleado.fade .modal-dialog {
+    transition: transform 0.3s ease-out;
+    transform: translate(0, -50px);
+}
+
+#ModalEmpleado.show .modal-dialog {
+    transform: none;
+}
+
+/* Focus outline personalizado */
+#ModalEmpleado .form-control:focus,
+#ModalEmpleado .btn:focus {
+    outline: none;
+}
+
+/* Estilos para tooltips dentro del modal */
+#ModalEmpleado [data-toggle="tooltip"] {
+    cursor: help;
+}
+
+/* Iconos en los headers de las cards */
+#ModalEmpleado .card-header i {
+    margin-right: 0.5rem;
+    color: #17a2b8;
+}
+
+/* Mejoras visuales adicionales */
+#ModalEmpleado .form-group:last-child {
+    margin-bottom: 0;
+}
+
+#ModalEmpleado .row .form-group:last-child {
+    margin-bottom: 1rem;
+}
+
+/* Estados hover para elementos interactivos */
+#ModalEmpleado .form-control:hover {
+    border-color: #adb5bd;
+}
+
+/* Backdrop personalizado */
+.modal-backdrop.show {
+    opacity: 0.6;
+}

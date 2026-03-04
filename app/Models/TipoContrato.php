@@ -24,7 +24,7 @@ class TipoContrato extends Model
     /**
      * @var array
      */
-    protected $fillable = ['codigo','nombre', 'active', 'created_at', 'updated_at'];
+    protected $fillable = ['company_id','codigo','nombre', 'active', 'created_at', 'updated_at','tercerotipo_id'];
 
     public function Empleados(){
         return $this->hasMany(Empleado::class);

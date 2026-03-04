@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Contratos\Empleados;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\EmpleadoRequest;
 use App\Models\Cargo;
+use App\Models\Ciudad;
 use App\Models\Empleado;
+use App\Models\Pais;
 use App\Models\Tercero;
 use App\Models\TipoContrato;
 use App\Models\TipoIdentificacion;
@@ -51,12 +53,16 @@ class EmpleadoController extends Controller
             $tiposContratos = TipoContrato::where('active',1)->get();
             $clientes =  Tercero::where('active', 1)->orderBy('nombres')->get();
             $tiposIdentificacion= TipoIdentificacion::where('active',1)->orderBy('nombre')->get();
+            $paises = Pais::with('departamentos.ciudades')->get();
+            $ciudades=Ciudad::where('active',1)->orderBy('nombre')->get();
             return view('contratos.empleados.index', [
                 'cargos' => Cargo::where('active', 1)->orderBy('nombre')->get(),
                 'tiposContratos'=>$tiposContratos,
                 'clientes'=>$clientes,
                 'user_id' => auth()->id(),
-                'tiposIdentificaciones'=> $tiposIdentificacion
+                'tiposIdentificaciones'=> $tiposIdentificacion,
+                'paises'=> $paises,
+                'ciudades'=>$ciudades,
             ]);
         } catch (Exception $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
@@ -113,6 +119,23 @@ class EmpleadoController extends Controller
         } catch (Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
+    }
+
+    public function list()
+    {
+        $companyId = (int) session('company_id');
+
+        $items = Empleado::query()
+            ->where('company_id', $companyId)
+            ->where('active', 1)
+            ->orderBy('nombres')
+            ->get(['id','nombres','apellidos','identificacion'])
+            ->map(fn($e)=>[
+                'id'=>$e->id,
+                'text'=> trim($e->nombres.' '.$e->apellidos).' - '.$e->identificacion
+            ])->values();
+
+        return response()->json(['data'=>$items]);
     }
 
 

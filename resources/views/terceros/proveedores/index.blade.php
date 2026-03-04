@@ -29,10 +29,15 @@
             <h4>Proveedores</h4>
         </div>
         <div class="card-body" >
-            @if(auth()->user()->can('clientes.index'))
+            @if(auth()->user()->can('proveedores.create'))
                 <div class="col-md-1">
-                <button type="button" onclick="regProv()" class="btn btn-primary btn-block mb-1" data-toggle="tooltip" data-placement="top" title="Crear Cliente">
-                    <i class="fas fa-user-plus"></i>
+                <!-- Botón para modal simple (sin pasos) -->
+                <button type="button" onclick="regProvDirect()" class="btn btn-success btn-block mb-1" data-toggle="tooltip" data-placement="top" title="Crear Proveedor (Simple)">
+                    <i class="fas fa-user-plus"></i> Simple
+                </button>
+                <!-- Botón para modal con pasos (backup) -->
+                <button type="button" onclick="regProv()" class="btn btn-primary btn-block mb-1" data-toggle="tooltip" data-placement="top" title="Crear Proveedor (Con Pasos)">
+                    <i class="fas fa-user-plus"></i> Pasos
                 </button>
                 </div>
             @endif
@@ -62,9 +67,9 @@
     </div>
 @stop
 
-@push('modals')
-    @include('terceros.proveedores.modal')
-@endpush
+@include('terceros.proveedores.modal-simple')
+@include('terceros.proveedores.modal-simple-direct')
+
 
 @section('css')
     {{-- Add here extra stylesheets --}}
@@ -75,6 +80,11 @@
     <script>
         const permisos =  @json($user);
         const dataPaises = @json($paises);
+        const tiposPersona = @json($tiposPersona);
+        const tiposIdentificacion = @json($tiposIdentificacion);
+        const vendedores = @json($vendedores);
     </script>
     <script src="{{asset('assets/js/Terceros/proveedores/proveedor.js') }}" type="text/javascript"></script>
+    <script src="{{asset('assets/js/Terceros/proveedores/proveedores-modal-steps.js') }}" type="text/javascript"></script>
+    <script src="{{asset('assets/js/Terceros/proveedores/proveedor-direct.js') }}" type="text/javascript"></script>
 @stop

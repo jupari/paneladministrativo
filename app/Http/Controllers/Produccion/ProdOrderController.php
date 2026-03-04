@@ -15,7 +15,7 @@ use Yajra\DataTables\Facades\DataTables;
 
 class ProdOrderController extends Controller
 {
-    public function __construct(private ProdOrderService $service) {}
+    public function __construct(private ProdOrderService $service, private ProdOrderLogService $logService) {}
 
     public function index(Request $request)
     {

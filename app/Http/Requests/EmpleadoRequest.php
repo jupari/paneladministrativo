@@ -23,6 +23,7 @@ class EmpleadoRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'company_id' => 'nullable',
             'nombres' => 'required|string|max:255',
             'apellidos' => 'required|string|max:255',
             'tipo_identificacion_id'=>'required|exists:tipo_identificacion,id',
@@ -37,7 +38,8 @@ class EmpleadoRequest extends FormRequest
             'cargo_id' => 'required|exists:cargos,id',
             'salario' => 'required|numeric|min:0',
             'ciudad_residencia'=>'required|string|max:255',
-            'tipo_contrato' => ['required', Rule::in(['obra_labor', 'termino_fijo', 'indefinido'])], // Asegura que el tipo de contrato sea válido
+            'ciudad_id'=>'required|exists:ciudades,id',
+            'tipo_contrato' => ['required', Rule::in(['obra_labor', 'termino_fijo', 'indefinido','PS', 'CONTRATISTA'])], // Asegura que el tipo de contrato sea válido
 
             // Reglas condicionales para fecha_finalizacion_contrato y cliente_id
             'fecha_finalizacion_contrato' => [

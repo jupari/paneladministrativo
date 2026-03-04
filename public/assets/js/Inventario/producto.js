@@ -61,11 +61,25 @@ $(async function () {
         ]
     });
 
-    $('#btn-nuevo').click(() => {
-        $('#form-producto')[0].reset();
-        $('#producto_id').val('');
-        $('#ModalProducto').modal('show');
+    $('#btn-nuevo').on('click', async function () {
+        console.log('entre al click');
+
+        $('#ModalProductoSkeleton').modal('show');
+        $('#ModalProducto').modal('hide');
+        $('#codigo').prop('readonly', false);
+        cargarUnidades();
+        cargarMarcas();
+        cargarCategorias();
+        cargarSubcategorias();
+        cargarTipoProducto();
+        await confTablaDet();
+        // 4. Alternar modales
+        setTimeout(() => {
+            $('#ModalProductoSkeleton').modal('hide');
+            $('#ModalProducto').modal('show');
+        }, 500);
     });
+
 
     $('#btn-nuevo-propiedad').click(() => {
         window.tableProductosDet.addRow(
@@ -179,6 +193,25 @@ $(async function () {
         });
     });
 });
+
+async function regProductos() {
+    console.log('entre al click');
+
+    $('#ModalProductoSkeleton').modal('show');
+    $('#ModalProducto').modal('hide');
+    $('#codigo').prop('readonly', false);
+    cargarUnidades();
+    cargarMarcas();
+    cargarCategorias();
+    cargarSubcategorias();
+    cargarTipoProducto();
+    await confTablaDet();
+    // 4. Alternar modales
+    setTimeout(() => {
+        $('#ModalProductoSkeleton').modal('hide');
+        $('#ModalProducto').modal('show');
+    }, 500);
+}
 
 async function cargarUnidades(unidad_medida = null) {
     $.ajax({
@@ -520,24 +553,6 @@ function limpiarValidaciones() {
     $('#error_precio').text('');
     $('#error_stock').text('');
 }
-
-$('#btn-nuevo').on('click', async function () {
-    $('#ModalProductoSkeleton').modal('show');
-    $('#ModalProducto').modal('hide');
-    $('#codigo').prop('readonly', false);
-    cargarUnidades();
-    cargarMarcas();
-    cargarCategorias();
-    cargarSubcategorias();
-    cargarTipoProducto();
-    await confTablaDet();
-    // 4. Alternar modales
-    setTimeout(() => {
-        $('#ModalProductoSkeleton').modal('hide');
-        $('#ModalProducto').modal('show');
-    }, 500);
-
-});
 
 $('#categoria').on('change', function () {
     cargarSubcategorias();

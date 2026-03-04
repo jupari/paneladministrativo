@@ -36,6 +36,11 @@ class TerceroSucursal extends Model
      */
     protected $fillable = ['tercero_id', 'ciudad_id', 'vendedor_id', 'nombre_sucursal', 'telefono', 'celular', 'correo', 'direccion', 'persona_contacto', 'created_at', 'updated_at'];
 
+    public function tercero()
+    {
+        return $this->belongsTo(Tercero::class, 'tercero_id');
+    }
+
     public function ciudades(){
         return $this->belongsTo(Ciudad::class, 'ciudad_id');
     }

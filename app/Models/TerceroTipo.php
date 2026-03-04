@@ -29,4 +29,9 @@ class TerceroTipo extends Model
      * @var array
      */
     protected $fillable = ['nombre', 'active', 'created_at', 'updated_at'];
+
+    public function terceros()
+    {
+        return $this->hasMany(Tercero::class, 'tercerotipo_id');
+    }
 }

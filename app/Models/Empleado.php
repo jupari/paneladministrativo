@@ -18,6 +18,7 @@ Empleado extends Model
      public $timestamps=false;
 
     protected $fillable = [
+        'company_id',
         'nombres'
         ,'apellidos'
         ,'tipo_identificacion_id'
@@ -28,6 +29,7 @@ Empleado extends Model
         ,'fecha_finalizacion_contrato'
         ,'direccion'
         ,'ciudad_residencia'
+        ,'ciudad_id'
         ,'telefono'
         ,'celular'
         ,'correo'
@@ -52,6 +54,11 @@ Empleado extends Model
 
     public function cliente(){
         return $this->belongsTo(Tercero::class, 'cliente_id');
+    }
+
+    public function nominaPayRunParticipants()
+    {
+        return $this->morphMany(\App\Models\Nomina\NominaPayRunParticipant::class, 'participant', 'participant_type', 'participant_id');
     }
 
     protected $casts = [

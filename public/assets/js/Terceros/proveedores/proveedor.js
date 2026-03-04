@@ -91,11 +91,6 @@ $(function () {
 
 });
 
-//se declara la variable del modal
-var myModal = new bootstrap.Modal(document.getElementById('ModalProveedor'), {
-    keyboard: false
-})
-
 function Cargar() {
     if ($.fn.DataTable.isDataTable('#proveedores-table')) {
         $('#proveedores-table').DataTable().destroy();
@@ -120,7 +115,7 @@ function Cargar() {
                     titleAttr: 'Exportar a Excel',
                     filename: 'reporte_excel'
                 }],
-            ajax: '/admin/admin.clientes.index',
+            ajax: '/admin/admin.proveedores.index',
                 columns: [
                 { data: 'DT_RowIndex', name: 'DT_RowIndex', className: 'exclude', orderable: false,searchable: false},
                 { data: 'tipoid', name: 'tipoid'},
@@ -374,24 +369,117 @@ function showCustomUser(btn) {
 
 //Registrar usuario
 function regProv() {
-    $('#ModalProveedor').modal('show');
-    $('#exampleModalLabel').html('Registrar Proveedor');
+    console.log('🆕 regProv() - Abriendo modal para crear proveedor');
 
-    // LIMPIAR CAMPOS
-    cleanInput();
-     // FIN LIMPIAR CAMPOS
-    limpiarValidaciones();
-    cleanInputSucursal();
-    //Se limpia el contacto_id
-    $('#contacto_id').val('');
-    $('#sucursal_id').val('');
-    CargarSucursales(0);
-    CargarContactos(0);
-    let r = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>' +
-        '<button type="button" class="btn btn-primary" onclick="registerCli()"><span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="spinnerRegister"></span>Agregar</button>';
+    try {
+        // Desmarcar modo de edición para creación
+        $('#ModalProveedor').removeData('edit-mode');
+        console.log('🔄 Modo de edición desmarcado para CREACIÓN');
 
-    $(".modal-footer").html(r);
+        // Método directo y simple para abrir el modal PRIMERO
+        console.log('🔄 Abriendo modal...');
+        $('#ModalProveedor').modal('show');
+        console.log('✅ Modal abierto');
 
+        $('#modalProveedorLabel').html('<i class="fas fa-truck mr-2"></i>Registrar Proveedor');
+
+        // VERIFICAR valores iniciales ANTES de cualquier limpieza
+        console.log('📊 Valores ANTES de limpiar:');
+        console.log('   - tercerotipo_id:', $('#tercerotipo_id').val());
+        console.log('   - user_id:', $('#user_id').val());
+
+        // ASEGURAR valores críticos ANTES de cualquier limpieza
+        let tercerotipo_inicial = $('#tercerotipo_id').val();
+        let user_inicial = $('#user_id').val();
+
+        if (!tercerotipo_inicial || tercerotipo_inicial === '') {
+            tercerotipo_inicial = '2'; // Proveedores = 2
+            $('#tercerotipo_id').val(tercerotipo_inicial);
+            console.log('🔧 ESTABLECIDO tercerotipo_id = 2 (proveedores)');
+        }
+
+        if (!user_inicial || user_inicial === '') {
+            // Intentar obtener user_id desde alguna variable global o usar un valor por defecto
+            const userFromGlobal = window.permisos && window.permisos.id ? window.permisos.id : null;
+            user_inicial = userFromGlobal || '1'; // Valor por defecto
+            $('#user_id').val(user_inicial);
+            console.log('🔧 ESTABLECIDO user_id =', user_inicial);
+        }
+
+        console.log('💾 Valores críticos asegurados:', {
+            tercerotipo_id: tercerotipo_inicial,
+            user_id: user_inicial
+        });
+
+        // LIMPIAR CAMPOS - pero preservando los críticos
+        cleanInput();
+         // FIN LIMPIAR CAMPOS
+        limpiarValidaciones();
+        cleanInputSucursal();
+        //Se limpia el contacto_id
+        $('#contacto_id').val('');
+        $('#sucursal_id').val('');
+        CargarSucursales(0);
+        CargarContactos(0);
+
+        // VERIFICAR Y RESTAURAR si es necesario
+        if (!$('#tercerotipo_id').val() || $('#tercerotipo_id').val() === '') {
+            $('#tercerotipo_id').val(tercerotipo_inicial);
+            console.log('🔧 RESTAURADO tercerotipo_id =', tercerotipo_inicial);
+        }
+
+        if (!$('#user_id').val() || $('#user_id').val() === '') {
+            $('#user_id').val(user_inicial);
+            console.log('🔧 RESTAURADO user_id =', user_inicial);
+        }
+
+        // VERIFICAR valores DESPUÉS de la limpieza
+        console.log('📊 Valores DESPUÉS de limpiar:');
+        console.log('   - tercerotipo_id:', $('#tercerotipo_id').val());
+        console.log('   - user_id:', $('#user_id').val());
+
+        // DETECTAR si el sistema de pasos está disponible
+        const hasStepSystem = document.querySelector('.step-item') !== null;
+        console.log('🔍 Sistema de pasos detectado:', hasStepSystem);
+
+        if (hasStepSystem) {
+            console.log('✅ Usando sistema de pasos avanzado');
+            // RESETEAR el sistema de navegación por pasos PERO preservando campos críticos
+            if (typeof resetModal === 'function') {
+                console.log('🔄 Ejecutando resetModal...');
+                resetModal();
+
+                // Asegurar nuevamente los valores después del reset
+                if (!$('#tercerotipo_id').val()) {
+                    $('#tercerotipo_id').val(tercerotipo_inicial);
+                    console.log('🔧 POST-RESET: Restaurado tercerotipo_id');
+                }
+                if (!$('#user_id').val()) {
+                    $('#user_id').val(user_inicial);
+                    console.log('🔧 POST-RESET: Restaurado user_id');
+                }
+            }
+
+            // NO sobrescribir botones cuando hay sistema de pasos
+            console.log('🔒 Sistema de pasos activo - manteniendo botones de navegación');
+        } else {
+            console.log('⚪ Usando sistema tradicional - configurando botones simples');
+            // Solo usar el footer simple cuando NO hay sistema de pasos
+            let r = '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>' +
+                '<button type="button" class="btn btn-primary" onclick="registerProv()"><span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="spinnerRegister"></span>Agregar</button>';
+
+            $(".modal-footer").html(r);
+        }
+
+        // VERIFICACIÓN FINAL
+        console.log('🔍 VERIFICACIÓN FINAL:');
+        console.log('   - tercerotipo_id:', $('#tercerotipo_id').val());
+        console.log('   - user_id:', $('#user_id').val());
+
+    } catch (error) {
+        console.error('❌ Error al abrir modal:', error);
+        alert('Error al abrir el modal. Verifique la consola para más detalles.');
+    }
 }
 
 function registerProv() {

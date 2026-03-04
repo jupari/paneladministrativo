@@ -27,7 +27,7 @@
             <h4>Producció/Fichas Técnicas</h4>
         </div>
         <div class="card-body" >
-            @if(auth()->user()->hasRole('Administrator'))
+            @if(auth()->user()->hasRole(['Administrator', 'sysadmin', 'Produccion-Manager']))
                 <div class="col-md-1">
                 <a type="button"  href="{{ route('admin.fichas-tecnicas.create') }}" class="btn btn-primary btn-block mb-1" data-toggle="tooltip" data-placement="top" title="Crear Ficha Técnica">
                     <i class="fa fa-plus" aria-hidden="true"></i>

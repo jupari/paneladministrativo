@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\admin\ConfigAccountController;
 use App\Http\Controllers\Admin\CuentaController;
 use App\Http\Controllers\Admin\CuentaMadreController;
@@ -8,12 +9,13 @@ use App\Http\Controllers\Admin\EstadoController;
 use App\Http\Controllers\Admin\OutlookController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CompanyController;
+use App\Http\Controllers\Admin\CostCenterController;
 use App\Http\Controllers\Admin\UsuarioRolesController;
 use App\Http\Controllers\Admin\RolesPermisosController;
 use App\Http\Controllers\Contratos\Cargos\CargoController;
 use App\Http\Controllers\Contratos\Categorias\CategoriaController;
-use App\Http\Controllers\Contratos\ContratoController;
 use App\Http\Controllers\Contratos\Empleados\EmpleadoController;
+use App\Http\Controllers\Contratos\ContratoController;
 use App\Http\Controllers\Contratos\Novedades\NovedadController;
 use App\Http\Controllers\Contratos\Novedades\NovedadDetalleController;
 use App\Http\Controllers\Contratos\Parametrizacion\ParametrizacionController;
@@ -36,7 +38,6 @@ use App\Http\Controllers\Produccion\FichaTecnicaController;
 use App\Http\Controllers\Produccion\FichaTecnicaBocetoController;
 use App\Http\Controllers\Produccion\FichaTecnicaMaterialController;
 use App\Http\Controllers\Produccion\FichaTecnicaProcesoController;
-
 use App\Http\Controllers\Produccion\ProdOrderController;
 use App\Http\Controllers\Produccion\ProdProductionLogController;
 use App\Http\Controllers\Produccion\ProdSettlementController;
@@ -50,6 +51,11 @@ use App\Http\Controllers\Inventario\MovimientoController;
 use App\Http\Controllers\Inventario\MovimientoDetalleController;
 use App\Http\Controllers\Inventario\ProductoPropiedadController;
 use App\Http\Controllers\Inventario\SaldoController;
+use App\Http\Controllers\Nomina\NominaConceptoController;
+use App\Http\Controllers\Nomina\NominaNovedadController;
+use App\Http\Controllers\Nomina\NominaPayRunController;
+use App\Http\Controllers\Nomina\NominaPayslipController;
+use App\Http\Controllers\Nomina\NominaReportController;
 use App\Http\Controllers\Produccion\procesos\ProcesoController;
 use App\Http\Controllers\Produccion\procesos\ProcesoDetController;
 use App\Http\Controllers\Terceros\Clientes\ClienteController;
@@ -154,6 +160,23 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::get('admin.clientes.edit/{id}', [ClienteController::class, 'edit'])->name('admin.clientes.edit');
         Route::post('admin.clientes.update/{id}', [ClienteController::class, 'update'])->name('admin.clientes.update');
         Route::delete('admin.clientes.destroy/{id}', [ClienteController::class, 'destroy'])->name('admin.clientes.destroy');
+    });
+
+    // Route::controller(ProveedorController::class)->group(function () {
+    //     Route::get('admin.proveedores.index', [ProveedorController::class, 'index'])->name('admin.proveedores.index');
+    //     Route::post('admin.proveedores.store', [ProveedorController::class, 'store'])->name('admin.proveedores.store');
+    //     Route::get('admin.proveedores.edit/{id}', [ProveedorController::class, 'edit'])->name('admin.proveedores.edit');
+    //     Route::post('admin.proveedores.update/{id}', [ProveedorController::class, 'update'])->name('admin.proveedores.update');
+    //     Route::delete('admin.proveedores.destroy/{id}', [ProveedorController::class, 'destroy'])->name('admin.proveedores.destroy');
+    // });
+
+    Route::controller(EmpleadoController::class)->group(function () {
+        Route::get('admin.empleados-terceros.index', [EmpleadoController::class, 'index'])->name('admin.empleados-terceros.index');
+        Route::post('admin.empleados-terceros.store', [EmpleadoController::class, 'store'])->name('admin.empleados-terceros.store');
+        Route::get('admin.empleados-terceros.edit/{id}', [EmpleadoController::class, 'edit'])->name('admin.empleados-terceros.edit');
+        Route::post('admin.empleados-terceros.update/{id}', [EmpleadoController::class, 'update'])->name('admin.empleados-terceros.update');
+        Route::delete('admin.empleados-terceros.destroy/{id}', [EmpleadoController::class, 'destroy'])->name('admin.empleados-terceros.destroy');
+        Route::get('admin.empleados.list', [EmpleadoController::class, 'list'])->name('admin.empleados.list');
     });
 
     Route::controller(SucursalClienteController::class)->group(function () {

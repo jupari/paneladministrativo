@@ -22,9 +22,9 @@
             <h4 class="mb-0">Productos</h4>
         </div>
         <div class="card-body">
-            @if(auth()->user()->hasRole('Administrator'))
+            @if(auth()->user()->can('productos.create'))
                     <div class="col-md-1">
-                    <button type="button" id="btn-nuevo" class="btn btn-primary btn-block mb-1" data-toggle="tooltip" data-placement="top" title="Crear producto">
+                    <button type="button" id="btn-nuevo" class="btn btn-primary btn-block mb-1" onclick="regProductos()" data-toggle="tooltip" data-placement="top" title="Crear producto">
                         <i class="fa fa-plus" aria-hidden="true"></i>
                     </button>
                     </div>

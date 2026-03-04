@@ -33,4 +33,9 @@ class TerceroContacto extends Model
      * @var array
      */
     protected $fillable = ['tercero_id','nombres', 'apellidos', 'correo', 'celular', 'telefono', 'ext','cargo', 'created_at', 'updated_at', 'user_id'];
+
+    public function tercero()
+    {
+        return $this->belongsTo(Tercero::class, 'tercero_id');
+    }
 }

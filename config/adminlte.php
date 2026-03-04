@@ -298,12 +298,11 @@ return [
     | https://github.com/jeroennoten/Laravel-AdminLTE/wiki/Menu-Configuration
     |
     */
-
     'menu' => [
-        // Navbar items:
+        // Navbar
         [
             'type' => 'navbar-search',
-            'text' => 'search',
+            'text' => 'Buscar',
             'topnav_right' => false,
         ],
         [
@@ -311,88 +310,252 @@ return [
             'topnav_right' => true,
         ],
 
-        // ========================================
-        // MENÚ PRINCIPAL
-        // ========================================
+        // ===============================
+        // INICIO
+        // ===============================
+        ['header' => 'INICIO'],
 
-        // Dashboard - Elemento destacado
         [
-            'text' => 'Dashboard',
+            'text' => 'Panel de Control',
             'route' => 'dashboard',
-            'icon' => 'fas fa-tachometer-alt text-primary',
-            'can' => 'admin.dashboard'
+            'icon' => 'fas fa-chart-line text-primary',
+            'can' => 'admin.dashboard',
         ],
 
-        // ========================================
-        // GESTIÓN DE TERCEROS - SUBMENÚ
-        // ========================================
+        // ===============================
+        // ORGANIZACIÓN
+        // ===============================
+        ['header' => 'ORGANIZACIÓN'],
+
         [
-            'text' => 'Terceros',
-            'icon' => 'fas fa-handshake text-success',
+            'text' => 'Empresas',
+            'route' => 'admin.companies.index',
+            'icon' => 'fas fa-building text-success',
+            'can' => 'companies.index',
+        ],
+        [
+            'text' => 'Estructura Organizacional',
+            'icon' => 'fas fa-sitemap text-secondary',
+            'can' => ['configuracion.index'],
+            'submenu' => [
+                [
+                    'text' => 'Sedes / Sucursales',
+                    'route' => 'admin.branches.index',
+                    'icon' => 'fas fa-store-alt text-secondary',
+                    'can' => 'branches.index',
+                ],
+                [
+                    'text' => 'Centros de Costo',
+                    'route' => 'admin.costCenters.index',
+                    'icon' => 'fas fa-network-wired text-secondary',
+                    'can' => 'centro_costo.index',
+                ],
+            ],
+        ],
+
+        // ===============================
+        // MAESTROS
+        // ===============================
+        ['header' => 'MAESTROS'],
+
+        [
+            'text' => 'Maestros de Terceros',
+            'icon' => 'fas fa-address-book text-info',
             'can' => ['terceros.index','users.index'],
             'submenu' => [
                 [
                     'text' => 'Clientes',
                     'route' => 'admin.clientes.index',
-                    'icon' => 'fas fa-users text-success',
+                    'icon' => 'fas fa-user-friends text-success',
                     'can' => 'terceros.index',
+                ],
+                [
+                    'text' => 'Proveedores',
+                    'route' => 'admin.proveedores.index',
+                    'icon' => 'fas fa-truck-loading text-primary',
+                    'can' => 'terceros.index',
+                ],
+                [
+                    'text' => 'Empleados (Terceros)',
+                    'route' => 'admin.empleados-terceros.index',
+                    'icon' => 'fas fa-user-tie text-info',
+                    'can' => 'empleados.index',
                 ],
                 [
                     'text' => 'Vendedores',
                     'route' => 'admin.vendedores.index',
-                    'icon' => 'fas fa-user-tie text-info',
+                    'icon' => 'fas fa-user-tag text-warning',
                     'can' => 'terceros.index',
                 ],
+            ],
+        ],
+
+        [
+            'text' => 'Ubicaciones',
+            'icon' => 'fas fa-map-marked-alt text-secondary',
+            'can' => ['configuracion.index'],
+            'submenu' => [
                 [
                     'text' => 'Ciudades',
                     'route' => 'admin.ubicaciones.index',
-                    'icon' => 'fas fa-map-marker-alt text-warning',
+                    'icon' => 'fas fa-city text-secondary',
                     'can' => 'configuracion.index',
                 ],
-            ]
+            ],
         ],
 
-        // ========================================
-        // RECURSOS HUMANOS - SUBMENÚ
-        // ========================================
+        // ===============================
+        // TALENTO HUMANO
+        // ===============================
+        ['header' => 'TALENTO HUMANO'],
+
         [
-            'text' => 'Recursos Humanos',
-            'icon' => 'fas fa-user-friends text-primary',
-            'can' => ['empleados.index','configuracion.index'],
+            'text' => 'Talento Humano',
+            'icon' => 'fas fa-users-cog text-primary',
+            'can' => ['empleados.index','configuracion.index','nomina.index'],
             'submenu' => [
                 [
                     'text' => 'Empleados',
                     'route' => 'admin.empleados.index',
-                    'icon' => 'fas fa-user-friends text-primary',
-                    'can' => 'empleados.index',
-                ],
-                [
-                    'text' => 'Cargos',
-                    'route' => 'admin.cargos.index',
-                    'icon' => 'fas fa-user-graduate text-success',
+                    'icon' => 'fas fa-id-card text-success',
                     'can' => 'empleados.index',
                 ],
                 [
                     'text' => 'Contratos',
                     'route' => 'admin.contratos.index',
-                    'icon' => 'fas fa-file-contract text-info',
+                    'icon' => 'fas fa-file-signature text-primary',
+                    'can' => 'empleados.index',
+                ],
+                [
+                    'text' => 'Cargos',
+                    'route' => 'admin.cargos.index',
+                    'icon' => 'fas fa-briefcase text-warning',
                     'can' => 'empleados.index',
                 ],
                 [
                     'text' => 'Plantillas',
                     'route' => 'admin.plantillas.index',
-                    'icon' => 'fas fa-file-alt text-secondary',
+                    'icon' => 'fas fa-file-alt text-info',
                     'can' => 'configuracion.index',
                 ],
-            ]
+            ],
         ],
 
-        // ========================================
-        // COTIZACIONES - SUBMENÚ
-        // ========================================
         [
-            'text' => 'Cotizaciones',
-            'icon' => 'fas fa-calculator text-warning',
+            'text' => 'Nómina y Compensación',
+            'icon' => 'fas fa-money-check-alt text-info',
+            'can' => 'nomina.index',
+            'submenu' => [
+                [
+                    'text' => 'Procesos de Nómina (PayRuns)',
+                    'route' => 'admin.nomina.payruns.index',
+                    'icon' => 'fas fa-calendar-alt',
+                    'icon_color' => 'info',
+                    'can' => 'nomina.procesos.index',
+                ],
+                [
+                    'text' => 'Novedades de Nómina',
+                    'route' => 'admin.nomina.novelties.index',
+                    'icon' => 'fas fa-exclamation-circle',
+                    'icon_color' => 'danger',
+                    'can' => 'nomina.novedades.index',
+                ],
+                [
+                    'text' => 'Conceptos y Reglas',
+                    'route' => 'admin.nomina.concepts.index',
+                    'icon' => 'fas fa-list-alt',
+                    'icon_color' => 'warning',
+                    'can' => ['nomina.conceptos.index','nomina.concepts.index'],
+                ],
+                [
+                    'text' => 'Reportes de Nómina',
+                    'route' => 'admin.nomina.reports.participants.index',
+                    'icon' => 'fas fa-chart-pie',
+                    'icon_color' => 'success',
+                    'can' => 'nomina.reports.index',
+                ],
+
+                // Enterprise extras (placeholders)
+                [
+                    'text' => 'Costos de Nómina por Centro de Costo',
+                    'url' => '#',
+                    'icon' => 'fas fa-coins text-secondary',
+                    'classes' => 'disabled',
+                ],
+                [
+                    'text' => 'Consolidado Contable (Interfaz)',
+                    'url' => '#',
+                    'icon' => 'fas fa-file-invoice text-secondary',
+                    'classes' => 'disabled',
+                ],
+            ],
+        ],
+
+        // ===============================
+        // OPERACIÓN
+        // ===============================
+        ['header' => 'OPERACIÓN'],
+
+        [
+            'text' => 'Operación – Taller',
+            'icon' => 'fas fa-industry text-primary',
+            'can' => ['nomina.index','empleados.index','configuracion.index'],
+            'submenu' => [
+                [
+                    'text' => 'Órdenes de Producción',
+                    'route' => 'admin.produccion.orders.index',
+                    'icon' => 'fas fa-clipboard-list',
+                    'icon_color' => 'primary',
+                ],
+                [
+                    'text' => 'Ejecución (Registros de Operación)',
+                    'route' => 'admin.produccion.logs.index',
+                    'icon' => 'fas fa-tasks',
+                    'icon_color' => 'info',
+                ],
+                [
+                    'text' => 'Liquidación por Destajo',
+                    'route' => 'admin.produccion.settlements.index',
+                    'icon' => 'fas fa-file-invoice-dollar',
+                    'icon_color' => 'success',
+                ],
+                [
+                    'text' => 'Catálogo de Operaciones',
+                    'route' => 'admin.produccion.operations.index',
+                    'icon' => 'fas fa-project-diagram',
+                    'icon_color' => 'warning',
+                ],
+                [
+                    'text' => 'Tarifas por Producto',
+                    'route' => 'admin.produccion.rates.index',
+                    'icon' => 'fas fa-tags',
+                    'icon_color' => 'secondary',
+                ],
+
+                // Enterprise extras (placeholders)
+                [
+                    'text' => 'Indicadores de Producción (KPI)',
+                    'url' => '#',
+                    'icon' => 'fas fa-tachometer-alt text-secondary',
+                    'classes' => 'disabled',
+                ],
+                [
+                    'text' => 'Costeo por Orden',
+                    'url' => '#',
+                    'icon' => 'fas fa-calculator text-secondary',
+                    'classes' => 'disabled',
+                ],
+            ],
+        ],
+
+        // ===============================
+        // COMERCIAL
+        // ===============================
+        ['header' => 'COMERCIAL'],
+
+        [
+            'text' => 'Cotizaciones y Ventas',
+            'icon' => 'fas fa-file-invoice text-primary',
             'can' => ['cotizaciones.index'],
             'submenu' => [
                 [
@@ -402,22 +565,21 @@ return [
                     'can' => 'cotizaciones.index',
                 ],
                 [
-                    'text' => 'Solicitudes Pendientes',
+                    'text' => 'Solicitudes de Aprobación',
                     'route' => 'admin.cotizaciones.solicitudes.index',
-                    'icon' => 'fas fa-clock text-warning',
+                    'icon' => 'fas fa-clipboard-check text-warning',
                     'can' => 'cotizaciones.index',
                 ],
-            ]
+            ],
         ],
 
-        // ========================================
-        // CONFIGURACIÓN DEL SISTEMA - SUBMENÚ UNIFICADO
-        // ========================================
+        // ===============================
+        // REPORTES EJECUTIVOS (ENTERPRISE)
+        // ===============================
+        ['header' => 'INTELIGENCIA / REPORTES'],
+
         [
-<<<<<<< Updated upstream
-            'text' => 'Configuración',
-=======
-            'text' => 'Reportes Ejecutivos',
+           'text' => 'Reportes Ejecutivos',
             'icon' => 'fas fa-chart-bar text-success',
             'can' => ['nomina.index','configuracion.index'],
             'submenu' => [
@@ -449,198 +611,138 @@ return [
 
         [
             'text' => 'Parámetros',
->>>>>>> Stashed changes
             'icon' => 'fas fa-cogs text-secondary',
             'can' => ['users.index','roles.index','configuracion.index'],
+            // 'text' => 'Reportes Ejecutivos',
+            // 'icon' => 'fas fa-chart-bar text-success',
+            // 'can' => ['nomina.index','configuracion.index'],
+
             'submenu' => [
-                // Subgrupo: Parametrización
                 [
-                    'text' => 'Parametrización',
-                    'icon' => 'fas fa-cogs text-primary',
-                    'submenu' => [
-                        [
-                            'text' => 'Parámetros de Liquidación',
-                            'icon' => 'fas fa-calculator text-info',
-                            'route' => 'admin.parametrizacion.index',
-                        ],
-                        [
-                            'text' => 'Categorías',
-                            'icon' => 'fas fa-tags text-success',
-                            'route' => 'admin.categoria.index',
-                        ],
-                        [
-                            'text' => 'Novedades',
-                            'icon' => 'fas fa-exclamation-triangle text-warning',
-                            'route' => 'admin.novedad.index',
-                        ],
-                        [
-                            'text' => 'Items Propios',
-                            'icon' => 'fas fa-boxes text-secondary',
-                            'route' => 'admin.items-propios.index',
-                        ]
-                    ]
+                    'text' => 'Resumen Nómina (Periodo)',
+                    'route' => 'admin.nomina.reports.participants.index',
+                    'icon' => 'fas fa-chart-pie text-success',
+                    'can' => 'nomina.reports.index',
                 ],
-                // Gestión de usuarios
+                [
+                    'text' => 'Resumen Producción (Periodo)',
+                    'url' => '#',
+                    'icon' => 'fas fa-industry text-secondary',
+                    'classes' => 'disabled',
+                ],
+                [
+                    'text' => 'Costos Operativos',
+                    'url' => '#',
+                    'icon' => 'fas fa-coins text-secondary',
+                    'classes' => 'disabled',
+                ],
+            ],
+        ],
+
+        // ===============================
+        // PARAMETRIZACIÓN
+        // ===============================
+        ['header' => 'PARAMETRIZACIÓN'],
+
+        [
+            'text' => 'Parámetros',
+            'icon' => 'fas fa-cogs text-secondary',
+            'can' => ['configuracion.index'],
+            'submenu' => [
+                [
+                    'text' => 'Parámetros de Liquidación',
+                    'icon' => 'fas fa-calculator text-primary',
+                    'route' => 'admin.parametrizacion.index',
+                    'can' => 'configuracion.index',
+                ],
+                [
+                    'text' => 'Categorías',
+                    'icon' => 'fas fa-tags text-success',
+                    'route' => 'admin.categoria.index',
+                    'can' => 'configuracion.index',
+                ],
+                [
+                    'text' => 'Novedades (Maestro)',
+                    'icon' => 'fas fa-bell text-warning',
+                    'route' => 'admin.novedad.index',
+                    'can' => 'configuracion.index',
+                ],
+                [
+                    'text' => 'Ítems Propios',
+                    'icon' => 'fas fa-box-open text-info',
+                    'route' => 'admin.items-propios.index',
+                    'can' => 'configuracion.index',
+                ],
+                [
+                    'text' => 'Elementos del Sistema',
+                    'route' => 'admin.elementos.index',
+                    'icon' => 'fas fa-tools text-secondary',
+                    'can' => 'configuracion.index',
+                ],
+            ],
+        ],
+
+        // ===============================
+        // ADMINISTRACIÓN / SEGURIDAD
+        // ===============================
+        ['header' => 'ADMINISTRACIÓN Y SEGURIDAD'],
+
+        [
+            'text' => 'Administración del Sistema',
+            'icon' => 'fas fa-shield-alt text-dark',
+            'can' => ['users.index','roles.index','configuracion.index','permission.index'],
+            'submenu' => [
                 [
                     'text' => 'Usuarios',
                     'route' => 'admin.users.index',
                     'icon' => 'fas fa-users text-primary',
                     'can' => 'users.index',
                 ],
-                // Roles y permisos
                 [
-                    'text' => 'Roles y Permisos',
-                    'icon' => 'fas fa-shield-alt text-danger',
-                    'submenu' => [
-                        [
-                            'text' => 'Roles',
-                            'route' => 'admin.roles.index',
-                            'icon' => 'fas fa-user-tag text-info',
-                            'can' => 'roles.index'
-                        ],
-                        [
-                            'text' => 'Permisos',
-                            'route' => 'admin.permission.index',
-                            'icon' => 'fas fa-key text-warning',
-                            'can' => 'configuracion.index',
-                        ],
-                    ]
+                    'text' => 'Roles',
+                    'route' => 'admin.roles.index',
+                    'icon' => 'fas fa-user-tag text-success',
+                    'can' => 'roles.index',
                 ],
-                // Parámetros generales
                 [
-                    'text' => 'Parámetros Generales',
-                    'route' => 'admin.elementos.index',
-                    'icon' => 'fas fa-sliders-h text-secondary',
-                    'can' => 'configuracion.index',
+                    'text' => 'Permisos',
+                    'route' => 'admin.permission.index',
+                    'icon' => 'fas fa-key text-warning',
+                    'can' => 'permission.index',
                 ],
-            ]
+
+                // Auditoría (placeholders)
+                [
+                    'text' => 'Auditoría / Trazabilidad',
+                    'url' => '#',
+                    'icon' => 'fas fa-clipboard-list text-secondary',
+                    'classes' => 'disabled',
+                ],
+                [
+                    'text' => 'Registro de Actividad (Logs)',
+                    'url' => '#',
+                    'icon' => 'fas fa-history text-secondary',
+                    'classes' => 'disabled',
+                ],
+            ],
         ],
 
-        // ========================================
-        // GESTIÓN EMPRESARIAL - SUBMENÚ
-        // ========================================
+        // ===============================
+        // COMUNICACIÓN
+        // ===============================
+        ['header' => 'COMUNICACIÓN'],
+
         [
-            'text' => 'Empresas',
-            'icon' => 'fas fa-building text-primary',
-            'can' => 'companies.index',
+            'text' => 'Comunicaciones',
+            'icon' => 'fas fa-envelope-open-text text-info',
             'submenu' => [
                 [
-                    'text' => 'Gestión de Empresas',
-                    'route' => 'admin.companies.index',
-                    'icon' => 'fas fa-building text-primary',
-                    'can' => 'companies.index',
+                    'text' => 'Gestión de Emails',
+                    'route' => 'admin.emails.index',
+                    'icon' => 'fas fa-mail-bulk text-primary',
                 ],
-            ]
+            ],
         ],
-        // ['header' => 'Producción', 'can'=>['users.index','roles.index','permisos.index']],
-        // ========================================
-        // MÓDULOS EN DESARROLLO (COMENTADOS)
-        // ========================================
-        // Los siguientes módulos están preparados para activación futura
-
-        // ['header' => '🏭 PRODUCCIÓN', 'can'=>['users.index','roles.index','permisos.index']],
-        // [
-        //     'text' => 'Fichas de Producción',
-        //     'route' => 'admin.fichas-tecnicas.index',
-        //     'icon' => 'fas fa-clipboard-list text-primary',
-        //     'can'=>'users.index',
-        // ],
-        // [
-        //     'text' => 'Órdenes de Producción',
-        //     'route' => 'admin.materiales.index',
-        //     'icon' => 'fas fa-tasks text-info',
-        //     'can'=>'users.index',
-        // ],
-        // [
-        //     'text' => 'Materiales',
-        //     'route' => 'admin.materiales.index',
-        //     'icon' => 'fas fa-boxes text-success',
-        //     'can'=>'users.index',
-        // ],
-        // [
-        //     'text' => 'Procesos',
-        //     'route' => 'admin.procesos.index',
-        //     'icon' => 'fas fa-cogs text-warning',
-        //     'can'=>'users.index',
-        // ],
-
-        // ['header' => '📦 INVENTARIOS', 'can'=>['users.index','roles.index','permisos.index']],
-        // [
-        //     'text' => 'Productos',
-        //     'route' => 'admin.productos.index',
-        //     'icon' => 'fas fa-cubes text-primary',
-        //     'can'=>'users.index',
-        // ],
-        // [
-        //     'text' => 'Bodegas',
-        //     'route' => 'admin.bodegas.index',
-        //     'icon' => 'fas fa-warehouse text-info',
-        //     'can'=>'users.index',
-        // ],
-        // [
-        //     'text' => 'Movimientos',
-        //     'route' => 'admin.movimientos.index',
-        //     'icon' => 'fas fa-exchange-alt text-success',
-        //     'can'=>'users.index',
-        // ],
-        // [
-        //     'text' => 'Saldos',
-        //     'route' => 'admin.saldos.index',
-        //     'icon' => 'fas fa-balance-scale text-warning',
-        //     'can'=>'users.index',
-        // ],
-
-        // ['header' => '🛒 COMPRAS', 'can'=>['users.index','roles.index','permisos.index']],
-        // [
-        //     'text' => 'Órdenes de Compra',
-        //     'route' => 'admin.fichas-tecnicas.index',
-        //     'icon' => 'fas fa-shopping-cart text-primary',
-        //     'can'=>'users.index',
-        // ],
-        // [
-        //     'text' => 'Proveedores',
-        //     'route' => 'admin.proveedores.index',
-        //     'icon' => 'fas fa-truck text-info',
-        //     'can'=>'users.index',
-        // ],
-        // [
-        //     'text' => 'Compras Generales',
-        //     'route' => 'admin.materiales.index',
-        //     'icon' => 'fas fa-money-bill-wave text-success',
-        //     'can'=>'users.index',
-        // ],
-
-        // ['header' => '📊 REPORTES', 'can'=>['users.index']],
-        // [
-        //     'text' => 'Dashboard Ejecutivo',
-        //     'route' => 'admin.reportes.index',
-        //     'icon' => 'fas fa-chart-line text-primary',
-        //     'can'=>'users.index',
-        // ],
-        // [
-        //     'text' => 'Reportes Financieros',
-        //     'route' => 'admin.reportes.financieros',
-        //     'icon' => 'fas fa-chart-bar text-success',
-        //     'can'=>'users.index',
-        // ],
-
-        // ['header' => '📧 COMUNICACIONES', 'can'=>['configEmail.index']],
-        // [
-        //     'text' => 'Configuración de Correos',
-        //     'route' => 'admin.configemail.index',
-        //     'icon' => 'fas fa-cog text-primary',
-        //     'can'=>'configEmail.index',
-        // ],
-        // [
-        //     'text' => 'Gestión de Emails',
-        //     'route' => 'admin.emails.index',
-        //     'icon' => 'fas fa-envelope text-info',
-        // ],
-
-        // ========================================
-        // SEPARADOR FINAL
-        // ========================================
-        ['type' => 'sidebar-custom', 'content' => '<hr class="sidebar-divider">']
     ],
 
     /*

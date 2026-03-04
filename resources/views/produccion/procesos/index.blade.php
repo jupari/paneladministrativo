@@ -28,7 +28,7 @@
             <h4>Listado de Procesos</h4>
         </div>
         <div class="card-body" >
-            @if(auth()->user()->hasRole('Administrator'))
+            @if(auth()->user()->can('procesos.create'))
                 <div class="col-md-1">
                 <button type="button" onclick="regProceso()" class="btn btn-primary btn-block mb-1" data-toggle="tooltip" data-placement="top" title="Crear parametro">
                     <i class="fa fa-plus" aria-hidden="true"></i>
