@@ -71,6 +71,11 @@ function obtenerCotizacionId() {
         return cotizacionIdEl.value;
     }
 
+    const cotizacionElId =  $('#id').val();
+    if (cotizacionElId) {
+        return cotizacionElId;
+    }
+
     return null;
 }
 
@@ -886,6 +891,38 @@ function resaltarTexto(texto, filtro) {
  */
 function limpiarFiltro() {
     $('#filtroItems').val('').trigger('keyup');
+}
+
+function crearTarjetaItem(item, tipoItem) {
+    const codigo = item.codigo || '';
+    const nombre = item.nombre || '';
+    const tipo = tipoItem === 'cargo' ? 'cargo' : 'item';
+    const tipoClass = tipo === 'cargo' ? 'tipo-cargo' : 'tipo-item';
+    const tipoTexto = tipo === 'cargo' ? 'Cargo' : 'Item';
+    const iconoTipo = tipo === 'cargo' ? 'fas fa-user-tie' : 'fas fa-cube';
+
+    return `
+        <div class="item-card" data-item-id="${item.id}" data-tipo="${tipo}" data-searchable="${codigo.toLowerCase()} ${nombre.toLowerCase()}">
+            <div class="d-flex align-items-center">
+                <input type="checkbox" class="item-checkbox"
+                       id="item_${item.id}"
+                       value="${item.id}"
+                       data-tipo="${item.tipo || ''}"
+                       data-nombre="${nombre}"
+                       data-codigo="${codigo}"
+                       onchange="actualizarEstadoBotonAplicar(); actualizarContadorSeleccionados(); toggleTarjetaSeleccionada(this);">
+
+                <div class="flex-grow-1">
+                    <div class="item-nombre">
+                        <i class="${iconoTipo} mr-2 text-muted"></i>${nombre}
+                    </div>
+                    ${codigo ? `<div class="item-codigo">${codigo}</div>` : ''}
+                </div>
+
+                <span class="item-tipo ${tipoClass}">${tipoTexto}</span>
+            </div>
+        </div>
+    `;
 }
 
 /**

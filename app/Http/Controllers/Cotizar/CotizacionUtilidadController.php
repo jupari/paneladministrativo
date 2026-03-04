@@ -103,19 +103,20 @@ class CotizacionUtilidadController extends Controller
                 $utilidadesCreadas[] = $utilidad;
             }
         }else if(!empty($cargoIds)){
+            Log::info('Procesando cargos: ', $cargoIds);
             foreach ($cargoIds as $cargoId) {
                 // Primero verificar productos en la cotización
                 $productosEnCotizacion = $cotizacion->productos()
                     ->where('categoria_id', $data['categoria_id'])
                     ->get();
-
+                Log::info('Productos en cotización para categoría ' . $data['categoria_id'] . ': ' . $productosEnCotizacion->count());
                 // Verificar que existan productos que coincidan con ambos criterios
                 $queryProductos = $cotizacion->productos()
                     ->where('categoria_id', $data['categoria_id'])
                     ->whereHas('parametrizacion', function($query) use ($cargoId) {
                         $query->where('cargo_id', $cargoId);
                     });
-
+                Log::info('Productos que coinciden con cargo ' . $cargoId . ': ' . $queryProductos->count().'  Categoria: '.$data['categoria_id'].', sql>>'.$queryProductos->toSql());
                 $hayProductos = $queryProductos->exists();
                 if (!$hayProductos) {
                     $itemsSinProductos[] = $cargoId;
@@ -130,6 +131,7 @@ class CotizacionUtilidadController extends Controller
 
                 if ($existeUtilidad) {
                     $itemsDuplicados[] = $cargoId;
+                    Log::info('Utilidad duplicada encontrada para cargo ' . $cargoId);
                     continue;
                 }
 
