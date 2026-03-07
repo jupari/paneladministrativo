@@ -1025,7 +1025,7 @@
                                     <!-- FINNNNN -->
 
                                     <!--botones -->
-                                     <div class="d-flex justify-content-between align-items-center my-4" id="botones">
+                                    <div class="d-flex justify-content-between align-items-center my-4" id="botones">
                                         <div class="">
                                             <a class="btn btn-secondary" href="javascript:history.back()">
                                                 <i class="fas fa-arrow-left mr-1"></i>

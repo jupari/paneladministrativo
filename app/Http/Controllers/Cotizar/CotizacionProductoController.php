@@ -10,6 +10,7 @@ use App\Services\CotizacionProductoService;
 use App\Models\CotizacionProducto;
 use App\Models\ItemPropio;
 use App\Models\Parametrizacion;
+use App\Models\ParametrizacionCosto;
 use App\Models\Producto;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -344,26 +345,35 @@ class CotizacionProductoController extends Controller
                 'url' => $request->fullUrl()
             ]);
 
-            // Obtener categorías y items propios desde la base de datos
-            $query = ItemPropio::with(['categoria'])
-                ->where('active', 1);
+            // Buscar items por categoría desde tablas de parametrización
+            $query = ParametrizacionCosto::query()
+                ->leftJoin('categorias', 'parametrizacion_costos.categoria_id', '=', 'categorias.id')
+                ->select(
+                    'parametrizacion_costos.id',
+                    'parametrizacion_costos.item',
+                    'parametrizacion_costos.item_nombre',
+                    'parametrizacion_costos.unidad_medida',
+                    'parametrizacion_costos.costo_unitario',
+                    'parametrizacion_costos.costo_dia',
+                    'parametrizacion_costos.categoria_id',
+                    'parametrizacion_costos.active',
+                    'categorias.nombre as categoria_nombre'
+                )
+                ->where('parametrizacion_costos.active', 1);
 
             // Filtro por término de búsqueda si se proporciona
-            if ($request->has('buscar') && !empty($request->buscar)) {
+            if ($request->filled('buscar')) {
                 $termino = $request->buscar;
                 $query->where(function($q) use ($termino) {
-                    $q->where('nombre', 'like', "%{$termino}%")
-                      ->orWhere('codigo', 'like', "%{$termino}%")
-                      ->orWhere('descripcion', 'like', "%{$termino}%")
-                      ->orWhereHas('categoria', function($catQuery) use ($termino) {
-                          $catQuery->where('nombre', 'like', "%{$termino}%");
-                      });
+                    $q->where('parametrizacion_costos.item_nombre', 'like', "%{$termino}%")
+                      ->orWhere('parametrizacion_costos.item', 'like', "%{$termino}%")
+                      ->orWhere('categorias.nombre', 'like', "%{$termino}%");
                 });
             }
 
             // Filtro por categoría
-            if ($request->has('categoria_id') && !empty($request->categoria_id)) {
-                $query->where('categoria_id', $request->categoria_id);
+            if ($request->filled('categoria_id')) {
+                $query->where('parametrizacion_costos.categoria_id', $request->categoria_id);
             }
 
             $items = $query->get();
@@ -372,15 +382,16 @@ class CotizacionProductoController extends Controller
             $productos = $items->map(function ($item) {
                 return [
                     'id' => $item->id,
-                    'codigo' => $item->codigo ?? 'ITEM' . str_pad($item->id, 3, '0', STR_PAD_LEFT),
-                    'nombre' => $item->nombre,
-                    'precio' => (float) ($item->precio ?? 0),
-                    'stock' => $item->stock ?? 0,
-                    'categoria' => $item->categoria ? $item->categoria->nombre : 'Sin categoría',
+                    'codigo' => $item->item ?? 'ITEM' . str_pad($item->id, 3, '0', STR_PAD_LEFT),
+                    'nombre' => $item->item_nombre,
+                    'precio' => (float) ($item->costo_unitario ?? $item->costo_dia ?? 0),
+                    'stock' => 0,
+                    'categoria' => $item->categoria_nombre ?? 'Sin categoría',
                     'categoria_id' => $item->categoria_id,
                     'unidad' => $item->unidad_medida ?? 'Unidad',
-                    'descripcion' => $item->descripcion ?? '',
-                    'active' => $item->active
+                    'descripcion' => '',
+                    'active' => $item->active,
+                    'fuente' => 'parametrizacion_costos'
                 ];
             });
 
@@ -489,11 +500,23 @@ class CotizacionProductoController extends Controller
             }
 
             // Usar el servicio para agregar el producto
-            $cotizacionProducto = $this->cotizacionProductoService->agregarProducto($request->validated());
+            $validated = $request->validated();
+            Log::info('agregarProductosCotizacion - Datos validados para persistir', [
+                'parametrizacion_id' => $validated['parametrizacion_id'] ?? 'NO PRESENTE',
+                'item_propio_id' => $validated['item_propio_id'] ?? 'NO PRESENTE',
+                'tabla_precios_id' => $validated['tabla_precios_id'] ?? 'NO PRESENTE',
+                'cotizacion_item_id' => $validated['cotizacion_item_id'] ?? 'NO PRESENTE',
+                'cotizacion_subitem_id' => $validated['cotizacion_subitem_id'] ?? 'NO PRESENTE',
+                'categoria_id' => $validated['categoria_id'] ?? 'NO PRESENTE',
+                'cargo_id' => $validated['cargo_id'] ?? 'NO PRESENTE',
+            ]);
+            $cotizacionProducto = $this->cotizacionProductoService->agregarProducto($validated);
 
             Log::info('agregarProductosCotizacion - Producto agregado exitosamente', [
                 'producto_id' => $cotizacionProducto->id,
-                'cotizacion_id' => $request->cotizacion_id
+                'cotizacion_id' => $request->cotizacion_id,
+                'parametrizacion_id_guardado' => $cotizacionProducto->parametrizacion_id,
+                'item_propio_id_guardado' => $cotizacionProducto->item_propio_id,
             ]);
 
             return response()->json([

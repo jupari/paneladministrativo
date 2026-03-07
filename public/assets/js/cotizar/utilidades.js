@@ -354,11 +354,14 @@ async function aplicarUtilidad() {
         formData.append('tipo', tipo);
         formData.append('valor', valor);
 
-        // Agregar cada item seleccionado como array
+        // Agregar cada item seleccionado como array, según su tipo (cargo o item propio)
         itemsIds.forEach(itemId => {
-            if (nombreCategoria=='Nomina' || nombreCategoria=='NOMINA' || nombreCategoria=='Nómina' || nombreCategoria=='NOM' || nombreCategoria=='Seguridad Social' || nombreCategoria=='Parafiscales' || nombreCategoria=='Prestaciones Sociales') {
+            const checkbox = document.querySelector(`.item-checkbox[value="${itemId}"]:checked`);
+            const tipoItem = checkbox ? (checkbox.dataset.tipo || '') : '';
+
+            if (tipoItem === 'cargo') {
                 formData.append('cargo_ids[]', itemId);
-            }else{
+            } else {
                 formData.append('item_propio_ids[]', itemId);
             }
         });
@@ -590,13 +593,26 @@ async function cargarUtilidadesExistentes() {
                 const valorFormateado = formatearValor(utilidad.valor, utilidad.tipo);
                 const calculadoFormateado = formatearValor(utilidad.valor_calculado || 0, 'valor');
 
+                // html += `
+                //     <div class="d-flex justify-content-between align-items-center border rounded p-2 mb-2 bg-white">
+                //         <div>
+                //             <strong>${elemento}</strong><br>
+                //             <small class="text-muted">
+                //                 ${tipo}${valorFormateado}
+                //                 ${utilidad.valor_calculado ? `→ ${calculadoFormateado}` : ''}
+                //             </small>
+                //         </div>
+                //         <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarUtilidad(${utilidad.id})" title="Eliminar utilidad">
+                //             <i class="fas fa-trash"></i>
+                //         </button>
+                //     </div>
+                // `;
                 html += `
                     <div class="d-flex justify-content-between align-items-center border rounded p-2 mb-2 bg-white">
                         <div>
                             <strong>${elemento}</strong><br>
                             <small class="text-muted">
                                 ${tipo}${valorFormateado}
-                                ${utilidad.valor_calculado ? `→ ${calculadoFormateado}` : ''}
                             </small>
                         </div>
                         <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarUtilidad(${utilidad.id})" title="Eliminar utilidad">
@@ -604,6 +620,7 @@ async function cargarUtilidadesExistentes() {
                         </button>
                     </div>
                 `;
+
             });
         } else {
             html = `

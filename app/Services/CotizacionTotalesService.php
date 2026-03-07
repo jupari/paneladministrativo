@@ -94,81 +94,22 @@ class CotizacionTotalesService
                 'valor' => $utilidad->valor
             ]);
 
-            // Manejar utilidades por categoría + cargo_id
+            // Manejar utilidades por categoría + cargo_id (productos de nómina/parametrización)
             if ($utilidad->categoria_id && $utilidad->cargo_id) {
-                Log::info('Procesando utilidad con cargo_id', [
-                    'categoria_id' => $utilidad->categoria_id,
-                    'cargo_id' => $utilidad->cargo_id
-                ]);
-
-                // Filtrar productos por categoría Y cargo (parametrización)
+                // Filtrar productos directamente por categoria_id + cargo_id
                 $productosUtilidad = $productos->filter(function($producto) use ($utilidad) {
-                    // Verificar que coincida la categoría
-                    if ($producto->categoria_id != $utilidad->categoria_id) {
-                        return false;
-                    }
-
-                    // Verificar parametrización si existe
-                    if (!$producto->parametrizacion_id) {
-                        return false;
-                    }
-
-                    // Obtener cargo de la parametrización
-                    $parametrizacion = DB::table('parametrizacion')
-                        ->where('id', $producto->parametrizacion_id)
-                        ->first();
-
-                    $coincide = $parametrizacion && $parametrizacion->cargo_id == $utilidad->cargo_id;
-
-                    Log::info('Verificando producto', [
-                        'producto_id' => $producto->id,
-                        'parametrizacion_id' => $producto->parametrizacion_id,
-                        'cargo_en_parametrizacion' => $parametrizacion ? $parametrizacion->cargo_id : null,
-                        'cargo_utilidad' => $utilidad->cargo_id,
-                        'coincide' => $coincide
-                    ]);
-
-                    return $coincide;
+                    return $producto->categoria_id == $utilidad->categoria_id
+                        && $producto->cargo_id == $utilidad->cargo_id;
                 });
-
             }
             // Manejar utilidades por categoría + item_propio_id
             else if ($utilidad->categoria_id && $utilidad->item_propio_id) {
-
-                // Verificar si es un cargo (con prefijo cargo_)
-                if (strpos($utilidad->item_propio_id, 'cargo_') === 0) {
-                    // Extraer el ID del cargo
-                    $cargoId = str_replace('cargo_', '', $utilidad->item_propio_id);
-
-                    // Filtrar productos por categoría Y cargo (parametrización)
-                    $productosUtilidad = $productos->filter(function($producto) use ($utilidad, $cargoId) {
-                        // Verificar que coincida la categoría
-                        if ($producto->categoria_id != $utilidad->categoria_id) {
-                            return false;
-                        }
-
-                        // Verificar parametrización si existe
-                        if (!$producto->parametrizacion_id) {
-                            return false;
-                        }
-
-                        // Obtener cargo de la parametrización
-                        $parametrizacion = DB::table('parametrizacion')
-                            ->where('id', $producto->parametrizacion_id)
-                            ->first();
-
-                        return $parametrizacion && $parametrizacion->cargo_id == $cargoId;
-                    });
-
-                } else {
-                    // Filtrar productos por categoría Y item propio
-                    $productosUtilidad = $productos->filter(function($producto) use ($utilidad) {
-                        return $producto->categoria_id == $utilidad->categoria_id
-                            && $producto->item_propio_id == $utilidad->item_propio_id;
-                    });
-                }
+                // Filtrar productos por categoría Y item propio
+                $productosUtilidad = $productos->filter(function($producto) use ($utilidad) {
+                    return $producto->categoria_id == $utilidad->categoria_id
+                        && $producto->item_propio_id == $utilidad->item_propio_id;
+                });
             } else {
-                // Caso no válido
                 Log::warning('Utilidad sin criterios válidos', [
                     'utilidad_id' => $utilidad->id,
                     'categoria_id' => $utilidad->categoria_id,

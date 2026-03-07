@@ -63,9 +63,8 @@ class CotizacionUtilidadController extends Controller
                     $cargoId = str_replace('cargo_', '', $itemPropioId);
                     $hayProductos = $cotizacion->productos()
                         ->where('categoria_id', $data['categoria_id'])
-                        ->whereHas('parametrizacion', function($query) use ($cargoId) {
-                            $query->where('cargo_id', $cargoId);
-                        })
+                        ->whereNotNull('parametrizacion_id')
+                        ->where('cargo_id', $cargoId)
                         ->exists();
                 } else {
                     // Es un item propio normal, verificar ambos campos
@@ -103,21 +102,20 @@ class CotizacionUtilidadController extends Controller
                 $utilidadesCreadas[] = $utilidad;
             }
         }else if(!empty($cargoIds)){
-            Log::info('Procesando cargos: ', $cargoIds);
+            Log::info('Procesando cargos', ['cargo_ids' => $cargoIds, 'categoria_id' => $data['categoria_id']]);
             foreach ($cargoIds as $cargoId) {
-                // Primero verificar productos en la cotización
-                $productosEnCotizacion = $cotizacion->productos()
+                // Verificar que existan productos con este cargo_id y categoría
+                $hayProductos = $cotizacion->productos()
                     ->where('categoria_id', $data['categoria_id'])
-                    ->get();
-                Log::info('Productos en cotización para categoría ' . $data['categoria_id'] . ': ' . $productosEnCotizacion->count());
-                // Verificar que existan productos que coincidan con ambos criterios
-                $queryProductos = $cotizacion->productos()
-                    ->where('categoria_id', $data['categoria_id'])
-                    ->whereHas('parametrizacion', function($query) use ($cargoId) {
-                        $query->where('cargo_id', $cargoId);
-                    });
-                Log::info('Productos que coinciden con cargo ' . $cargoId . ': ' . $queryProductos->count().'  Categoria: '.$data['categoria_id'].', sql>>'.$queryProductos->toSql());
-                $hayProductos = $queryProductos->exists();
+                    ->where('cargo_id', $cargoId)
+                    ->exists();
+
+                Log::info('Verificación producto cargo', [
+                    'cargo_id' => $cargoId,
+                    'categoria_id' => $data['categoria_id'],
+                    'hay_productos' => $hayProductos
+                ]);
+
                 if (!$hayProductos) {
                     $itemsSinProductos[] = $cargoId;
                     continue;
@@ -131,7 +129,6 @@ class CotizacionUtilidadController extends Controller
 
                 if ($existeUtilidad) {
                     $itemsDuplicados[] = $cargoId;
-                    Log::info('Utilidad duplicada encontrada para cargo ' . $cargoId);
                     continue;
                 }
 
@@ -237,46 +234,22 @@ class CotizacionUtilidadController extends Controller
     public function obtenerCategorias($cotizacionId)
     {
         try {
-            // Obtener categorías que tienen productos en esta cotización
-            $categorias = Categoria::whereHas('itemsPropios', function($query) use ($cotizacionId) {
-                $query->whereHas('cotizacionProductos', function($subQuery) use ($cotizacionId) {
-                    $subQuery->where('cotizacion_id', $cotizacionId);
-                });
-            })
-            ->orWhereIn('id', function($query) use ($cotizacionId) {
-                $query->select('categoria_id')
-                      ->from('ord_cotizacion_productos')
-                      ->where('cotizacion_id', $cotizacionId)
-                      ->whereNotNull('categoria_id');
-            })
-            ->orderBy('nombre')
-            ->get(['id', 'nombre']);
+            // Obtener todas las categorías que tienen productos en esta cotización
+            $categoriaIds = \DB::table('ord_cotizacion_productos')
+                ->where('cotizacion_id', $cotizacionId)
+                ->whereNotNull('categoria_id')
+                ->distinct()
+                ->pluck('categoria_id');
 
-            // Verificar si hay categoría nómina con productos de parametrización
-            $categoriaNomina = Categoria::where('nombre', 'LIKE', '%nomina%')
-                ->orWhere('nombre', 'LIKE', '%nómina%')
-                ->orWhere('nombre', 'LIKE', '%NOMINA%')
-                ->first();
-
-            if ($categoriaNomina) {
-                // Verificar si hay productos de nómina en la cotización (desde parametrización)
-                $hayProductosNomina = \DB::table('ord_cotizacion_productos')
-                    ->where('cotizacion_id', $cotizacionId)
-                    ->where('categoria_id', $categoriaNomina->id)
-                    ->whereNotNull('parametrizacion_id')
-                    ->exists();
-
-                if ($hayProductosNomina && !$categorias->contains('id', $categoriaNomina->id)) {
-                    $categorias->push($categoriaNomina);
-                }
-            }
+            $categorias = Categoria::whereIn('id', $categoriaIds)
+                ->orderBy('nombre')
+                ->get(['id', 'nombre']);
 
             return response()->json([
                 'success' => true,
                 'data' => $categorias
             ]);
         } catch (\Throwable $th) {
-            //throw $th;
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener las categorías: ' . $th->getMessage()
@@ -341,49 +314,58 @@ class CotizacionUtilidadController extends Controller
     public function obtenerItemsPorCategoria($cotizacionId, $categoriaId)
     {
         try {
-            // Obtener items propios de esta categoría que tienen productos en la cotización
+            $items = collect();
+
+            // 1) Items propios que tienen productos en esta cotización con esta categoría
             $itemsPropios = ItemPropio::where('categoria_id', $categoriaId)
-                ->whereIn('id', function($query) use ($cotizacionId) {
+                ->whereIn('id', function($query) use ($cotizacionId, $categoriaId) {
                     $query->select('item_propio_id')
                           ->from('ord_cotizacion_productos')
                           ->where('cotizacion_id', $cotizacionId)
+                          ->where('categoria_id', $categoriaId)
                           ->whereNotNull('item_propio_id');
                 })
                 ->orderBy('nombre')
                 ->get(['id', 'nombre', 'codigo']);
 
-            // Si es categoría nómina, agregar cargos
-            $categoria = Categoria::find($categoriaId);
-            if ($categoria && (
-                stripos($categoria->nombre, 'nomina') !== false ||
-                stripos($categoria->nombre, 'nómina') !== false
-            )) {
-                // Obtener cargos que tienen productos en esta cotización con esta categoría
-                $cargosParametrizacion = \DB::table('cargos_tabla_precios as ocp')
-                    ->join('cargos as c', 'ocp.cargo_id', '=', 'c.id')
-                    ->whereNotNull('ocp.cargo_id')
-                    ->select('c.id', 'c.nombre')
-                    ->distinct()
-                    ->get();
-                // Agregar cargos a la colección
-                foreach ($cargosParametrizacion as $cargo) {
-                    $itemsPropios->push((object)[
-                        'id' => $cargo->id,
-                        'nombre' => $cargo->nombre . ' (Cargo)',
-                        'codigo' => $cargo->codigo ?? '',
-                        'tipo' => 'cargo'
-                    ]);
-                }
+            foreach ($itemsPropios as $ip) {
+                $items->push((object)[
+                    'id' => $ip->id,
+                    'nombre' => $ip->nombre,
+                    'codigo' => $ip->codigo ?? '',
+                    'tipo' => 'item'
+                ]);
+            }
+
+            // 2) Cargos que tienen productos en esta cotización con esta categoría
+            //    (productos que vienen de parametrización tienen cargo_id poblado)
+            $cargos = \DB::table('ord_cotizacion_productos as ocp')
+                ->join('cargos as c', 'ocp.cargo_id', '=', 'c.id')
+                ->where('ocp.cotizacion_id', $cotizacionId)
+                ->where('ocp.categoria_id', $categoriaId)
+                ->whereNotNull('ocp.cargo_id')
+                ->select('c.id', 'c.nombre')
+                ->distinct()
+                ->get();
+
+            foreach ($cargos as $cargo) {
+                $items->push((object)[
+                    'id' => $cargo->id,
+                    'nombre' => $cargo->nombre . ' (Cargo)',
+                    'codigo' => '',
+                    'tipo' => 'cargo'
+                ]);
             }
 
             return response()->json([
                 'success' => true,
-                'data' => $itemsPropios
+                'data' => $items->values()
             ]);
         } catch (\Throwable $th) {
+            Log::error('Error obtenerItemsPorCategoria: ' . $th->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener los items propios por categoría: ' . $th->getMessage()
+                'message' => 'Error al obtener los items por categoría: ' . $th->getMessage()
             ], 500);
         }
     }

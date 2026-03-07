@@ -49,6 +49,7 @@ class CotizacionProducto extends Model
         'cotizacion_subitem_id',
         'item_propio_id',
         'parametrizacion_id',//cargo id Categoria=>Nomina, Seguridad Social, Parafiscales, Prestaciones Sociales
+        'tabla_precios_id',
         'producto_id',
         'nombre',
         'descripcion',

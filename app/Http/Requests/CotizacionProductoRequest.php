@@ -30,8 +30,9 @@ class CotizacionProductoRequest extends FormRequest
                 Rule::unique('ord_cotizacion_productos', 'cotizacion_subitem_id')
                     ->where(fn ($query) => $query->where('cotizacion_subitem_id', $this->cotizacion_id))
                 ],
-            'item_propio_id'=>'nullable',
-            'parametrizacion_id'=>'nullable',
+            'item_propio_id'=>'nullable|integer',
+            'parametrizacion_id'=>'nullable|integer',
+            'tabla_precios_id'=>'nullable|integer',
             'nombre' => 'required|string|max:255',
             'descripcion' => 'nullable|string|max:1000',
             'codigo' => 'nullable|string|max:50',
@@ -117,6 +118,12 @@ class CotizacionProductoRequest extends FormRequest
             'descuento_porcentaje' => $this->descuento_porcentaje ?? 0,
             'descuento_valor' => $this->descuento_valor ?? 0,
             'incluir_dominicales' => $this->has('incluir_dominicales') ? (bool) $this->incluir_dominicales : false,
+            'item_propio_id' => $this->item_propio_id !== null && $this->item_propio_id !== ''
+                ? (int) $this->item_propio_id
+                : null,
+            'parametrizacion_id' => $this->parametrizacion_id !== null && $this->parametrizacion_id !== ''
+                ? (int) $this->parametrizacion_id
+                : null,
             'dias_diurnos' => $this->dias_diurnos ?? 0,
             'dias_nocturnos' => $this->dias_nocturnos ?? 0,
             'dias_remunerados_diurnos' => $this->dias_remunerados_diurnos ?? 0,

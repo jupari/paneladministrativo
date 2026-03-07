@@ -1,4 +1,4 @@
-// Funciones para controlar el skeleton loader
+﻿// Funciones para controlar el skeleton loader
 function showSkeleton() {
     const skeleton = document.getElementById('skeleton-loader');
     const content = document.getElementById('main-content');
@@ -355,7 +355,9 @@ async function guardarCotizacion() {
         if (response.success) {
             const cotizacionGuardadaId = isEdit ? cotizacionId : response.data?.id;
             let id = document.getElementById('id');
+            let cotizacionId = document.getElementById('cotizacionId');
             id.value = cotizacionGuardadaId;
+            cotizacionId.value = cotizacionGuardadaId;
 
             // Mostrar botones de PDF
             if (typeof mostrarBotonesPdf === 'function' && cotizacionGuardadaId) {
@@ -4528,8 +4530,10 @@ async function finalizarConfiguracionCostos() {
             item.parametrizacion_id = item.tipo === 'parametrizacion' ? item.id : null;
             item.tabla_precios_id = item.tipo === 'cargo_tabla' ? (item.tabla_precios_id || item.tabla_id || item.id) : null;
         }else{
-            item.parametrizacion_id = null;
-            item.item_propio_id = item.id;
+            // Si proviene de parametrización de costos o es de tipo parametrizacion, conservar su id
+            const esParametrizacion = item.tipo === 'parametrizacion' || item.fuente === 'parametrizacion_costos';
+            item.parametrizacion_id = item.parametrizacion_id || (esParametrizacion ? item.id : null);
+            item.item_propio_id = esParametrizacion ? null : item.id;
         }
 
         // Recopilar toda la configuración del item
@@ -4641,6 +4645,9 @@ function sincronizarItemsTablaConProductosSeleccionados(itemsConCostos) {
                 cotizacion_subitem_id: subitem.cotizacion_subitem_id,
                 item_propio_id: subitem.item_propio_id,
                 parametrizacion_id: subitem.parametrizacion_id,
+                tabla_precios_id: subitem.tabla_precios_id || null,
+                tipo: subitem.tipo || null, // Preservar tipo para resolución posterior
+                fuente: subitem.fuente || null, // Preservar fuente para resolución posterior
                 nombre: subitem.nombre,
                 codigo: subitem.codigo || '',
                 precio: precioUnitario, // 🎯 Usar precio unitario calculado
@@ -6446,8 +6453,6 @@ async function cargarProductosDisponibles() {
             renderizarTablaProductos();
         } else {
             console.error('Error al cargar productos:', data.message);
-            // Si no hay productos del servidor, usar datos de ejemplo
-            cargarProductosEjemplo();
         }
     } catch (error) {
         console.error('Error al cargar productos:', error);
@@ -6460,7 +6465,6 @@ async function cargarProductosDisponibles() {
  */
 function renderizarTablaProductos() {
     // En lugar de buscar tbodyProductosDisponibles, trabajar con items propios existentes
-
     // Verificar si hay items propios cargados
     const itemsPropiosContainer = document.getElementById('itemsPropiosContainer');
     if (itemsPropiosContainer) {
@@ -6530,7 +6534,9 @@ function toggleProductoSelectionRapida(productoId) {
                 total: producto.precio,
                 unidad: producto.unidad,
                 categoria: producto.categoria,
-                esDelAcordeon: false
+                esDelAcordeon: false,
+                parametrizacion_id: (producto.tipo === 'parametrizacion' || producto.fuente === 'parametrizacion_costos') ? producto.id : (producto.parametrizacion_id || null),
+                item_propio_id: (producto.tipo === 'parametrizacion' || producto.fuente === 'parametrizacion_costos') ? null : (producto.item_propio_id || null)
             };
 
             const lengthAntes = productosSeleccionados.length;
@@ -7043,7 +7049,9 @@ function usarItemsSeleccionados() {
                 precio: 0, // Precio inicial, se puede editar
                 cantidad: 1,
                 total: 0,
-                categoria: item.tipo === 'item' ? 'Item Principal' : 'Subitem'
+                    categoria: item.tipo === 'item' ? 'Item Principal' : 'Subitem',
+                    parametrizacion_id: (item.tipo === 'parametrizacion' || item.fuente === 'parametrizacion_costos') ? item.id : null,
+                    item_propio_id: (item.tipo === 'parametrizacion' || item.fuente === 'parametrizacion_costos') ? null : item.id
             });
         }
     });
@@ -7115,7 +7123,9 @@ function seleccionarProducto(productoId) {
         productosSeleccionados.push({
             ...producto,
             cantidad: 1,
-            total: producto.precio
+            total: producto.precio,
+            parametrizacion_id: (producto.tipo === 'parametrizacion' || producto.fuente === 'parametrizacion_costos') ? producto.id : (producto.parametrizacion_id || null),
+            item_propio_id: (producto.tipo === 'parametrizacion' || producto.fuente === 'parametrizacion_costos') ? null : (producto.item_propio_id || producto.id || null)
         });
         actualizarTablaProductosSeleccionados();
         calcularTotales();
@@ -7228,11 +7238,11 @@ function actualizarTotalGeneral() {
     console.log('🔍 Iniciando actualización del total general...');
     console.log('📦 Productos seleccionados:', productosSeleccionados);
 
-    const totalGeneral = productosSeleccionados.reduce((sum, producto) => {
+    const totalGeneral = calcularTotalGeneral();
+    productosSeleccionados.forEach(producto => {
         const productoTotal = producto.total || 0;
         console.log(`   - ${producto.nombre}: $${productoTotal}`);
-        return sum + productoTotal;
-    }, 0);
+    });
 
     console.log('💰 Total calculado:', totalGeneral);
 
@@ -7249,6 +7259,19 @@ function actualizarTotalGeneral() {
     } else {
         console.error('❌ No se encontró el elemento #totalGeneral en el DOM');
     }
+}
+
+/**
+ * Calcular total general de productos seleccionados (solo número)
+ */
+function calcularTotalGeneral() {
+    return productosSeleccionados.reduce((sum, producto) => {
+        // Usa total precalculado; si no existe, calcula por cantidad * precio
+        const base = typeof producto.total === 'number'
+            ? producto.total
+            : (Number(producto.precio) || 0) * (Number(producto.cantidad) || 0);
+        return sum + base;
+    }, 0);
 }
 
 /**
@@ -7807,13 +7830,25 @@ async function enviarProductosTablaABaseDatos(productosEnTabla) {
         productosSeleccionados.forEach((producto, index) => {
             console.log(`📝 Procesando producto ${index + 1}:`, producto);
 
+            const esParametrizacion = producto.tipo === 'parametrizacion' || producto.fuente === 'parametrizacion_costos';
+            const rawParametrizacionId = producto.parametrizacion_id ?? (esParametrizacion ? producto.id : null);
+            const rawItemPropioId = producto.item_propio_id ?? (esParametrizacion ? null : (producto.id ?? null));
+
+            const parametrizacionId = rawParametrizacionId !== undefined && rawParametrizacionId !== null && rawParametrizacionId !== ''
+                ? Number(rawParametrizacionId)
+                : null;
+            const itemPropioId = rawItemPropioId !== undefined && rawItemPropioId !== null && rawItemPropioId !== ''
+                ? Number(rawItemPropioId)
+                : null;
+
             // Mapear a estructura CotizacionProductoRequest usando datos ya capturados
             const productoMapeado = {
                 cotizacion_id: parseInt(cotizacionId),
-                cotizacion_item_id: producto.cotizacion_item_id,
-                cotizacion_subitem_id: producto.cotizacion_subitem_id,
-                item_propio_id: producto.item_propio_id,
-                parametrizacion_id: producto.parametrizacion_id,
+                cotizacion_item_id: producto.cotizacion_item_id || null,
+                cotizacion_subitem_id: producto.cotizacion_subitem_id || null,
+                item_propio_id: itemPropioId,
+                parametrizacion_id: parametrizacionId,
+                tabla_precios_id: producto.tabla_precios_id || null,
                 producto_id: producto.id,
                 nombre: producto.nombre || `Producto ${index + 1}`,
                 descripcion: producto.descripcion || producto.observaciones || `${producto.categoria || ''} - ${producto.source || 'manual'}`,
@@ -7864,6 +7899,7 @@ async function enviarProductosTablaABaseDatos(productosEnTabla) {
         for (const producto of productos) {
             try {
                 console.log('🚀 Enviando producto a la API:', producto);
+                console.log('🔑 parametrizacion_id:', producto.parametrizacion_id, '| item_propio_id:', producto.item_propio_id, '| tabla_precios_id:', producto.tabla_precios_id);
 
                 const response = await fetch('/admin/admin.cotizaciones.productos.agregar', {
                     method: 'POST',
