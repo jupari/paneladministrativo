@@ -60,6 +60,16 @@ class Company extends Model
         return $this->hasMany(Tercero::class);
     }
 
+    public function workshopDevices(): HasMany
+    {
+        return $this->hasMany(WorkshopDevice::class);
+    }
+
+    public function workshopQrTokens(): HasMany
+    {
+        return $this->hasMany(WorkshopQrToken::class);
+    }
+
     // Métodos para gestión de licencias
     public function isLicenseValid(): bool
     {

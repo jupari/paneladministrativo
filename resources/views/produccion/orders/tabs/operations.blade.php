@@ -7,6 +7,8 @@
         <th>Código</th>
         <th>Operación</th>
         <th class="text-right">Requerido</th>
+        <th class="text-right text-danger">Dañadas</th>
+        <th class="text-right">Req. Ajustado</th>
         <th class="text-right">Hecho</th>
         <th class="text-right">Pendiente</th>
         <th class="text-center">Avance</th>

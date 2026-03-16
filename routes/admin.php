@@ -637,6 +637,15 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::post('admin.produccion.orders.store', [ProdOrderController::class, 'store'])->name('admin.produccion.orders.store');
         Route::get('admin.produccion.orders.edit/{id}', [ProdOrderController::class, 'edit'])->name('admin.produccion.orders.edit');
         Route::post('admin.produccion.orders.update/{id}', [ProdOrderController::class, 'update'])->name('admin.produccion.orders.update');
+        Route::get('admin.produccion.orders.show/{order}', [ProdOrderController::class, 'show'])->name('admin.produccion.orders.show');
+        Route::get('admin.produccion.orders/{order}/operations/table', [ProdOrderController::class, 'operationsTable'])->name('admin.produccion.orders.operations.table');
+        Route::get('admin.produccion.orders/{order}/logs/table', [ProdOrderController::class, 'logsTable'])->name('admin.produccion.orders.logs.table');
+        Route::post('admin.produccion.orders/{order}/logs/store', [ProdOrderController::class, 'storeLog'])->name('admin.produccion.orders.logs.store');
+        Route::get('admin.produccion.orders/{order}/damages/table', [ProdOrderController::class, 'damagesTable'])->name('admin.produccion.orders.damages.table');
+        Route::get('admin.produccion.orders/{order}/settlements/data', [ProdOrderController::class, 'settlementData'])->name('admin.produccion.orders.settlements.data');
+        Route::post('admin.produccion.orders/{order}/settlements/calculate', [ProdOrderController::class, 'calculateSettlement'])->name('admin.produccion.orders.settlements.calculate');
+        Route::get('admin.produccion.orders/{order}/operations/select2', [ProdOrderController::class, 'operationsSelect2'])->name('admin.produccion.orders.operations.select2');
+        Route::get('admin.produccion.employees.select2', [ProdOrderController::class, 'employeesSelect2'])->name('admin.produccion.employees.select2');
     });
 
     // Logs
@@ -661,7 +670,6 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::get('admin.produccion.orders', [ProdOrderController::class, 'index'])->name('admin.produccion.orders.index');
         Route::get('admin.produccion.products.list', [ProdOrderController::class, 'productsList'])->name('admin.produccion.products.list');
         Route::get('admin.produccion.operations.list', [ProdOrderController::class, 'operationsList'])->name('admin.produccion.operations.list');
-        Route::get('admin.produccion.employees.select2', [ProdOrderController::class, 'operationsSelect2'])->name('admin.produccion.employees.select2');
     });
 
     // CRUD Operaciones

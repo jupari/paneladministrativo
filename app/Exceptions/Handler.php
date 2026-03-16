@@ -2,7 +2,11 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -44,5 +48,45 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+    }
+
+    /**
+     * Render JSON responses for all /api/* routes.
+     */
+    public function render($request, Throwable $e)
+    {
+        if ($request->is('api/*')) {
+            if ($e instanceof AuthenticationException) {
+                return response()->json([
+                    'message' => 'No autenticado.',
+                ], 401);
+            }
+
+            if ($e instanceof AuthorizationException) {
+                return response()->json([
+                    'message' => 'Acceso denegado.',
+                ], 403);
+            }
+
+            if ($e instanceof ValidationException) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                    'errors'  => $e->errors(),
+                ], 422);
+            }
+
+            if ($e instanceof ModelNotFoundException) {
+                $model = class_basename($e->getModel());
+                return response()->json([
+                    'message' => "{$model} no encontrado.",
+                ], 404);
+            }
+
+            return response()->json([
+                'message' => 'Error interno del servidor.',
+            ], 500);
+        }
+
+        return parent::render($request, $e);
     }
 }

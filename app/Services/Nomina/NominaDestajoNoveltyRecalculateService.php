@@ -26,7 +26,7 @@ class NominaDestajoNoveltyRecalculateService
         // Fuente recomendada: settlements aprobados o sincronizados
         // Ajusta nombres de tabla/columnas según tu implementación real.
         $rows = DB::table('prod_worker_settlements as s')
-            ->join('prod_orders as o', 'o.id', '=', 's.order_id')
+            ->join('production_orders as o', 'o.id', '=', 's.order_id')
             ->where('s.company_id', $companyId)
             ->whereBetween(DB::raw('DATE(s.work_date)'), [$periodStart, $periodEnd]) // si no tienes work_date en settlements, usa created_at o log_date
             ->whereIn('s.status', ['APPROVED','SYNCED_TO_NOMINA']) // ajusta

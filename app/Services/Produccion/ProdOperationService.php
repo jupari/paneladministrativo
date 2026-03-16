@@ -2,34 +2,34 @@
 
 namespace App\Services\Produccion;
 
-use Illuminate\Support\Facades\DB;
+use App\Models\Activity;
 
 class ProdOperationService
 {
     public function create(array $data, int $companyId): int
     {
-        return DB::table('prod_operations')->insertGetId([
-            'company_id' => $companyId,
-            'code' => $data['code'],
-            'name' => $data['name'],
+        $activity = Activity::create([
+            'company_id'  => $companyId,
+            'code'        => $data['code'],
+            'name'        => $data['name'],
             'description' => $data['description'] ?? null,
-            'is_active' => isset($data['is_active']) ? (int)$data['is_active'] : 1,
-            'created_at' => now(),
-            'updated_at' => now(),
+            'unit_price'  => $data['unit_price'] ?? 0,
+            'is_active'   => isset($data['is_active']) ? (bool) $data['is_active'] : true,
         ]);
+
+        return $activity->id;
     }
 
     public function update(int $id, array $data, int $companyId): void
     {
-        DB::table('prod_operations')
-            ->where('company_id', $companyId)
+        Activity::where('company_id', $companyId)
             ->where('id', $id)
             ->update([
-                'code' => $data['code'],
-                'name' => $data['name'],
+                'code'        => $data['code'],
+                'name'        => $data['name'],
                 'description' => $data['description'] ?? null,
-                'is_active' => isset($data['is_active']) ? (int)$data['is_active'] : 0,
-                'updated_at' => now(),
+                'unit_price'  => $data['unit_price'] ?? 0,
+                'is_active'   => isset($data['is_active']) ? (bool) $data['is_active'] : false,
             ]);
     }
 }

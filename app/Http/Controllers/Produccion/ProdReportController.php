@@ -19,34 +19,43 @@ class ProdReportController extends Controller
         $from = (string) $request->query('from', '');
         $to = (string) $request->query('to', '');
 
-        $base = DB::table('prod_production_logs as l')
-            ->join('prod_orders as o', 'o.id', '=', 'l.order_id')
+        $base = DB::table('production_operations as l')
+            ->join('production_orders as o', 'o.id', '=', 'l.production_order_id')
             ->join('inv_productos as p', 'p.id', '=', 'o.product_id')
             ->where('l.company_id', $companyId)
+            ->whereNotNull('l.employee_id')
             ->when($from !== '', fn($q) => $q->whereDate('l.work_date', '>=', $from))
             ->when($to !== '', fn($q) => $q->whereDate('l.work_date', '<=', $to))
-            ->groupBy('l.order_id', 'o.code', 'o.objective_qty', 'p.codigo', 'p.nombre')
+            ->groupBy('l.production_order_id', 'o.order_code', 'o.total_units', 'p.codigo', 'p.nombre')
             ->selectRaw("
-                l.order_id,
-                o.code as order_code,
-                o.objective_qty,
+                l.production_order_id as order_id,
+                o.order_code as order_code,
+                o.total_units as objective_qty,
                 CONCAT(p.codigo,' - ',p.nombre) as producto,
-                SUM(l.qty) as total_qty,
+                SUM(l.quantity) as total_qty,
                 SUM(l.rejected_qty) as total_rejected,
-                SUM(l.qty - l.rejected_qty) as total_accepted
+                SUM(l.quantity - l.rejected_qty) as total_accepted
             ");
 
-        $q = DB::query()->fromSub($base, 'x');
+        // Subconsulta de daños agrupados por orden
+        $damageSub = DB::table('damaged_garments')
+            ->selectRaw('production_order_id, SUM(quantity) as total_damaged')
+            ->groupBy('production_order_id');
 
-        $summary = DB::table('prod_production_logs as l')
+        $q = DB::query()->fromSub($base, 'x')
+            ->leftJoinSub($damageSub, 'dmg', fn($j) => $j->on('dmg.production_order_id', '=', 'x.order_id'))
+            ->selectRaw('x.*, COALESCE(dmg.total_damaged, 0) as total_damaged');
+
+        $summary = DB::table('production_operations as l')
             ->where('l.company_id', $companyId)
+            ->whereNotNull('l.employee_id')
             ->when($from !== '', fn($q) => $q->whereDate('l.work_date', '>=', $from))
             ->when($to !== '', fn($q) => $q->whereDate('l.work_date', '<=', $to))
             ->selectRaw("
-                ROUND(COALESCE(SUM(l.qty),0),2) as total_qty,
+                ROUND(COALESCE(SUM(l.quantity),0),2) as total_qty,
                 ROUND(COALESCE(SUM(l.rejected_qty),0),2) as total_rejected,
-                ROUND(COALESCE(SUM(l.qty - l.rejected_qty),0),2) as total_accepted,
-                COUNT(DISTINCT l.order_id) as total_orders,
+                ROUND(COALESCE(SUM(l.quantity - l.rejected_qty),0),2) as total_accepted,
+                COUNT(DISTINCT l.production_order_id) as total_orders,
                 COUNT(DISTINCT l.employee_id) as total_workers
             ")
             ->first();
@@ -61,10 +70,11 @@ class ProdReportController extends Controller
             ->editColumn('total_qty', fn($r) => number_format((float) $r->total_qty, 2, ',', '.'))
             ->editColumn('total_rejected', fn($r) => number_format((float) $r->total_rejected, 2, ',', '.'))
             ->editColumn('total_accepted', fn($r) => number_format((float) $r->total_accepted, 2, ',', '.'))
+            ->editColumn('total_damaged', fn($r) => number_format((float) $r->total_damaged, 0, ',', '.'))
             ->addColumn('progress_pct', function ($r) {
-                $objective = (float) $r->objective_qty;
+                $adjusted = (float) $r->objective_qty - (float) $r->total_damaged;
                 $accepted = (float) $r->total_accepted;
-                $pct = $objective > 0 ? min(100, round(($accepted / $objective) * 100, 2)) : 0;
+                $pct = $adjusted > 0 ? min(100, round(($accepted / $adjusted) * 100, 2)) : ($accepted > 0 ? 100 : 0);
                 return number_format($pct, 2, ',', '.') . '%';
             })
             ->addColumn('reject_pct', function ($r) {
@@ -78,6 +88,17 @@ class ProdReportController extends Controller
                     'total_qty' => number_format($totalQty, 2, ',', '.'),
                     'total_rejected' => number_format($totalRejected, 2, ',', '.'),
                     'total_accepted' => number_format((float) ($summary->total_accepted ?? 0), 2, ',', '.'),
+                    'total_damaged' => number_format((int) DB::table('damaged_garments')
+                        ->whereIn('production_order_id', function ($sub) use ($companyId, $from, $to) {
+                            $sub->select('production_order_id')
+                                ->from('production_operations')
+                                ->where('company_id', $companyId)
+                                ->whereNotNull('employee_id')
+                                ->when($from !== '', fn($q) => $q->whereDate('work_date', '>=', $from))
+                                ->when($to !== '', fn($q) => $q->whereDate('work_date', '<=', $to))
+                                ->distinct();
+                        })
+                        ->sum('quantity'), 0, ',', '.'),
                     'reject_rate' => number_format($rejectRate, 2, ',', '.') . '%',
                     'total_orders' => (int) ($summary->total_orders ?? 0),
                     'total_workers' => (int) ($summary->total_workers ?? 0),
@@ -96,29 +117,30 @@ class ProdReportController extends Controller
         $from = (string) $request->query('from', '');
         $to = (string) $request->query('to', '');
 
-        $lineBase = DB::table('prod_production_logs as l')
-            ->join('prod_orders as o', 'o.id', '=', 'l.order_id')
+        $lineBase = DB::table('production_operations as l')
+            ->join('production_orders as o', 'o.id', '=', 'l.production_order_id')
             ->join('inv_productos as p', 'p.id', '=', 'o.product_id')
-            ->join('prod_order_operations as oo', 'oo.id', '=', 'l.order_operation_id')
-            ->join('prod_operations as op', 'op.id', '=', 'oo.operation_id')
+            ->join('production_order_activities as oo', 'oo.id', '=', 'l.order_operation_id')
+            ->join('activities as op', 'op.id', '=', 'oo.activity_id')
             ->where('l.company_id', $companyId)
+            ->whereNotNull('l.employee_id')
             ->when($from !== '', fn($q) => $q->whereDate('l.work_date', '>=', $from))
             ->when($to !== '', fn($q) => $q->whereDate('l.work_date', '<=', $to))
             ->selectRaw("
-                l.order_id,
-                o.code as order_code,
+                l.production_order_id as order_id,
+                o.order_code as order_code,
                 CONCAT(p.codigo,' - ',p.nombre) as producto,
-                oo.operation_id,
+                oo.activity_id as operation_id,
                 CONCAT(op.code,' - ',op.name) as operacion,
-                l.qty,
+                l.quantity as qty,
                 l.rejected_qty,
-                (l.qty - l.rejected_qty) as accepted_qty,
+                (l.quantity - l.rejected_qty) as accepted_qty,
                 COALESCE((
                     SELECT r.amount
                     FROM prod_operation_product_rates r
                     WHERE r.company_id = l.company_id
                     AND r.product_id = o.product_id
-                    AND r.operation_id = oo.operation_id
+                    AND r.operation_id = oo.activity_id
                     AND r.is_active = 1
                     AND (r.valid_from IS NULL OR DATE(r.valid_from) <= DATE(l.work_date))
                     AND (r.valid_to IS NULL OR DATE(r.valid_to) >= DATE(l.work_date))

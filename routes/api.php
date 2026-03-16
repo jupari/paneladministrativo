@@ -1,19 +1,104 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\V1\Auth\AuthController;
+use App\Http\Controllers\Api\V1\WorkshopsController;
+use App\Http\Controllers\Api\V1\ProductionOrdersController;
+use App\Http\Controllers\Api\V1\CatalogController;
+use App\Http\Controllers\Api\V1\OperationsBulkController;
+use App\Http\Controllers\Api\V1\DamagedGarmentsBulkController;
+use App\Http\Controllers\Api\V1\EvidencesController;
+use App\Http\Controllers\Api\V1\ProfileController;
+use App\Models\ProductionOrder;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes
+| API Routes — v1
 |--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+// ── Ruta temporal de mantenimiento (BORRAR después de usar) ──────────────
+Route::get('maintenance/recalculate-units', function () {
+    $orders = ProductionOrder::whereNull('deleted_at')->get();
+    $updated = 0;
+    $details = [];
+
+    foreach ($orders as $order) {
+        $before = (int) $order->completed_units;
+        $order->recalculateCompletedUnits();
+        $order->refresh();
+        $after = (int) $order->completed_units;
+
+        if ($before !== $after) {
+            $details[] = "Orden #{$order->id} ({$order->order_code}): {$before} → {$after}";
+            $updated++;
+        }
+    }
+
+    return response()->json([
+        'message' => "Recalculación completada. {$updated} órdenes actualizadas de {$orders->count()} totales.",
+        'details' => $details,
+    ]);
+});
+
+Route::prefix('v1')->name('api.v1.')->group(function () {
+
+    // ── Auth ────────────────────────────────────────────────────────────
+    Route::prefix('auth')->name('auth.')->group(function () {
+        Route::post('login',   [AuthController::class, 'login'])->name('login');
+        Route::post('refresh', [AuthController::class, 'refresh'])
+             ->middleware('auth.refresh')
+             ->name('refresh');
+
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::post('logout', [AuthController::class, 'logout'])->name('logout');
+            Route::get('me',      [AuthController::class, 'me'])->name('me');
+        });
+    });
+
+    // ── Rutas protegidas ────────────────────────────────────────────────
+    Route::middleware('auth:sanctum')->group(function () {
+
+        // ── Talleres ───────────────────────────────────────────────────
+        Route::get('workshops', [WorkshopsController::class, 'index'])->name('workshops.index');
+
+        Route::prefix('workshops/{workshopId}')
+             ->middleware('workshop.access')
+             ->name('workshops.')
+             ->group(function () {
+                 Route::get('/',         [WorkshopsController::class,       'show'])->name('show');
+                 Route::get('operators', [WorkshopsController::class,       'operators'])->name('operators');
+                 Route::get('orders',    [ProductionOrdersController::class,'index'])->name('orders.index');
+             });
+
+        // ── Órdenes individuales ───────────────────────────────────────
+        Route::prefix('production-orders/{orderId}')->name('orders.')->group(function () {
+            Route::get('/',          [ProductionOrdersController::class, 'show'])->name('show');
+            Route::get('activities', [ProductionOrdersController::class, 'activities'])->name('activities');
+            Route::patch('status',   [ProductionOrdersController::class, 'updateStatus'])->name('status');
+        });
+
+        // ── Catálogos ──────────────────────────────────────────────────
+        Route::prefix('catalog')->name('catalog.')->group(function () {
+            Route::get('activities',   [CatalogController::class, 'activities'])->name('activities');
+            Route::get('operators',    [CatalogController::class, 'operators'])->name('operators');
+            Route::get('damage-types', [CatalogController::class, 'damageTypes'])->name('damageTypes');
+        });
+
+        // ── Sync Bulk ──────────────────────────────────────────────────
+        Route::post('operations/bulk',       [OperationsBulkController::class,      'store'])->name('operations.bulk');
+        Route::post('damaged-garments/bulk', [DamagedGarmentsBulkController::class, 'store'])->name('damagedGarments.bulk');
+
+        // ── Evidencias ─────────────────────────────────────────────────
+        Route::post('evidences',        [EvidencesController::class, 'store'])->name('evidences.store');
+        Route::get('evidences/{id}',    [EvidencesController::class, 'show'])->name('evidences.show');
+        Route::delete('evidences/{id}', [EvidencesController::class, 'destroy'])->name('evidences.destroy');
+
+        // ── Perfil ─────────────────────────────────────────────────────
+        Route::prefix('profile')->name('profile.')->group(function () {
+            Route::get('/',              [ProfileController::class, 'show'])->name('show');
+            Route::get('account-status', [ProfileController::class, 'accountStatus'])->name('accountStatus');
+            Route::get('sync-status',    [ProfileController::class, 'syncStatus'])->name('syncStatus');
+        });
+    });
 });

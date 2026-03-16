@@ -19,7 +19,7 @@ class ProdRateController extends Controller
 
         $q = DB::table('prod_operation_product_rates as r')
             ->join('inv_productos as p','p.id','=','r.product_id')
-            ->join('prod_operations as op','op.id','=','r.operation_id')
+            ->join('activities as op','op.id','=','r.operation_id')
             ->where('r.company_id',$companyId)
             ->select([
                 'r.id','r.product_id','r.operation_id','r.amount','r.valid_from','r.valid_to','r.is_active',

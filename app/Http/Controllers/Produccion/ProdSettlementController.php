@@ -27,14 +27,14 @@ class ProdSettlementController extends Controller
         $orderId = (int) $request->query('order_id');
 
         $q = DB::table('prod_worker_settlements as s')
-            ->join('prod_orders as o', 'o.id', '=', 's.order_id')
-            ->join('prod_order_operations as oo', 'oo.id', '=', 's.order_operation_id')
-            ->join('prod_operations as op', 'op.id', '=', 'oo.operation_id')
+            ->join('production_orders as o', 'o.id', '=', 's.order_id')
+            ->join('production_order_activities as oo', 'oo.id', '=', 's.order_operation_id')
+            ->join('activities as op', 'op.id', '=', 'oo.activity_id')
             ->join('empleados as e', 'e.id', '=', 's.employee_id')
             ->join('inv_productos as p', 'p.id', '=', 'o.product_id')
             ->where('s.company_id', $companyId)
             ->select([
-                's.id','s.order_id','o.code as order_code','s.status',
+                's.id','s.order_id','o.order_code as order_code','s.status',
                 DB::raw("CONCAT(p.codigo,' - ',p.nombre) as producto"),
                 DB::raw("CONCAT(op.code,' - ',op.name) as operacion"),
                 DB::raw("CONCAT(e.identificacion,' - ',e.nombres,' ',e.apellidos) as empleado"),
@@ -102,12 +102,13 @@ class ProdSettlementController extends Controller
     {
         $companyId = (int) session('company_id');
 
-        $items = DB::table('prod_orders as o')
+        $items = DB::table('production_orders as o')
             ->join('inv_productos as p', 'p.id', '=', 'o.product_id')
             ->where('o.company_id', $companyId)
+            ->whereNull('o.deleted_at')
             ->orderByDesc('o.id')
             ->limit(200)
-            ->get(['o.id','o.code','o.start_date','o.end_date','o.status', DB::raw("CONCAT(p.codigo,' - ',p.nombre) as producto")])
+            ->get(['o.id','o.order_code as code','o.start_date','o.deadline as end_date','o.status', DB::raw("CONCAT(p.codigo,' - ',p.nombre) as producto")])
             ->map(fn($r) => ['id' => $r->id, 'text' => "#{$r->id} | {$r->code} | {$r->producto} | {$r->status}"])
             ->values();
 

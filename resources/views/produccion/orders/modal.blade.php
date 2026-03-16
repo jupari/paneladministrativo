@@ -45,9 +45,11 @@
             <label>Estado</label>
             <select id="status" class="form-control">
               <option value="DRAFT">DRAFT</option>
+              <option value="PENDING">PENDING</option>
               <option value="IN_PROGRESS">IN_PROGRESS</option>
               <option value="CLOSED">CLOSED</option>
               <option value="CANCELLED">CANCELLED</option>
+              <option value="COMPLETED">COMPLETED</option>
             </select>
             <span class="text-danger" id="error_status"></span>
           </div>

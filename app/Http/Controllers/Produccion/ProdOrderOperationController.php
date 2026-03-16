@@ -15,13 +15,13 @@ class ProdOrderOperationController extends Controller
     {
         $companyId = (int) session('company_id');
 
-        $q = DB::table('prod_order_operations as oo')
-            ->join('prod_orders as o','o.id','=','oo.order_id')
-            ->join('prod_operations as op','op.id','=','oo.operation_id')
+        $q = DB::table('production_order_activities as oo')
+            ->join('production_orders as o','o.id','=','oo.production_order_id')
+            ->join('activities as op','op.id','=','oo.activity_id')
             ->where('o.company_id', $companyId)
-            ->where('oo.order_id', $orderId)
+            ->where('oo.production_order_id', $orderId)
             ->select([
-                'oo.id','oo.operation_id','oo.seq','oo.qty_per_unit','oo.required_qty','oo.status',
+                'oo.id','oo.activity_id as operation_id','oo.position as seq','oo.qty_per_unit','oo.required_qty','oo.status',
                 DB::raw("CONCAT(op.code,' - ',op.name) as operacion")
             ]);
 
@@ -38,16 +38,16 @@ class ProdOrderOperationController extends Controller
     {
         $companyId = (int) session('company_id');
 
-        $rows = DB::table('prod_order_operations as oo')
-            ->join('prod_orders as o','o.id','=','oo.order_id')
-            ->join('prod_operations as op','op.id','=','oo.operation_id')
+        $rows = DB::table('production_order_activities as oo')
+            ->join('production_orders as o','o.id','=','oo.production_order_id')
+            ->join('activities as op','op.id','=','oo.activity_id')
             ->where('o.company_id', $companyId)
-            ->where('oo.order_id', $orderId)
+            ->where('oo.production_order_id', $orderId)
             ->select([
-                'oo.id','oo.operation_id','oo.seq','oo.qty_per_unit','oo.required_qty','oo.status',
+                'oo.id','oo.activity_id as operation_id','oo.position as seq','oo.qty_per_unit','oo.required_qty','oo.status',
                 DB::raw("CONCAT(op.code,' - ',op.name) as operacion")
             ])
-            ->orderBy('oo.seq')
+            ->orderBy('oo.position')
             ->get();
 
         return DataTables::of($rows)
@@ -75,15 +75,15 @@ class ProdOrderOperationController extends Controller
             'status' => 'required|in:PENDING,IN_PROGRESS,DONE',
         ]);
 
-        $order = DB::table('prod_orders')->where('company_id',$companyId)->where('id',$orderId)->first();
+        $order = DB::table('production_orders')->where('company_id',$companyId)->whereNull('deleted_at')->where('id',$orderId)->first();
         if(!$order) return response()->json(['message'=>'Orden no encontrada'], 404);
 
-        $required = (float)$order->objective_qty * (float)$data['qty_per_unit'];
+        $required = (float)$order->total_units * (float)$data['qty_per_unit'];
 
-        DB::table('prod_order_operations')->insert([
-            'order_id' => $orderId,
-            'operation_id' => (int)$data['operation_id'],
-            'seq' => (int)$data['seq'],
+        DB::table('production_order_activities')->insert([
+            'production_order_id' => $orderId,
+            'activity_id' => (int)$data['operation_id'],
+            'position' => (int)$data['seq'],
             'qty_per_unit' => (float)$data['qty_per_unit'],
             'required_qty' => $required,
             'status' => $data['status'],
@@ -98,11 +98,15 @@ class ProdOrderOperationController extends Controller
     {
         $companyId = (int) session('company_id');
 
-        $row = DB::table('prod_order_operations as oo')
-            ->join('prod_orders as o','o.id','=','oo.order_id')
+        $row = DB::table('production_order_activities as oo')
+            ->join('production_orders as o','o.id','=','oo.production_order_id')
             ->where('o.company_id',$companyId)
             ->where('oo.id',$id)
-            ->select(['oo.*'])
+            ->select([
+                'oo.id','oo.production_order_id as order_id','oo.activity_id as operation_id',
+                'oo.position as seq','oo.qty_per_unit','oo.required_qty','oo.status',
+                'oo.created_at','oo.updated_at'
+            ])
             ->first();
 
         return response()->json(['data'=>$row]);
@@ -119,23 +123,23 @@ class ProdOrderOperationController extends Controller
             'status' => 'required|in:PENDING,IN_PROGRESS,DONE',
         ]);
 
-        $row = DB::table('prod_order_operations as oo')
-            ->join('prod_orders as o','o.id','=','oo.order_id')
+        $row = DB::table('production_order_activities as oo')
+            ->join('production_orders as o','o.id','=','oo.production_order_id')
             ->where('o.company_id',$companyId)
             ->where('oo.id',$id)
-            ->select(['oo.id','oo.order_id'])
+            ->select(['oo.id','oo.production_order_id as order_id'])
             ->first();
 
         if(!$row) return response()->json(['message'=>'Registro no encontrado'], 404);
 
-        $order = DB::table('prod_orders')->where('company_id',$companyId)->where('id',$row->order_id)->first();
-        $required = (float)$order->objective_qty * (float)$data['qty_per_unit'];
+        $order = DB::table('production_orders')->where('company_id',$companyId)->whereNull('deleted_at')->where('id',$row->order_id)->first();
+        $required = (float)$order->total_units * (float)$data['qty_per_unit'];
 
-        DB::table('prod_order_operations')
+        DB::table('production_order_activities')
             ->where('id',$id)
             ->update([
-                'operation_id' => (int)$data['operation_id'],
-                'seq' => (int)$data['seq'],
+                'activity_id' => (int)$data['operation_id'],
+                'position' => (int)$data['seq'],
                 'qty_per_unit' => (float)$data['qty_per_unit'],
                 'required_qty' => $required,
                 'status' => $data['status'],
@@ -151,15 +155,14 @@ class ProdOrderOperationController extends Controller
         $companyId = (int) session('company_id');
         $orderId = (int) $request->query('order_id');
 
-        $items = DB::table('prod_order_operations as oo')
-            ->join('prod_orders as o','o.id','=','oo.order_id')
-            ->join('prod_operations as op','op.id','=','oo.operation_id')
-            ->where('o.company_id',$companyId)
-            ->where('oo.order_id',$orderId)
-            ->orderBy('oo.seq')
+        $items = DB::table('production_order_activities as oo')
+            ->join('production_orders as o','o.id','=','oo.production_order_id')
+            ->join('activities as op','op.id','=','oo.activity_id')
+            ->where('o.company_id',$companyId)->whereNull('o.deleted_at')->where('oo.production_order_id',$orderId)
+            ->orderBy('oo.position')
             ->get([
                 'oo.id',
-                DB::raw("CONCAT(oo.seq,' | ',op.name,' | Req: ',oo.required_qty) as text")
+                DB::raw("CONCAT(oo.position,' | ',op.name,' | Req: ',oo.required_qty) as text")
             ]);
 
         return response()->json(['data'=>$items]);
@@ -170,21 +173,33 @@ class ProdOrderOperationController extends Controller
         $companyId = (int) session('company_id');
         abort_if((int)$order->company_id !== $companyId, 403);
 
-        $doneSub = DB::table('prod_worker_logs')
-            ->selectRaw('order_operation_id, SUM(qty) as done_qty')
-            ->where('company_id', $companyId)
-            ->where('order_id', $order->id)
-            ->groupBy('order_operation_id');
+        // Total de prendas dañadas para esta orden
+        $totalDamaged = (int) DB::table('damaged_garments')
+            ->where('production_order_id', $order->id)
+            ->sum('quantity');
 
-        $rows = DB::table('prod_order_operations as poo')
-            ->join('prod_operations as op','op.id','=','poo.operation_id')
+        $doneSub = DB::table('production_operations as po')
+            ->leftJoin('production_order_activities as poa_resolve', function ($j) use ($order) {
+                $j->on('poa_resolve.activity_id', '=', 'po.activity_id')
+                  ->where('poa_resolve.production_order_id', '=', $order->id);
+            })
+            ->selectRaw('COALESCE(po.order_operation_id, poa_resolve.id) as order_operation_id, SUM(po.quantity) as done_qty')
+            ->where('po.production_order_id', $order->id)
+            ->where(function ($q) use ($companyId) {
+                $q->where('po.company_id', $companyId)
+                  ->orWhereNull('po.company_id');
+            })
+            ->groupByRaw('COALESCE(po.order_operation_id, poa_resolve.id)');
+
+        $rows = DB::table('production_order_activities as poo')
+            ->join('activities as op','op.id','=','poo.activity_id')
             ->leftJoinSub($doneSub, 'd', function($j){
                 $j->on('d.order_operation_id','=','poo.id');
             })
-            ->where('poo.order_id', $order->id)
+            ->where('poo.production_order_id', $order->id)
             ->selectRaw("
                 poo.id,
-                poo.seq,
+                poo.position as seq,
                 op.code,
                 op.name,
                 poo.qty_per_unit,
@@ -197,25 +212,41 @@ class ProdOrderOperationController extends Controller
                 ELSE 'IN_PROGRESS'
                 END as computed_status
             ")
-            ->orderBy('poo.seq')
+            ->orderBy('poo.position')
             ->get();
 
         return datatables()->of($rows)
             ->addIndexColumn()
-            ->addColumn('progress', function($r){
-                $req = (float)$r->required_qty;
+            ->addColumn('damaged_qty', function($r) use ($totalDamaged) {
+                return round($totalDamaged * (float)$r->qty_per_unit, 2);
+            })
+            ->addColumn('adjusted_required', function($r) use ($totalDamaged) {
+                return max(0, (float)$r->required_qty - ($totalDamaged * (float)$r->qty_per_unit));
+            })
+            ->addColumn('progress', function($r) use ($totalDamaged) {
+                $adjusted = max(0, (float)$r->required_qty - ($totalDamaged * (float)$r->qty_per_unit));
                 $done = (float)$r->done_qty;
-                $pct = $req > 0 ? min(100, round(($done/$req)*100, 1)) : 0;
+                $pct = $adjusted > 0 ? min(100, round(($done/$adjusted)*100, 1)) : ($done > 0 ? 100 : 0);
                 return $pct.'%';
             })
-            ->editColumn('computed_status', function($r){
-                $badge = match($r->computed_status){
+            ->editColumn('remaining_qty', function($r) use ($totalDamaged) {
+                $adjusted = max(0, (float)$r->required_qty - ($totalDamaged * (float)$r->qty_per_unit));
+                return max(0, round($adjusted - (float)$r->done_qty, 2));
+            })
+            ->editColumn('computed_status', function($r) use ($totalDamaged) {
+                $adjusted = max(0, (float)$r->required_qty - ($totalDamaged * (float)$r->qty_per_unit));
+                $done = (float)$r->done_qty;
+                if ($done <= 0) $status = 'PENDING';
+                elseif ($done >= $adjusted) $status = 'DONE';
+                else $status = 'IN_PROGRESS';
+                $badge = match($status){
                     'DONE' => 'success',
                     'IN_PROGRESS' => 'warning',
                     default => 'secondary'
                 };
-                return '<span class="badge badge-'.$badge.'">'.$r->computed_status.'</span>';
+                return '<span class="badge badge-'.$badge.'">'.$status.'</span>';
             })
+            ->with(['total_damaged' => $totalDamaged])
             ->rawColumns(['computed_status'])
             ->make(true);
     }

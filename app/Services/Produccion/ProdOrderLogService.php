@@ -3,7 +3,6 @@
 namespace App\Services\Produccion;
 
 use App\Models\Produccion\ProdOrder;
-use App\Models\Produccion\ProdWorkerLog;
 use Illuminate\Support\Facades\DB;
 
 class ProdOrderLogService
@@ -37,9 +36,9 @@ class ProdOrderLogService
             $userId
         ) {
             // validar operación de orden pertenece a la orden
-            $poo = DB::table('prod_order_operations')
+            $poo = DB::table('production_order_activities')
                 ->where('id', $orderOperationId)
-                ->where('order_id', $order->id)
+                ->where('production_order_id', $order->id)
                 ->first();
 
             if (!$poo) {
@@ -47,11 +46,11 @@ class ProdOrderLogService
             }
 
             // done actual
-            $done = (float) DB::table('prod_worker_logs')
+            $done = (float) DB::table('production_operations')
                 ->where('company_id', $companyId)
-                ->where('order_id', $order->id)
+                ->where('production_order_id', $order->id)
                 ->where('order_operation_id', $orderOperationId)
-                ->sum('qty');
+                ->sum('quantity');
 
             $required = (float) $poo->required_qty;
             $remaining = max($required - $done, 0);
@@ -66,12 +65,12 @@ class ProdOrderLogService
             foreach ($employeeIds as $empId) {
                 $rows[] = [
                     'company_id' => $companyId,
-                    'order_id' => $order->id,
+                    'production_order_id' => $order->id,
                     'order_operation_id' => $orderOperationId,
-                    'operation_id' => (int)$poo->operation_id,
+                    'activity_id' => (int)$poo->activity_id,
                     'employee_id' => (int)$empId,
-                    'qty' => $qty,
-                    'worked_at' => $workedAt,
+                    'quantity' => $qty,
+                    'registered_at' => $workedAt,
                     'notes' => $notes,
                     'created_by' => $userId,
                     'created_at' => now(),
@@ -79,13 +78,13 @@ class ProdOrderLogService
                 ];
             }
 
-            DB::table('prod_worker_logs')->insert($rows);
+            DB::table('production_operations')->insert($rows);
 
             // estado “computado” (opcional actualizar columna status)
             $newDone = $done + $incomingTotal;
             $newStatus = ($newDone <= 0) ? 'PENDING' : (($newDone >= $required) ? 'DONE' : 'IN_PROGRESS');
 
-            DB::table('prod_order_operations')
+            DB::table('production_order_activities')
                 ->where('id', $orderOperationId)
                 ->update(['status' => $newStatus, 'updated_at' => now()]);
 

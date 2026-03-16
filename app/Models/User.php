@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -52,6 +54,27 @@ class User extends Authenticatable
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
+    }
+
+    /** Talleres asignados al usuario (app móvil) */
+    public function workshops(): BelongsToMany
+    {
+        return $this->belongsToMany(Workshop::class, 'user_workshops');
+    }
+
+    public function registeredWorkshopDevices(): HasMany
+    {
+        return $this->hasMany(WorkshopDevice::class, 'registered_by_user_id');
+    }
+
+    public function revokedWorkshopDevices(): HasMany
+    {
+        return $this->hasMany(WorkshopDevice::class, 'revoked_by_user_id');
+    }
+
+    public function createdWorkshopQrTokens(): HasMany
+    {
+        return $this->hasMany(WorkshopQrToken::class, 'created_by_user_id');
     }
 
     // Métodos para verificar empresa y licencia

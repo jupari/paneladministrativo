@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Produccion\StoreProdLogRequest;
 use App\Http\Requests\Produccion\UpdateProdLogRequest;
 use App\Models\Empleado;
-use App\Models\Produccion\ProdProductionLog;
+use App\Models\ProductionOperation;
 use App\Services\Produccion\ProdLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,22 +26,23 @@ class ProdProductionLogController extends Controller
 
         $orderId = $request->query('order_id');
 
-        $q = DB::table('prod_production_logs as l')
-            ->join('prod_orders as o', 'o.id', '=', 'l.order_id')
-            ->join('prod_order_operations as oo', 'oo.id', '=', 'l.order_operation_id')
-            ->join('prod_operations as op', 'op.id', '=', 'oo.operation_id')
+        $q = DB::table('production_operations as l')
+            ->join('production_orders as o', 'o.id', '=', 'l.production_order_id')
+            ->join('production_order_activities as oo', 'oo.id', '=', 'l.order_operation_id')
+            ->join('activities as op', 'op.id', '=', 'oo.activity_id')
             ->join('empleados as e', 'e.id', '=', 'l.employee_id')
             ->join('inv_productos as p', 'p.id', '=', 'o.product_id')
             ->where('l.company_id', $companyId)
+            ->whereNotNull('l.employee_id')
             ->select([
-                'l.id','l.work_date','l.shift','l.qty','l.rejected_qty','l.created_at',
-                'o.id as order_id', 'o.code as order_code',
+                'l.id','l.work_date','l.shift','l.quantity as qty','l.rejected_qty','l.created_at',
+                'o.id as order_id', 'o.order_code as order_code',
                 DB::raw("CONCAT(p.codigo,' - ',p.nombre) as producto"),
                 DB::raw("CONCAT(e.identificacion,' - ',e.nombres,' ',e.apellidos) as empleado"),
                 DB::raw("CONCAT(op.code,' - ',op.name) as operacion"),
             ]);
 
-        if ($orderId) $q->where('l.order_id', (int)$orderId);
+        if ($orderId) $q->where('l.production_order_id', (int)$orderId);
 
         return DataTables::of($q)
             ->addIndexColumn()
@@ -64,15 +65,20 @@ class ProdProductionLogController extends Controller
     public function edit(int $id)
     {
         $companyId = (int) session('company_id');
-        $log = ProdProductionLog::where('company_id', $companyId)->findOrFail($id);
+        $log = ProductionOperation::where('company_id', $companyId)->findOrFail($id);
 
-        return response()->json(['data' => $log]);
+        // Mapear campos para compatibilidad con el frontend
+        $data = $log->toArray();
+        $data['order_id'] = $log->production_order_id;
+        $data['qty'] = $log->quantity;
+
+        return response()->json(['data' => $data]);
     }
 
     public function update(UpdateProdLogRequest $request, int $id)
     {
         $companyId = (int) session('company_id');
-        $log = ProdProductionLog::where('company_id', $companyId)->findOrFail($id);
+        $log = ProductionOperation::where('company_id', $companyId)->findOrFail($id);
 
         $this->service->update($log, $request->validated());
 

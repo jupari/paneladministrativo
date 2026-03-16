@@ -22,7 +22,7 @@ class ProdOperationController extends Controller
 
         $companyId = (int) session('company_id');
 
-        $q = DB::table('prod_operations')
+        $q = DB::table('activities')
             ->where('company_id', $companyId)
             ->select(['id','code','name','description','is_active','created_at']);
 
@@ -46,7 +46,7 @@ class ProdOperationController extends Controller
     {
         $companyId = (int) session('company_id');
 
-        $row = DB::table('prod_operations')
+        $row = DB::table('activities')
             ->where('company_id', $companyId)
             ->where('id', $id)
             ->first();
@@ -66,7 +66,7 @@ class ProdOperationController extends Controller
     {
         $companyId = (int) session('company_id');
 
-        $items = DB::table('prod_operations')
+        $items = DB::table('activities')
             ->where('company_id', $companyId)
             ->where('is_active', 1)
             ->orderBy('name')

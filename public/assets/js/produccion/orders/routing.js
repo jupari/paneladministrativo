@@ -17,7 +17,7 @@ function loadRoutingOrders(){
 }
 
 function loadOperationsForRouting(){
-  $.get('/admin/admin.produccion.operations.list', (resp)=>{
+  return $.get('/admin/admin.produccion.operations.list', (resp)=>{
     const $s=$('#routing_operation_id');
     $s.empty().append('<option value="">Seleccione...</option>');
     (resp.data||[]).forEach(i=>$s.append(`<option value="${i.id}">${i.text}</option>`));
@@ -104,13 +104,22 @@ function upRouting(id){
   $('#routingModalTitle').text('Editar Operación de la Orden');
   limpiarValidacionesRouting();
 
-  $.get('/admin/admin.produccion.orders.operations.edit/' + id, (resp)=>{
-    const r = resp.data;
-    $('#routing_id').val(r.id);
-    $('#routing_operation_id').val(r.operation_id);
-    $('#routing_seq').val(r.seq);
-    $('#routing_qty_per_unit').val(r.qty_per_unit);
-    $('#routing_status').val(r.status);
+  // Cargar opciones del select y LUEGO setear el valor con callbacks anidados
+  $.get('/admin/admin.produccion.operations.list', function(resp){
+    var $s = $('#routing_operation_id');
+    $s.empty().append('<option value="">Seleccione...</option>');
+    (resp.data||[]).forEach(function(i){
+      $s.append('<option value="'+i.id+'">'+i.text+'</option>');
+    });
+
+    $.get('/admin/admin.produccion.orders.operations.edit/' + id, function(editResp){
+      var r = editResp.data;
+      $('#routing_id').val(r.id);
+      $('#routing_operation_id').val(String(r.operation_id));
+      $('#routing_seq').val(r.seq);
+      $('#routing_qty_per_unit').val(r.qty_per_unit);
+      $('#routing_status').val(r.status);
+    });
   });
 
   $('.modal-footer').html(

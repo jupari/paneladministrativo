@@ -4,29 +4,48 @@ namespace App\Services\Produccion;
 
 use App\Models\Produccion\ProdOrder;
 use App\Models\Produccion\ProdWorkerSettlement;
+use App\Models\ProductionOrder;
 use Illuminate\Support\Facades\DB;
 
 class ProdSettlementService
 {
     /**
      * Calcula settlement por empleado para la orden.
-     * - qty pagable = SUM(qty - rejected_qty) por employee + order_operation
+     * - qty pagable = SUM(quantity - rejected_qty) por employee + order_operation
      * - rate = tarifa vigente por product_id + operation_id
      */
     public function calculate(int $orderId, int $companyId): int
     {
-        $order = ProdOrder::where('company_id', $companyId)->findOrFail($orderId);
+        $order = ProductionOrder::where('company_id', $companyId)->findOrFail($orderId);
 
-        // Agrupar logs por empleado + operación de la orden
-        $rows = DB::table('prod_production_logs as l')
-            ->join('prod_order_operations as oo', 'oo.id', '=', 'l.order_operation_id')
-            ->where('l.company_id', $companyId)
-            ->where('l.order_id', $orderId)
-            ->groupBy('l.order_operation_id', 'l.employee_id', 'oo.operation_id')
-            ->selectRaw('l.order_operation_id, l.employee_id, oo.operation_id,
-                        SUM(l.qty) as sum_qty,
-                        SUM(l.rejected_qty) as sum_rejected,
-                        SUM(l.qty - l.rejected_qty) as accepted_qty')
+        // Agrupar logs por operario + operación de la orden
+        // Resuelve employee_id: directo → vía workshop_operators → fallback workshop_operator_id
+        $rows = DB::table('production_operations as l')
+            ->leftJoin('workshop_operators as wo', 'wo.id', '=', 'l.workshop_operator_id')
+            ->leftJoin('production_order_activities as oo', 'oo.id', '=', 'l.order_operation_id')
+            ->leftJoin('production_order_activities as oo_fb', function ($j) use ($orderId) {
+                $j->on('oo_fb.activity_id', '=', 'l.activity_id')
+                  ->where('oo_fb.production_order_id', '=', $orderId);
+            })
+            ->where('l.production_order_id', $orderId)
+            ->where(function ($q) use ($companyId) {
+                $q->where('l.company_id', $companyId)
+                  ->orWhereNull('l.company_id');
+            })
+            ->groupByRaw('
+                COALESCE(l.order_operation_id, oo_fb.id),
+                COALESCE(l.employee_id, wo.employee_id, l.workshop_operator_id),
+                COALESCE(oo.activity_id, oo_fb.activity_id)
+            ')
+            ->selectRaw('
+                COALESCE(l.order_operation_id, oo_fb.id) as order_operation_id,
+                COALESCE(l.employee_id, wo.employee_id, l.workshop_operator_id) as employee_id,
+                COALESCE(oo.activity_id, oo_fb.activity_id) as operation_id,
+                SUM(l.quantity) as sum_qty,
+                SUM(COALESCE(l.rejected_qty,0)) as sum_rejected,
+                SUM(l.quantity - COALESCE(l.rejected_qty,0)) as accepted_qty
+            ')
+            ->havingRaw('employee_id IS NOT NULL AND order_operation_id IS NOT NULL')
             ->get();
 
         $upserts = 0;
@@ -35,8 +54,8 @@ class ProdSettlementService
             $accepted = (float) $r->accepted_qty;
             if ($accepted <= 0) continue;
 
-            // Tarifa vigente por producto + operación
-            $rate = (float) DB::table('prod_operation_product_rates')
+            // Tarifa vigente: primero prod_operation_product_rates, fallback activities.unit_price
+            $rate = DB::table('prod_operation_product_rates')
                 ->where('company_id', $companyId)
                 ->where('product_id', $order->product_id)
                 ->where('operation_id', (int)$r->operation_id)
@@ -50,6 +69,13 @@ class ProdSettlementService
                 ->orderByDesc('valid_from')
                 ->value('amount');
 
+            if ($rate === null || (float)$rate <= 0) {
+                $rate = DB::table('activities')
+                    ->where('id', (int)$r->operation_id)
+                    ->value('unit_price');
+            }
+
+            $rate = (float)($rate ?? 0);
             $gross = round($accepted * $rate, 2);
 
             ProdWorkerSettlement::updateOrCreate(
@@ -63,7 +89,7 @@ class ProdSettlementService
                     'qty' => $accepted,
                     'rate' => $rate,
                     'gross_amount' => $gross,
-                    'status' => 'APPROVED', // si quieres: DRAFT primero
+                    'status' => 'APPROVED',
                 ]
             );
 
@@ -75,16 +101,31 @@ class ProdSettlementService
 
     public function calculateOrderSettlements(int $orderId, int $companyId): int
     {
-        $order = ProdOrder::query()
+        $order = ProductionOrder::query()
             ->where('company_id', $companyId)
             ->findOrFail($orderId);
 
         // 1) Logs agrupados por order_operation_id + employee_id
-        $grouped = DB::table('prod_worker_logs as l')
-            ->where('l.company_id', $companyId)
-            ->where('l.order_id', $order->id)
-            ->selectRaw('l.order_operation_id, l.employee_id, SUM(l.qty) as qty')
-            ->groupBy('l.order_operation_id', 'l.employee_id')
+        //    Incluye operaciones móviles: resuelve employee_id vía workshop_operators.employee_id
+        //    Para filas API sin order_operation_id, lo resolvemos desde production_order_activities
+        $grouped = DB::table('production_operations as l')
+            ->leftJoin('workshop_operators as wo', 'wo.id', '=', 'l.workshop_operator_id')
+            ->leftJoin('production_order_activities as poa', function ($j) use ($order) {
+                $j->on('poa.activity_id', '=', 'l.activity_id')
+                  ->where('poa.production_order_id', '=', $order->id);
+            })
+            ->where('l.production_order_id', $order->id)
+            ->where(function ($q) use ($companyId) {
+                $q->where('l.company_id', $companyId)
+                  ->orWhereNull('l.company_id');
+            })
+            ->whereRaw('COALESCE(l.employee_id, wo.employee_id) IS NOT NULL')
+            ->selectRaw('
+                COALESCE(l.order_operation_id, poa.id) as order_operation_id,
+                COALESCE(l.employee_id, wo.employee_id) as employee_id,
+                SUM(l.quantity - l.rejected_qty) as qty
+            ')
+            ->groupByRaw('COALESCE(l.order_operation_id, poa.id), COALESCE(l.employee_id, wo.employee_id)')
             ->get();
 
         if ($grouped->isEmpty()) {
@@ -92,9 +133,9 @@ class ProdSettlementService
         }
 
         // 2) Mapa order_operation_id -> operation_id (para buscar tarifa)
-        $opMap = DB::table('prod_order_operations')
-            ->where('order_id', $order->id)
-            ->pluck('operation_id', 'id'); // [order_operation_id => operation_id]
+        $opMap = DB::table('production_order_activities')
+            ->where('production_order_id', $order->id)
+            ->pluck('activity_id', 'id'); // [order_operation_id => activity_id]
 
         // 3) Tarifas vigentes para el producto de la orden
         $today = now()->toDateString();
@@ -129,8 +170,13 @@ class ProdSettlementService
                 $rateRow = $rates->get($operationId);
                 $rate = (float)($rateRow->amount ?? 0);
 
-                // Si no hay tarifa, puedes: (a) saltar o (b) dejar rate=0
-                // Yo recomiendo saltar y reportar error en UI:
+                // Fallback a activities.unit_price si no hay tarifa configurada
+                if ($rate <= 0) {
+                    $rate = (float) DB::table('activities')
+                        ->where('id', $operationId)
+                        ->value('unit_price');
+                }
+
                 if ($rate <= 0) {
                     continue;
                 }
