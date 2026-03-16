@@ -45,6 +45,8 @@ use App\Http\Controllers\Produccion\ProdOperationController;
 use App\Http\Controllers\Produccion\ProdRateController;
 use App\Http\Controllers\Produccion\ProdOrderOperationController;
 use App\Http\Controllers\Produccion\ProdReportController;
+use App\Http\Controllers\Produccion\WorkshopController;
+use App\Http\Controllers\Produccion\WorkshopPairingAdminController;
 use App\Http\Controllers\ItemPropio\ItemPropioController;
 use App\Http\Controllers\Produccion\MaterialController;
 use App\Http\Controllers\Inventario\MovimientoController;
@@ -646,6 +648,24 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::post('admin.produccion.orders/{order}/settlements/calculate', [ProdOrderController::class, 'calculateSettlement'])->name('admin.produccion.orders.settlements.calculate');
         Route::get('admin.produccion.orders/{order}/operations/select2', [ProdOrderController::class, 'operationsSelect2'])->name('admin.produccion.orders.operations.select2');
         Route::get('admin.produccion.employees.select2', [ProdOrderController::class, 'employeesSelect2'])->name('admin.produccion.employees.select2');
+    });
+
+    Route::controller(WorkshopController::class)->group(function () {
+        Route::get('admin.produccion.workshops.index', [WorkshopController::class, 'index'])->name('admin.produccion.workshops.index');
+        Route::post('admin.produccion.workshops.store', [WorkshopController::class, 'store'])->name('admin.produccion.workshops.store');
+        Route::get('admin.produccion.workshops.edit/{id}', [WorkshopController::class, 'edit'])->name('admin.produccion.workshops.edit');
+        Route::post('admin.produccion.workshops.update/{id}', [WorkshopController::class, 'update'])->name('admin.produccion.workshops.update');
+        Route::post('admin.produccion.workshops.toggle-status/{id}', [WorkshopController::class, 'toggleStatus'])->name('admin.produccion.workshops.toggle-status');
+        Route::get('admin.produccion.workshops.show/{id}', [WorkshopController::class, 'show'])->name('admin.produccion.workshops.show');
+    });
+
+    Route::controller(WorkshopPairingAdminController::class)->group(function () {
+        Route::post('admin.produccion.workshops/{workshopId}/pairing-qr', [WorkshopPairingAdminController::class, 'generatePairingQr'])
+            ->name('admin.produccion.workshops.pairing-qr');
+        Route::get('admin.produccion.workshops/{workshopId}/devices', [WorkshopPairingAdminController::class, 'devices'])
+            ->name('admin.produccion.workshops.devices');
+        Route::patch('admin.produccion.workshops/{workshopId}/devices/{deviceId}/status', [WorkshopPairingAdminController::class, 'updateDeviceStatus'])
+            ->name('admin.produccion.workshops.devices.status');
     });
 
     // Logs

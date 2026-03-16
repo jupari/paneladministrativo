@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\OperationsBulkController;
 use App\Http\Controllers\Api\V1\DamagedGarmentsBulkController;
 use App\Http\Controllers\Api\V1\EvidencesController;
 use App\Http\Controllers\Api\V1\ProfileController;
+use App\Http\Controllers\Api\V1\WorkshopPairingController;
 use App\Models\ProductionOrder;
 use Illuminate\Support\Facades\Route;
 
@@ -61,6 +62,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
         // ── Talleres ───────────────────────────────────────────────────
         Route::get('workshops', [WorkshopsController::class, 'index'])->name('workshops.index');
+        Route::post('workshops/pair', [WorkshopPairingController::class, 'pair'])->name('workshops.pair');
 
         Route::prefix('workshops/{workshopId}')
              ->middleware('workshop.access')
@@ -69,6 +71,8 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
                  Route::get('/',         [WorkshopsController::class,       'show'])->name('show');
                  Route::get('operators', [WorkshopsController::class,       'operators'])->name('operators');
                  Route::get('orders',    [ProductionOrdersController::class,'index'])->name('orders.index');
+                 Route::get('devices',   [WorkshopPairingController::class, 'indexDevices'])->name('devices.index');
+                 Route::patch('devices/{deviceId}/status', [WorkshopPairingController::class, 'updateDeviceStatus'])->name('devices.status');
              });
 
         // ── Órdenes individuales ───────────────────────────────────────

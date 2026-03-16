@@ -508,6 +508,12 @@ return [
                     'icon_color' => 'primary',
                 ],
                 [
+                    'text' => 'Talleres',
+                    'route' => 'admin.produccion.workshops.index',
+                    'icon' => 'fas fa-warehouse',
+                    'icon_color' => 'primary',
+                ],
+                [
                     'text' => 'Ejecución (Registros de Operación)',
                     'route' => 'admin.produccion.logs.index',
                     'icon' => 'fas fa-tasks',

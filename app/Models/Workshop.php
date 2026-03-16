@@ -14,6 +14,7 @@ class Workshop extends Model
     protected $fillable = [
         'name', 'code', 'address',
         'coordinator_name', 'coordinator_phone', 'status', 'last_sync_at',
+        'company_workshops'
     ];
 
     protected $casts = [
