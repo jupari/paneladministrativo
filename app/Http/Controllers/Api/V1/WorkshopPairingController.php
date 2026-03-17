@@ -57,6 +57,46 @@ class WorkshopPairingController extends Controller
     }
 
     /**
+     * GET /api/v1/device/status
+     * Devuelve el estado del dispositivo actual (identificado por X-Device-UUID)
+     * para cualquier taller de la empresa. No requiere contexto de taller.
+     */
+    public function deviceStatus(Request $request): JsonResponse
+    {
+        $rawUuid = $request->header('X-Device-UUID');
+        $deviceUuid = is_string($rawUuid) ? trim($rawUuid) : '';
+
+        if ($deviceUuid === '') {
+            return $this->successResponse([
+                'enrolled' => false,
+                'active'   => false,
+                'status'   => null,
+            ]);
+        }
+
+        $device = WorkshopDevice::query()
+            ->where('device_uuid', $deviceUuid)
+            ->where('company_id', $request->user()->company_id)
+            ->orderByDesc('created_at')
+            ->first(['id', 'workshop_id', 'status']);
+
+        if (!$device) {
+            return $this->successResponse([
+                'enrolled' => false,
+                'active'   => false,
+                'status'   => null,
+            ]);
+        }
+
+        return $this->successResponse([
+            'enrolled'    => true,
+            'active'      => $device->status === 'active',
+            'status'      => $device->status,
+            'workshop_id' => $device->workshop_id,
+        ]);
+    }
+
+    /**
      * GET /api/v1/workshops/{workshopId}/devices
      */
     public function indexDevices(int $workshopId, Request $request): JsonResponse

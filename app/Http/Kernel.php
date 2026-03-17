@@ -69,5 +69,6 @@ class Kernel extends HttpKernel
         'sysadmin'         => \App\Http\Middleware\EnsureSysAdminRole::class,
         'auth.refresh'     => \App\Http\Middleware\EnsureRefreshToken::class,
         'workshop.access'  => \App\Http\Middleware\EnsureWorkshopAccess::class,
+        'workshop.device.enrolled' => \App\Http\Middleware\EnsureEnrolledWorkshopDevice::class,
     ];
 }

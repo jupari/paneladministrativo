@@ -63,6 +63,7 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         // ── Talleres ───────────────────────────────────────────────────
         Route::get('workshops', [WorkshopsController::class, 'index'])->name('workshops.index');
         Route::post('workshops/pair', [WorkshopPairingController::class, 'pair'])->name('workshops.pair');
+        Route::get('device/status',    [WorkshopPairingController::class, 'deviceStatus'])->name('device.status');
 
         Route::prefix('workshops/{workshopId}')
              ->middleware('workshop.access')
@@ -70,13 +71,18 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
              ->group(function () {
                  Route::get('/',         [WorkshopsController::class,       'show'])->name('show');
                  Route::get('operators', [WorkshopsController::class,       'operators'])->name('operators');
-                 Route::get('orders',    [ProductionOrdersController::class,'index'])->name('orders.index');
+                 Route::get('orders',    [ProductionOrdersController::class,'index'])
+                    ->middleware('workshop.device.enrolled:workshop')
+                    ->name('orders.index');
                  Route::get('devices',   [WorkshopPairingController::class, 'indexDevices'])->name('devices.index');
                  Route::patch('devices/{deviceId}/status', [WorkshopPairingController::class, 'updateDeviceStatus'])->name('devices.status');
              });
 
         // ── Órdenes individuales ───────────────────────────────────────
-        Route::prefix('production-orders/{orderId}')->name('orders.')->group(function () {
+        Route::prefix('production-orders/{orderId}')
+            ->middleware('workshop.device.enrolled:order')
+            ->name('orders.')
+            ->group(function () {
             Route::get('/',          [ProductionOrdersController::class, 'show'])->name('show');
             Route::get('activities', [ProductionOrdersController::class, 'activities'])->name('activities');
             Route::patch('status',   [ProductionOrdersController::class, 'updateStatus'])->name('status');
@@ -90,13 +96,23 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         });
 
         // ── Sync Bulk ──────────────────────────────────────────────────
-        Route::post('operations/bulk',       [OperationsBulkController::class,      'store'])->name('operations.bulk');
-        Route::post('damaged-garments/bulk', [DamagedGarmentsBulkController::class, 'store'])->name('damagedGarments.bulk');
+        Route::post('operations/bulk',       [OperationsBulkController::class,      'store'])
+            ->middleware('workshop.device.enrolled:operations-bulk')
+            ->name('operations.bulk');
+        Route::post('damaged-garments/bulk', [DamagedGarmentsBulkController::class, 'store'])
+            ->middleware('workshop.device.enrolled:damaged-bulk')
+            ->name('damagedGarments.bulk');
 
         // ── Evidencias ─────────────────────────────────────────────────
-        Route::post('evidences',        [EvidencesController::class, 'store'])->name('evidences.store');
-        Route::get('evidences/{id}',    [EvidencesController::class, 'show'])->name('evidences.show');
-        Route::delete('evidences/{id}', [EvidencesController::class, 'destroy'])->name('evidences.destroy');
+        Route::post('evidences',        [EvidencesController::class, 'store'])
+            ->middleware('workshop.device.enrolled:evidence-store')
+            ->name('evidences.store');
+        Route::get('evidences/{id}',    [EvidencesController::class, 'show'])
+            ->middleware('workshop.device.enrolled:evidence-route')
+            ->name('evidences.show');
+        Route::delete('evidences/{id}', [EvidencesController::class, 'destroy'])
+            ->middleware('workshop.device.enrolled:evidence-route')
+            ->name('evidences.destroy');
 
         // ── Perfil ─────────────────────────────────────────────────────
         Route::prefix('profile')->name('profile.')->group(function () {
