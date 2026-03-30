@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/proyecto-personal/paneladministrativo/routes -name *.php -type f)",
+      "Bash(grep -r \"cargo_id\" database/migrations/*.php)",
+      "Bash(xargs grep:*)"
+    ]
+  }
+}

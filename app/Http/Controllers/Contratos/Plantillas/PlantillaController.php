@@ -59,8 +59,14 @@ class PlantillaController extends Controller
                             : '<span class="badge bg-danger">Inactivo</span>';
                     })
                     ->addColumn('acciones', function ($plantilla) {
-                        return '<button type="button" onclick="upPlantilla(' . $plantilla->id . ')" class="btn btn-warning btn-sm" data-toggle="tooltip" title="Editar"><i class="fas fa-edit"></i></button>
-                                <button type="button" onclick="deletePlantilla(' . $plantilla->id . ')" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Eliminar"><i class="fas fa-trash"></i></button>';
+                        $href = '';
+                        if (auth()->user()->can('plantillas.edit')) {
+                            $href .= '<button type="button" onclick="upPlantilla(' . $plantilla->id . ')" class="btn btn-warning btn-sm" data-toggle="tooltip" title="Editar"><i class="fas fa-edit"></i></button>&nbsp;';
+                        }
+                        if (auth()->user()->can('plantillas.destroy')) {
+                            $href .= '<button type="button" onclick="deletePlantilla(' . $plantilla->id . ')" class="btn btn-danger btn-sm" data-toggle="tooltip" title="Eliminar"><i class="fas fa-trash"></i></button>';
+                        }
+                        return $href;
                     })
                     ->rawColumns(['archivo', 'active', 'acciones'])
                     ->make(true);

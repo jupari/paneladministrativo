@@ -23,10 +23,20 @@ class Cargo extends Model
      protected $table='cargos';
      public $timestamps=false;
 
-    protected $fillable = ['nombre', 'active', 'created_at', 'updated_at'];
+    protected $fillable = [
+        'nombre',
+        'active',
+        'salario_base',
+        'arl_nivel',
+        'aplica_exoneracion_ley1607',
+        'created_at',
+        'updated_at',
+    ];
 
     protected $casts = [
-        'created_at' => 'datetime', // Esto asegura que Laravel trate el campo como un objeto Carbon.
-        'updated_at' => 'datetime',
+        'created_at'                  => 'datetime',
+        'updated_at'                  => 'datetime',
+        'salario_base'                => 'float',
+        'aplica_exoneracion_ley1607'  => 'boolean',
     ];
 }

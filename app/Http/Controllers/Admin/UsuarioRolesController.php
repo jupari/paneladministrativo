@@ -10,17 +10,16 @@ use Spatie\Permission\Models\Role;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rules\Can;
 use Spatie\Permission\Models\Permission;
 
 class UsuarioRolesController extends Controller
 {
     //
      // Asegúrate de incluir el trait si es necesario
-     use AuthorizesRequests;
+    use AuthorizesRequests;
 
 
-     public function __construct()
+    public function __construct()
     {
         // Solo usuarios con rol sysadmin pueden gestionar roles y permisos
         //$this->middleware('sysadmin');
@@ -43,12 +42,12 @@ class UsuarioRolesController extends Controller
          try {
 
              $roles = Role::select($campos)
-                             ->with([
-                                 'permissions' => function($td) use($campos){
-                                     $td->select($campos);
-                                 }
-                             ])
-                             ->get();
+                            ->with([
+                                'permissions' => function($td) use($campos){
+                                    $td->select($campos);
+                                }
+                            ])
+                            ->get();
             $permissions =  Permission::All();
             if($request->ajax()) {
                 return Datatables::of($roles)
@@ -91,16 +90,16 @@ class UsuarioRolesController extends Controller
                 'permisos'=>$permissions?$permissions:[]
             ]);
 
-         }
-         catch (Exception $e) {
+        }
+        catch (Exception $e) {
 
-             return response()->json(['error' => 'Error al obtener usuarios ' . $e->getMessage()], 500);
-         }
+            return response()->json(['error' => 'Error al obtener usuarios ' . $e->getMessage()], 500);
+        }
 
 
-     }
+    }
 
-     public function edit(Request $request, $id)
+    public function edit(Request $request, $id)
     {
         // Campos para tablas siempre y cuando sean iguales
         $campos = ['id', 'name', 'guard_name'];
@@ -177,7 +176,7 @@ class UsuarioRolesController extends Controller
     public function update(Request $request, $id)
     {
         $rol = Role::select('id', 'name', 'guard_name')->findOrFail($id);
-        
+
         // Verificar autorización simplificada
         if (!auth()->user()->hasAnyRole(['Administrator', 'sysadmin']) && !auth()->user()->can('roles.edit')) {
             abort(403, 'Esta acción no está autorizada.');

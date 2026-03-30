@@ -38,6 +38,7 @@ class NovedadController extends Controller
             'total_admon' => 'nullable',
             'total_operativo' => 'nullable',
             'active' => 'required|boolean',
+            'grupo_cotiza' => 'required|boolean',
             'detalles' => 'required|array|min:1',
             'detalles.*.nombre' => 'required|string|max:255',
         ]);
@@ -45,6 +46,7 @@ class NovedadController extends Controller
         $novedad = Novedad::create([
             'nombre' => $request->nombre,
             'active' => $request->active,
+            'grupo_cotiza' => $request->grupo_cotiza,
             'total_admon' => $request->total_admon ?? 0,
             'total_operativo' => $request->total_operativo ?? 0,
             'created_at' => now(),
@@ -80,6 +82,7 @@ class NovedadController extends Controller
             'total_admon' => 'nullable',
             'total_operativo' => 'nullable',
             'active' => 'required|boolean',
+            'grupo_cotiza' => 'required|boolean',
             'detalles' => 'required|array|min:1',
             'detalles.*.nombre' => 'required|string|max:255',
         ]);
@@ -90,20 +93,35 @@ class NovedadController extends Controller
             'total_admon' => $request->total_admon ?? 0,
             'total_operativo' => $request->total_operativo ?? 0,
             'active' => $request->active,
-            'updated_at' => now()
+            'grupo_cotiza' => $request->grupo_cotiza,
+            'updated_at' => now(),
+            'created_at' => $novedad->created_at ?? now(),
         ]);
 
-        // Eliminar detalles antiguos y crear los nuevos
-        $novedad->detalles()->delete();
+        // Sincronizar detalles: crear, actualizar o eliminar según corresponda
+        $idsEnviados = collect($detalles)->pluck('id')->filter()->all();
+        // Eliminar detalles que ya no están
+        $novedad->detalles()->whereNotIn('id', $idsEnviados)->delete();
 
         foreach ($detalles as $detalle) {
-            $novedad->detalles()->create([
-                'nombre' => $detalle['nombre'],
-                'valor_admon'=> $detalle['valor_admon'] ?? 0,
-                'valor_operativo'=> $detalle['valor_operativo'] ?? 0,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            if (isset($detalle['id']) && $detalle['id']) {
+                // Actualizar detalle existente
+                $novedad->detalles()->where('id', $detalle['id'])->update([
+                    'nombre' => $detalle['nombre'],
+                    'valor_admon'=> $detalle['valor_admon'] ?? 0,
+                    'valor_operativo'=> $detalle['valor_operativo'] ?? 0,
+                    'updated_at' => now(),
+                ]);
+            } else {
+                // Crear nuevo detalle
+                $novedad->detalles()->create([
+                    'nombre' => $detalle['nombre'],
+                    'valor_admon'=> $detalle['valor_admon'] ?? 0,
+                    'valor_operativo'=> $detalle['valor_operativo'] ?? 0,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
 
         return response()->json(['success' => true, 'message' => 'Novedad actualizada con éxito']);

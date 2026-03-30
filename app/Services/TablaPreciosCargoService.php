@@ -205,6 +205,42 @@ class TablaPreciosCargoService
             }
         }
 
+        // ── PRIORIDAD: campos configurados directamente en el cargo ──────────────
+        // Fuente 1: cargos.salario_base   → overrides DATOS BÁSICOS - BASICO
+        // Fuente 2: nom_parametros_globales.aux_transporte → overrides AUX. DE TRANSPORTE
+        // Fuente 3: nom_arl_niveles[cargos.arl_nivel]     → siempre overrides pct_arp
+        // Los demás conceptos (cesantías, prima, etc.) siguen desde parametrización.
+        if (!empty($porCargo)) {
+            $paramGlobal = \App\Models\NominaParametrosGlobal::paraAno((int)date('Y'));
+            $arlNiveles  = \App\Models\NominaArlNivel::pluck('porcentaje', 'nivel'); // [1=>0.5220, ...]
+            $cargosData  = \App\Models\Cargo::whereIn('id', array_keys($porCargo))
+                ->select(['id', 'salario_base', 'arl_nivel'])
+                ->get()
+                ->keyBy('id');
+
+            foreach ($porCargo as $cargoId => &$d) {
+                $cargo = $cargosData[$cargoId] ?? null;
+                if (!$cargo) continue;
+
+                // B: salario_base del cargo tiene prioridad sobre DATOS BÁSICOS - BASICO
+                if ($cargo->salario_base !== null) {
+                    $d['basico'] = (float)$cargo->salario_base;
+
+                    // C: aux_transporte global cuando salario_base está configurado
+                    if ($paramGlobal) {
+                        $aplica = ((float)$cargo->salario_base) <= ((float)$paramGlobal->smlv * 2);
+                        $d['aux_trans'] = $aplica ? (float)$paramGlobal->aux_transporte : 0.0;
+                    }
+                }
+
+                // ARL: nivel configurado en el cargo siempre tiene prioridad sobre parametrización
+                if (isset($arlNiveles[$cargo->arl_nivel])) {
+                    $d['pct_arp'] = (float)$arlNiveles[$cargo->arl_nivel] / 100;
+                }
+            }
+            unset($d); // romper referencia
+        }
+
         // 4) Calcular igual que Excel + tabla precios
         $den = (1 - $utilidad);
         if ($den <= 0) $den = 1;

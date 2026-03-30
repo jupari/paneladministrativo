@@ -18,7 +18,6 @@ class ClienteService
         $companyId = auth()->user()->company_id;
 
         $query = Tercero::with('tipoPersona', 'tipoIdentificacion', 'ciudad')
-            ->where('tercerotipo_id', 2)
             ->where('company_id', $companyId)
             ->orderBy('created_at')
             ->get();

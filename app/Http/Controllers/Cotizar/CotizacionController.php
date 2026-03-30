@@ -38,6 +38,9 @@ class CotizacionController extends Controller
                     ->addColumn('num_documento', function ($row) {
                         return $row->num_documento;
                     })
+                    ->addColumn('version', function ($row) {
+                        return $row->version;
+                    })
                     ->addColumn('cliente', function ($row) {
                         if ($row->tercero) {
                             return $row->tercero->nombres && $row->tercero->apellidos
@@ -88,7 +91,7 @@ class CotizacionController extends Controller
                                     </button>
                                 </div>';
                     })
-                    ->rawColumns(['id','num_documento','cliente','fecha','estado','total','actions'])
+                    ->rawColumns(['id','num_documento','version','cliente','fecha','estado','total','actions'])
                     ->make(true);
             }
             // $estadisticas = $this->cotizacionService->obtenerEstadisticas();

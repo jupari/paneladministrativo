@@ -1,5 +1,5 @@
 <!-- Modal Completo con UX/UI Mejorado -->
-<div class="modal fade" id="ModalCliente" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+<div class="modal fade" id="ModalCliente" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header bg-gradient-primary text-white">
@@ -42,7 +42,6 @@
                         </div>
                     </div>
                 </div>
-                {{ auth()->id() }}
                 <!-- Form Container -->
                 <form autocomplete="off" id="cliente-form" novalidate>
                     <input type="hidden" id="tercerotipo_id" value="{{ $tercerotipo_id ?? '1' }}">
@@ -51,17 +50,6 @@
 
                     <!-- DEBUG: Verificar valores desde PHP -->
                     <script>
-                        // Este código NO usa jQuery, así que puede ejecutarse inmediatamente
-                        console.log('📋 DEBUG BLADE - Valores desde PHP:');
-                        console.log('   - tercerotipo_id desde PHP:', '{{ $tercerotipo_id ?? "UNDEFINED" }}');
-                        console.log('   - user_id desde PHP:', '{{ $user_id ?? "UNDEFINED" }}');
-                        console.log('   - user_id auth():', '{{ auth()->id() ?? "NO_AUTH" }}');
-
-                        // DEBUGGING MÁS DETALLADO
-                        const debugUserValue = '{{ $user_id ?? auth()->id() }}';
-                        console.log('   - Valor final que se asignará a user_id:', debugUserValue);
-                        console.log('   - Tipo del valor:', typeof debugUserValue);
-                        console.log('   - Es string vacío:', debugUserValue === '');
 
                         // ESTABLECER VALORES cuando jQuery esté disponible
                         document.addEventListener('DOMContentLoaded', function() {
@@ -93,7 +81,7 @@
                     <div class="step-content" id="step-1">
                         <div class="card">
                             <div class="card-header bg-light">
-                                <h5 class="mb-0"><i class="fas fa-user mr-2"></i>Información Básica</h5>
+                                <h5 class="mb-0"><i class="fas fa-user mr-2"></i>Datos Básicos</h5>
                             </div>
                             <div class="card-body">
                                 <div class="row">
@@ -133,9 +121,9 @@
                                     <div class="col-md-8">
                                         <div class="form-group">
                                             <label for="identificacion" class="required">Identificación</label>
-                                            <input type="text" id="identificacion" class="form-control" placeholder="Número de identificación" required>
-                                            <span class="text-danger" id="error_identificacion"></span>
+                                            <input type="text" id="identificacion" class="form-control" placeholder="Número de identificación" required inputmode="numeric" pattern="[0-9]*">
                                             <div class="valid-feedback">¡Perfecto!</div>
+                                            <span class="text-danger" id="error_identificacion_b"></span>
                                             <small class="form-text text-muted">Ingrese el número sin puntos ni espacios</small>
                                         </div>
                                     </div>
@@ -155,6 +143,16 @@
                                             <input type="text" id="nombres" class="form-control" placeholder="Nombres" required>
                                             <span class="text-danger" id="error_nombres"></span>
                                             <div class="valid-feedback">¡Perfecto!</div>
+                                            <script>
+                                            document.addEventListener('DOMContentLoaded', function() {
+                                                var nombresInput = document.getElementById('nombres');
+                                                if(nombresInput) {
+                                                    nombresInput.addEventListener('input', function() {
+                                                        this.value = this.value.toUpperCase();
+                                                    });
+                                                }
+                                            });
+                                            </script>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -163,6 +161,16 @@
                                             <input type="text" id="apellidos" class="form-control" placeholder="Apellidos" required>
                                             <span class="text-danger" id="error_apellidos"></span>
                                             <div class="valid-feedback">¡Perfecto!</div>
+                                            <script>
+                                            document.addEventListener('DOMContentLoaded', function() {
+                                                var apellidosInput = document.getElementById('apellidos');
+                                                if(apellidosInput) {
+                                                    apellidosInput.addEventListener('input', function() {
+                                                        this.value = this.value.toUpperCase();
+                                                    });
+                                                }
+                                            });
+                                            </script>
                                         </div>
                                     </div>
                                 </div>
@@ -171,6 +179,16 @@
                                     <label for="nombre_establecimiento">Nombre del Establecimiento</label>
                                     <input type="text" id="nombre_establecimiento" class="form-control" placeholder="Razón social o nombre comercial">
                                     <span class="text-danger" id="error_nombre_establecimiento"></span>
+                                    <script>
+                                    document.addEventListener('DOMContentLoaded', function() {
+                                        var establecimientoInput = document.getElementById('nombre_establecimiento');
+                                        if(establecimientoInput) {
+                                            establecimientoInput.addEventListener('input', function() {
+                                                this.value = this.value.toUpperCase();
+                                            });
+                                        }
+                                    });
+                                    </script>
                                 </div>
                             </div>
                         </div>
@@ -180,7 +198,7 @@
                     <div class="step-content d-none" id="step-2">
                         <div class="card">
                             <div class="card-header bg-light">
-                                <h5 class="mb-0"><i class="fas fa-address-book mr-2"></i>Información de Contacto</h5>
+                                <h5 class="mb-0"><i class="fas fa-address-book mr-2"></i>Información</h5>
                             </div>
                             <div class="card-body">
                                 <div class="row">
@@ -328,13 +346,35 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="contacto_nombres">Nombres</label>
-                                                <input type="text" id="contacto_nombres" class="form-control" placeholder="Nombres">
+                                                    <input type="text" id="contacto_nombres" class="form-control" placeholder="Nombres" maxlength="250">
+                                                    <script>
+                                                    document.addEventListener('DOMContentLoaded', function() {
+                                                        var contactoNombres = document.getElementById('contacto_nombres');
+                                                        if(contactoNombres) {
+                                                            contactoNombres.addEventListener('input', function() {
+                                                                // Capitalizar cada palabra
+                                                                this.value = this.value.replace(/\b\w/g, function(l){ return l.toUpperCase(); });
+                                                            });
+                                                        }
+                                                    });
+                                                    </script>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label for="contacto_apellidos">Apellidos</label>
-                                                <input type="text" id="contacto_apellidos" class="form-control" placeholder="Apellidos">
+                                                    <input type="text" id="contacto_apellidos" class="form-control" placeholder="Apellidos" maxlength="250">
+                                                    <script>
+                                                    document.addEventListener('DOMContentLoaded', function() {
+                                                        var contactoApellidos = document.getElementById('contacto_apellidos');
+                                                        if(contactoApellidos) {
+                                                            contactoApellidos.addEventListener('input', function() {
+                                                                // Capitalizar cada palabra
+                                                                this.value = this.value.replace(/\b\w/g, function(l){ return l.toUpperCase(); });
+                                                            });
+                                                        }
+                                                    });
+                                                    </script>
                                             </div>
                                         </div>
                                     </div>
@@ -416,13 +456,13 @@
                         <div class="card">
                             <div class="card-header bg-light">
                                 <h5 class="mb-0"><i class="fas fa-building mr-2"></i>Sucursales</h5>
-                                <button type="button" class="btn btn-success btn-sm float-right" id="addSucursalBtn">
+                                {{-- <button type="button" class="btn btn-success btn-sm float-right" id="addSucursalBtn">
                                     <i class="fas fa-plus mr-1"></i>Agregar Sucursal
-                                </button>
+                                </button> --}}
                             </div>
                             <div class="card-body">
                                 <!-- Formulario de sucursal -->
-                                <div id="sucursal-form" class="border rounded p-3 mb-3 bg-light d-none">
+                                <div id="sucursal-form" class="border rounded p-3 mb-3 bg-light">
                                     <h6><i class="fas fa-building mr-2"></i>Nueva Sucursal</h6>
                                     <div class="row">
                                         <div class="col-md-6">
@@ -510,7 +550,8 @@
                                         <thead class="thead-light">
                                             <tr>
                                                 <th style="width: 5%">#</th>
-                                                <th style="width: 15%">Comercial</th>
+                                                <th style="width: 15%">Sucursal</th>
+                                                <th style="width: 15%">Contacto</th>
                                                 <th style="width: 15%">Correo</th>
                                                 <th style="width: 12%">Teléfono</th>
                                                 <th style="width: 12%">Celular</th>

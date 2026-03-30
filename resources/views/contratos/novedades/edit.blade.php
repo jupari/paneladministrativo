@@ -36,12 +36,17 @@
                         </div>
 
                         <div class="form-group">
-                            <div class="custom-control custom-switch">
+                            <div class="custom-control custom-switch mb-2">
                                 <input class="custom-control-input" type="checkbox" id="active" name="active" {{ $novedad->active==1?'checked': '' }}>
                                 <label class="custom-control-label" for="active">Activo</label>
                             </div>
+                            <div class="custom-control custom-switch">
+                                <input class="custom-control-input" type="checkbox" id="grupo_cotiza" name="grupo_cotiza" {{ $novedad->grupo_cotiza==1?'checked': '' }}>
+                                <label class="custom-control-label" for="grupo_cotiza">Grupo Cotiza</label>
+                            </div>
                             <small class="text-muted">Desactiva si no quieres que se muestre en listados.</small>
                             <span class="text-danger error_active"></span>
+                            <span class="text-danger error-grupo_cotiza"></span>
                         </div>
 
                         <div class="d-flex align-items-center mb-2">

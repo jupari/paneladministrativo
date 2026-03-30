@@ -8,6 +8,8 @@ use App\Http\Requests\parametrizacionRequest;
 use App\Models\Cargo;
 use App\Models\Categoria;
 use App\Models\ItemPropio;
+use App\Models\NominaArlNivel;
+use App\Models\NominaParametrosGlobal;
 use App\Models\Novedad;
 use App\Models\Parametrizacion;
 use App\Models\ParametrizacionCosto;
@@ -47,10 +49,27 @@ class ParametrizacionController extends Controller
 
             $itemsPropios = ItemPropio::where('active', 1)->orderBy('orden')->orderBy('nombre')->get();
 
-            // $itemsPropios = ItemPropio::with('categoria', 'unidadMedida')
-            //                     ->where('active', 1)
-            //                     ->orderBy('nombre')
-            //                     ->get(['id', 'codigo', 'nombre', 'categoria_id', 'unidad_medida']);
+            // Datos para el panel "Fuentes Activas"
+            $cargosConfig = Cargo::select('id', 'nombre', 'salario_base', 'arl_nivel', 'aplica_exoneracion_ley1607')
+                ->where('active', 1)
+                ->orderBy('nombre')
+                ->get();
+
+            $arlNivelesConfig = NominaArlNivel::pluck('porcentaje', 'nivel');
+            $paramGlobal = NominaParametrosGlobal::paraAno((int)date('Y'));
+
+            // IDs de cargos que tienen fila DATOS BÁSICOS - BASICO en parametrización
+            $cargosConBasico = DB::table('parametrizacion as p')
+                ->join('categorias as cat', 'cat.id', '=', 'p.categoria_id')
+                ->join('novedades_detalle as nd', 'nd.id', '=', 'p.novedad_detalle_id')
+                ->join('novedades as n', 'n.id', '=', 'nd.novedad_id')
+                ->where('p.active', 1)
+                ->whereRaw("UPPER(cat.nombre) = 'NOMINA'")
+                ->whereRaw("UPPER(n.nombre) IN ('DATOS BÁSICOS','DATOS BASICOS')")
+                ->whereRaw("UPPER(nd.nombre) IN ('BASICO','BÁSICO')")
+                ->pluck('p.cargo_id')
+                ->flip()
+                ->all(); // [cargoId => 0, ...]
 
             return view('contratos.parametrizacion.index', [
                     'parametrizacioncostos'=>$parametrizacioncostos,
@@ -62,6 +81,10 @@ class ParametrizacionController extends Controller
                     'unidades'=>$unidades,
                     'itemsPropios'=>$itemsPropios,
                     'cantHorasDiarias'=>$cantHorasDiarias,
+                    'cargosConfig'=>$cargosConfig,
+                    'arlNivelesConfig'=>$arlNivelesConfig,
+                    'paramGlobal'=>$paramGlobal,
+                    'cargosConBasico'=>$cargosConBasico,
                 ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Error al actualizar el empleado: ' . $e->getMessage()], 500);
@@ -160,6 +183,31 @@ class ParametrizacionController extends Controller
 
     public function tablaPreciosData(Request $request, TablaPreciosCargoService $service)
     {
+        // IDs de cargos que tienen fila DATOS BÁSICOS - BASICO en parametrización
+        $cargosConBasico = DB::table('parametrizacion as p')
+            ->join('categorias as cat', 'cat.id', '=', 'p.categoria_id')
+            ->join('novedades_detalle as nd', 'nd.id', '=', 'p.novedad_detalle_id')
+            ->join('novedades as n', 'n.id', '=', 'nd.novedad_id')
+            ->where('p.active', 1)
+            ->whereRaw("UPPER(cat.nombre) = 'NOMINA'")
+            ->whereRaw("UPPER(n.nombre) IN ('DATOS BÁSICOS','DATOS BASICOS')")
+            ->whereRaw("UPPER(nd.nombre) IN ('BASICO','BÁSICO')")
+            ->pluck('p.cargo_id')
+            ->flip()
+            ->all();
+
+        $cargosData = Cargo::select('id', 'salario_base', 'arl_nivel')
+            ->where('active', 1)
+            ->get()
+            ->keyBy('id');
+
+        $resolveFuente = function (int $cargoId) use ($cargosData, $cargosConBasico): string {
+            $cargo = $cargosData[$cargoId] ?? null;
+            if ($cargo && $cargo->salario_base !== null) return 'cargo';
+            if (array_key_exists($cargoId, $cargosConBasico)) return 'parametrizacion';
+            return 'smlv';
+        };
+
         // Si ya existe la tabla persistida, puedes leer de BD (más rápido)
         // Si no existe, devolvemos calculado en caliente
         if (Schema::hasTable('cargos_tabla_precios')) {
@@ -183,7 +231,11 @@ class ParametrizacionController extends Controller
                     'tp.updated_at',
                 ])
                 ->orderBy('c.nombre')
-                ->get();
+                ->get()
+                ->map(function ($row) use ($resolveFuente) {
+                    $row->fuente_salario = $resolveFuente((int)$row->cargo_id);
+                    return $row;
+                });
 
             return response()->json(['success' => true, 'data' => $rows]);
         }

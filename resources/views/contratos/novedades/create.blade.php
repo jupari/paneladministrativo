@@ -36,12 +36,17 @@
                         </div>
 
                         <div class="form-group">
-                            <div class="custom-control custom-switch">
+                            <div class="custom-control custom-switch mb-2">
                                 <input class="custom-control-input" type="checkbox" id="active" name="active">
                                 <label class="custom-control-label" for="active">Activo</label>
                             </div>
+                            <div class="custom-control custom-switch">
+                                <input class="custom-control-input" type="checkbox" id="grupo_cotiza" name="grupo_cotiza">
+                                <label class="custom-control-label" for="grupo_cotiza">Grupo Cotiza</label>
+                            </div>
                             <small class="text-muted">Si está inactiva, no estará disponible en listados.</small>
                             <span class="text-danger error_active"></span>
+                            <span class="text-danger error-grupo_cotiza"></span>
                         </div>
 
                         <div class="d-flex align-items-center mb-2">

@@ -43,6 +43,7 @@
                            <th>#</th>
                            <th>id</th>
                            <th>Documento</th>
+                            <th>Versión</th>
                            <th>Cliente</th>
                             <th>Sede</th>
                            <th>Proyecto</th>

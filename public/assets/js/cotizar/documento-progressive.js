@@ -6,7 +6,7 @@
 // Variables globales del sistema progresivo
 let cotizacionGuardada = false;
 let pasoActual = 0;
-let totalPasos = 5; // Total de pasos en el sistema progresivo
+let totalPasos = 6; // Total de pasos en el sistema progresivo (nuevo flujo)
 
 /**
  * Inicializar el sistema progresivo
@@ -178,7 +178,9 @@ function configurarEventosSistemaProgresivo() {
  */
 function habilitarSistemaProgresivo() {
     mostrarEstadoGuardado('Información básica guardada exitosamente. Complete los siguientes pasos.');
-    mostrarPaso(1);
+    // Siempre mostrar el paso de items como primer paso después de guardar la cabecera
+    pasoActual = 1;
+    mostrarPaso(pasoActual);
     configurarNavegacion();
 }
 
@@ -242,12 +244,15 @@ function mostrarPaso(numeroPaso) {
  * Obtener nombre del paso por número
  */
 function getPasoNombre(numero) {
+    // Nuevo orden de pasos:
+    // 1: items, 2: productos, 3: impuestos, 4: observaciones, 5: condiciones
     const nombres = {
-        1: 'impuestos',
-        2: 'items',
-        3: 'observaciones',
-        4: 'condiciones',
-        5: 'productos'
+        1: 'items',
+        2: 'productos',
+        3: 'impuestos',
+        4: 'observaciones',
+        5: 'condiciones',
+        6: 'condiciones' // Para evitar errores si se llama al último paso
     };
     return nombres[numero];
 }

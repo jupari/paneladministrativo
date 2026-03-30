@@ -907,25 +907,8 @@ window.nextStepHandler = function(event) {
 
     console.log('🔄 nextStepHandler llamada');
     if (window.clienteModalSteps) {
-        // En modo edición, permitir navegación sin validación estricta
-        const isEdit = (document.getElementById('id')?.value &&
-                       document.getElementById('id').value.trim() !== '') ||
-                      (document.getElementById('identificacion')?.value &&
-                       document.getElementById('identificacion').value.trim() !== '');
-
-        if (isEdit) {
-            console.log('Modo edición - navegación libre');
-            // Navegación libre en modo edición
-            if (window.clienteModalSteps.currentStep < window.clienteModalSteps.totalSteps) {
-                window.clienteModalSteps.currentStep++;
-                window.clienteModalSteps.updateStepDisplay();
-                window.clienteModalSteps.updateProgress();
-                window.clienteModalSteps.updateNavigationButtons();
-            }
-        } else {
-            // Modo normal con validación
-            window.clienteModalSteps.nextStep(event);
-        }
+        // Siempre avanzar paso a paso, validando el paso actual, tanto en edición como en creación
+        window.clienteModalSteps.nextStep(event);
     }
 };
 

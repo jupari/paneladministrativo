@@ -38,6 +38,19 @@
       movableColumns: true,
       columns: [
         { title: "Cargo", field: "cargo", widthGrow: 2, headerFilter: "input" },
+        {
+          title: "Fuente salario",
+          field: "fuente_salario",
+          hozAlign: "center",
+          headerFilter: "select",
+          headerFilterParams: { values: { "": "Todos", cargo: "Cargo", parametrizacion: "Param.", smlv: "SMLV" } },
+          formatter: function (cell) {
+            const v = cell.getValue();
+            if (v === 'cargo')          return '<span class="badge badge-success">Cargo</span>';
+            if (v === 'parametrizacion') return '<span class="badge badge-warning text-dark">Param.</span>';
+            return '<span class="badge badge-info">SMLV</span>';
+          },
+        },
         { title: "Costo día (S)", field: "base_costo_dia", hozAlign: "right", formatter: moneyFormatter },
         { title: "Costo hora (T)", field: "base_costo_hora", hozAlign: "right", formatter: moneyFormatter },
         { title: "Hora ordinaria", field: "hora_ordinaria", hozAlign: "right", formatter: moneyFormatter },
@@ -83,18 +96,18 @@
       if (!json.success) throw new Error(json.message || 'No se pudo generar la tabla');
 
       Swal.fire('OK', `${json.message} (Cargos: ${json.count})`, 'success');
-      buildTablaPrecios(json.data || []);
+      await cargarTablaPrecios(); // recarga desde BD para incluir fuente_salario
     } catch (e) {
       Swal.fire('Error', e.message, 'error');
     }
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-refresh-tabla-precios')?.addEventListener('click', cargarTablaPrecios);
     document.getElementById('btn-gen-tabla-precios')?.addEventListener('click', generarTablaPrecios);
 
     document.getElementById('tabla-precios-tab')?.addEventListener('shown.bs.tab', () => {
-      if (!tablaPreciosCargo) cargarTablaPrecios();
+    if (!tablaPreciosCargo) cargarTablaPrecios();
     });
   });
 })();

@@ -209,14 +209,17 @@ class CotizacionService
 
             $datos = $cotizacionOriginal->toArray();
 
+
             // Remover ID y timestamps
             unset($datos['id']);
 
-            // Generar nuevo número de documento
-            $datos['num_documento'] = $this->generarNumeroDocumento();
-
-            // Incrementar versión
-            $datos['version'] = ($datos['version'] ?? 1) + 1;
+            // Mantener el mismo número de documento
+            // Calcular la nueva versión: buscar la máxima versión para ese num_documento y sumarle 1
+            $numDocumentoOriginal = $cotizacionOriginal->num_documento;
+            $maxVersion = Cotizacion::where('num_documento', $numDocumentoOriginal)->max('version');
+            $datos['num_documento'] = $numDocumentoOriginal;
+            $datos['doc_origen'] = $numDocumentoOriginal;
+            $datos['version'] = ($maxVersion ? $maxVersion : 1) + 1;
 
             // Crear la nueva cotización
             $nuevaCotizacion = Cotizacion::create($datos);
