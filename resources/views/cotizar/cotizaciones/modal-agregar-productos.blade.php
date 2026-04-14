@@ -50,7 +50,7 @@
                                                 <th width="40">
                                                     <i class="fas fa-check-circle"></i>
                                                 </th>
-                                                <th>Item/Subitem</th>
+                                                <th>Capitulación/Item</th>
                                                 <th>Descripción</th>
                                                 <th>Tipo</th>
                                             </tr>

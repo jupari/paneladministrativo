@@ -231,8 +231,6 @@ async function fetchSucursales(terceroId) {
         defaultOption.text = 'Seleccione una sede';
         sedeSelect.appendChild(defaultOption);
 
-        console.log('data.data...sucursales', data.data);
-
         data.data.forEach(sede => {
             const option = document.createElement('option');
             option.value = sede.id;
@@ -250,8 +248,6 @@ async function fetchSucursales(terceroId) {
 
 async function fetchContactos(terceroId) {
     try {
-        console.log('Entre a fetchContactos...>', terceroId);
-
         const response = await fetch(`/admin/admin.cotizaciones.getContactos/${terceroId}`);
         const data = await response.json();
 
@@ -262,8 +258,6 @@ async function fetchContactos(terceroId) {
         defaultOption.value = '';
         defaultOption.text = 'Seleccione un contacto';
         contactoSelect.appendChild(defaultOption);
-
-        console.log('data.data>>>', data.data);
 
         data.data.forEach(contacto => {
             const option = document.createElement('option');
@@ -2095,7 +2089,6 @@ function actualizarTablaItemsAcordeon() {
         `;
         return;
     }
-    console.log('Actualizando tabla del acordeón con items::::', itemsCotizacion);
     // Agregar filas para cada item y sus subitems
     itemsCotizacion.forEach((item, itemIndex) => {
         // Fila del item principal (NO seleccionable)
@@ -2106,8 +2099,8 @@ function actualizarTablaItemsAcordeon() {
                 <i class="fas fa-folder text-secondary" title="Items principales no seleccionables"></i>
             </td>
             <td><strong><i class="fas fa-folder mr-1 text-secondary"></i>${item.nombre}</strong></td>
-            <td class="text-muted"><em>Item principal - No seleccionable</em></td>
-            <td><span class="badge bg-secondary">Item Principal</span></td>
+            <td class="text-muted"><em>Capitulación - No seleccionable</em></td>
+            <td><span class="badge bg-secondary">Capitulación</span></td>
         `;
         tbody.appendChild(itemRow);
 
@@ -2135,9 +2128,9 @@ function actualizarTablaItemsAcordeon() {
                 <td class="text-center">
                     <i class="fas fa-info-circle text-muted"></i>
                 </td>
-                <td class="ps-4 text-muted"><em>Sin subitems disponibles</em></td>
+                <td class="ps-4 text-muted"><em>Sin items disponibles</em></td>
                 <td class="text-muted">-</td>
-                <td><span class="badge bg-light text-dark">Sin subitems</span></td>
+                <td><span class="badge bg-light text-dark">Sin items</span></td>
             `;
             tbody.appendChild(noSubitemsRow);
         }
@@ -2232,7 +2225,6 @@ function usarItemSeleccionado() {
 
     // Buscar item seleccionado en el acordeón
     const itemSeleccionado = document.querySelector('input[name="itemSelected"]:checked');
-    console.log("itemSeleccionado>>>>",itemSeleccionado);
 
     if (!itemSeleccionado) {
         Swal.fire({
@@ -4870,9 +4862,6 @@ async function finalizarConfiguracionCostos() {
                 const horasnormales = document.getElementById(`horasNormales_${itemId}`)?.value || 0;
                 const horasExtras = document.getElementById(`horasExtras_${itemId}`)?.value || 0;
 
-                console.log('horasnormales...', horasnormales);
-                console.log('horasExtras...', horasExtras);
-
                 if (parseFloat(horasnormales) + parseFloat(horasExtras) <= 0) {
                     errores.push(`Debe ingresar al menos una hora remunerada (normal o extra) para "${item.nombre}"`);
                     continue;
@@ -7055,9 +7044,6 @@ function crearProductosDesdeItemsPropios() {
             let precio = 0;
             if (precioElement) {
                 const precioText = precioElement.textContent;
-                console.log('=== DEBUGGING PRECIO (crearProductos) ===');
-                console.log('Texto completo del precio:', precioText);
-                console.log('Elemento precio HTML:', precioElement.outerHTML);
 
                 // Método simplificado: buscar diferentes patrones paso a paso
                 let precioUnitario = null;
@@ -7067,11 +7053,9 @@ function crearProductosDesdeItemsPropios() {
                 if (patron1) {
                     const numero1 = parseFloat(patron1[1].replace(/,/g, '')) || 0;
                     const numero2 = parseFloat(patron1[2].replace(/,/g, '')) || 0;
-                    console.log(`Patrón X x Y encontrado: ${numero1} x ${numero2}`);
 
                     // Si numero1 * numero2 parece ser el total mostrado, entonces numero1 es unitario
                     const totalCalculado = numero1 * numero2;
-                    console.log(`Total calculado: ${totalCalculado}`);
 
                     // Buscar si aparece el total en alguna parte del texto
                     const textoSinFormato = precioText.replace(/[^0-9]/g, '');
@@ -7079,11 +7063,9 @@ function crearProductosDesdeItemsPropios() {
 
                     if (textoSinFormato.includes(totalEnTexto)) {
                         precioUnitario = numero1;
-                        console.log(`✅ Precio unitario calculado: ${precioUnitario}`);
                     } else {
                         // Si no encuentra el total, tomar el menor número como unitario
                         precioUnitario = Math.min(numero1, numero2);
-                        console.log(`⚠️ Tomando menor valor como unitario: ${precioUnitario}`);
                     }
                 }
 
@@ -7092,7 +7074,6 @@ function crearProductosDesdeItemsPropios() {
                     const patron2 = precioText.match(/\(\$?([0-9.,]+)\s*(?:c\/u|cada|unitario)\)/i);
                     if (patron2) {
                         precioUnitario = parseFloat(patron2[1].replace(/,/g, '')) || 0;
-                        console.log(`✅ Precio por unidad encontrado: ${precioUnitario}`);
                     }
                 }
 
@@ -7101,24 +7082,19 @@ function crearProductosDesdeItemsPropios() {
                     const patron3 = precioText.match(/\$([0-9.,]+)/i);
                     if (patron3) {
                         const soloNumero = parseFloat(patron3[1].replace(/,/g, '')) || 0;
-                        console.log(`Solo número con $: ${soloNumero}`);
 
                         // Si hay "x" en el texto, es probable que sea un total
                         if (precioText.toLowerCase().includes('x') && precioText.match(/x\s*([0-9]+)/)) {
                             const cantidad = parseInt(precioText.match(/x\s*([0-9]+)/)[1]) || 1;
                             precioUnitario = cantidad > 1 ? soloNumero / cantidad : soloNumero;
-                            console.log(`⚠️ Dividiendo total entre cantidad: ${soloNumero} ÷ ${cantidad} = ${precioUnitario}`);
                         } else {
                             precioUnitario = soloNumero;
-                            console.log(`✅ Precio unitario directo: ${precioUnitario}`);
                         }
                     }
                 }
 
                 // Resultado final
                 precio = precioUnitario || 0;
-                console.log('🎯 PRECIO FINAL EXTRAÍDO (crearProductos):', precio);
-                console.log('==========================\n');
             }
 
             // Verificar si ya existe en productos disponibles
@@ -7185,9 +7161,6 @@ function seleccionarProductoDesdeItem(itemElement) {
         let precio = 0;
         if (precioElement) {
             const precioText = precioElement.textContent;
-            console.log('=== DEBUGGING PRECIO ===');
-            console.log('Texto completo del precio:', precioText);
-            console.log('Elemento precio HTML:', precioElement.outerHTML);
 
             // Método simplificado: buscar diferentes patrones paso a paso
             let precioUnitario = null;
@@ -7197,11 +7170,10 @@ function seleccionarProductoDesdeItem(itemElement) {
             if (patron1) {
                 const numero1 = parseFloat(patron1[1].replace(/,/g, '')) || 0;
                 const numero2 = parseFloat(patron1[2].replace(/,/g, '')) || 0;
-                console.log(`Patrón X x Y encontrado: ${numero1} x ${numero2}`);
 
                 // Si numero1 * numero2 parece ser el total mostrado, entonces numero1 es unitario
                 const totalCalculado = numero1 * numero2;
-                console.log(`Total calculado: ${totalCalculado}`);
+
 
                 // Buscar si aparece el total en alguna parte del texto
                 const textoSinFormato = precioText.replace(/[^0-9]/g, '');
@@ -7209,11 +7181,9 @@ function seleccionarProductoDesdeItem(itemElement) {
 
                 if (textoSinFormato.includes(totalEnTexto)) {
                     precioUnitario = numero1;
-                    console.log(`✅ Precio unitario calculado: ${precioUnitario}`);
                 } else {
                     // Si no encuentra el total, tomar el menor número como unitario
                     precioUnitario = Math.min(numero1, numero2);
-                    console.log(`⚠️ Tomando menor valor como unitario: ${precioUnitario}`);
                 }
             }
 
@@ -7222,7 +7192,6 @@ function seleccionarProductoDesdeItem(itemElement) {
                 const patron2 = precioText.match(/\(\$?([0-9.,]+)\s*(?:c\/u|cada|unitario)\)/i);
                 if (patron2) {
                     precioUnitario = parseFloat(patron2[1].replace(/,/g, '')) || 0;
-                    console.log(`✅ Precio por unidad encontrado: ${precioUnitario}`);
                 }
             }
 
@@ -7231,24 +7200,19 @@ function seleccionarProductoDesdeItem(itemElement) {
                 const patron3 = precioText.match(/\$([0-9.,]+)/i);
                 if (patron3) {
                     const soloNumero = parseFloat(patron3[1].replace(/,/g, '')) || 0;
-                    console.log(`Solo número con $: ${soloNumero}`);
 
                     // Si hay "x" en el texto, es probable que sea un total
                     if (precioText.toLowerCase().includes('x') && precioText.match(/x\s*([0-9]+)/)) {
                         const cantidad = parseInt(precioText.match(/x\s*([0-9]+)/)[1]) || 1;
                         precioUnitario = cantidad > 1 ? soloNumero / cantidad : soloNumero;
-                        console.log(`⚠️ Dividiendo total entre cantidad: ${soloNumero} ÷ ${cantidad} = ${precioUnitario}`);
                     } else {
                         precioUnitario = soloNumero;
-                        console.log(`✅ Precio unitario directo: ${precioUnitario}`);
                     }
                 }
             }
 
             // Resultado final
             precio = precioUnitario || 0;
-            console.log('🎯 PRECIO FINAL EXTRAÍDO:', precio);
-            console.log('==========================\n');
         }
 
         // Verificar si ya está seleccionado
@@ -7271,8 +7235,6 @@ function seleccionarProductoDesdeItem(itemElement) {
         };
 
         productosSeleccionados.push(producto);
-
-        console.log('productosSeleccionados seleccionarProductoDesdeItem(6597)', productosSeleccionados);
 
         // Actualizar UI
         actualizarTablaProductosSeleccionados();
@@ -7485,8 +7447,6 @@ function abrirModalQuitarProductos() {
 function usarItemsSeleccionados() {
     const itemsSeleccionados = obtenerItemsSeleccionados();
 
-    console.log('itemsSeleccionados usarItemsSeleccionados(6816)', itemsSeleccionados);
-
     if (itemsSeleccionados.length === 0) {
         Swal.fire({
             title: 'Sin selección',
@@ -7518,7 +7478,7 @@ function usarItemsSeleccionados() {
                 precio: 0, // Precio inicial, se puede editar
                 cantidad: 1,
                 total: 0,
-                    categoria: item.tipo === 'item' ? 'Item Principal' : 'Subitem',
+                    categoria: item.tipo === 'item' ? 'Capitulación' : 'item',
                     parametrizacion_id: (item.tipo === 'parametrizacion' || item.fuente === 'parametrizacion_costos') ? item.id : null,
                     item_propio_id: (item.tipo === 'parametrizacion' || item.fuente === 'parametrizacion_costos') ? null : item.id
             });
@@ -7704,27 +7664,18 @@ function actualizarTablaProductosSeleccionados() {
  * Actualizar el total general de productos seleccionados
  */
 function actualizarTotalGeneral() {
-    console.log('🔍 Iniciando actualización del total general...');
-    console.log('📦 Productos seleccionados:', productosSeleccionados);
 
     const totalGeneral = calcularTotalGeneral();
     productosSeleccionados.forEach(producto => {
         const productoTotal = producto.total || 0;
-        console.log(`   - ${producto.nombre}: $${productoTotal}`);
     });
-
-    console.log('💰 Total calculado:', totalGeneral);
-
     const elementoTotalGeneral = document.getElementById('totalGeneral');
-    console.log('🎯 Elemento totalGeneral encontrado:', !!elementoTotalGeneral);
-
     if (elementoTotalGeneral) {
         const totalFormateado = totalGeneral.toLocaleString('es-CO', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });
         elementoTotalGeneral.textContent = totalFormateado;
-        console.log('✅ Total general actualizado en el DOM:', totalFormateado);
     } else {
         console.error('❌ No se encontró el elemento #totalGeneral en el DOM');
     }
@@ -7779,12 +7730,10 @@ window.debugTotalGeneral = function() {
  * Actualizar cantidad de producto
  */
 function actualizarCantidadProducto(productoId, nuevaCantidad) {
-    console.log('🔢 Actualizando cantidad producto:', productoId, 'cantidad:', nuevaCantidad);
     const producto = productosSeleccionados.find(p => p.id === productoId);
     if (producto) {
         producto.cantidad = parseInt(nuevaCantidad) || 1;
         producto.total = producto.precio * producto.cantidad;
-        console.log(`   - ${producto.nombre}: cantidad=${producto.cantidad}, precio=${producto.precio}, total=${producto.total}`);
         actualizarTablaProductosSeleccionados();
     } else {
         console.error('❌ Producto no encontrado para actualizar cantidad:', productoId);
@@ -7795,12 +7744,10 @@ function actualizarCantidadProducto(productoId, nuevaCantidad) {
  * Actualizar precio de producto
  */
 function actualizarPrecioProducto(productoId, nuevoPrecio) {
-    console.log('💲 Actualizando precio producto:', productoId, 'precio:', nuevoPrecio);
     const producto = productosSeleccionados.find(p => p.id === productoId);
     if (producto) {
         producto.precio = parseFloat(nuevoPrecio) || 0;
         producto.total = producto.precio * producto.cantidad;
-        console.log(`   - ${producto.nombre}: cantidad=${producto.cantidad}, precio=${producto.precio}, total=${producto.total}`);
         actualizarTablaProductosSeleccionados();
     } else {
         console.error('❌ Producto no encontrado para actualizar precio:', productoId);
@@ -8277,9 +8224,9 @@ function procesarProductosSeleccionadosDeTabla() {
  * Enviar productos de la tabla a la base de datos
  */
 async function enviarProductosTablaABaseDatos(productosEnTabla) {
-    console.log('🔍 Iniciando envío de productos desde array productosSeleccionados');
-    console.log('📊 Productos seleccionados encontrados:', productosSeleccionados.length);
-    console.log('🗃️ Contenido completo del array productosSeleccionados:', productosSeleccionados);
+    // console.log('🔍 Iniciando envío de productos desde array productosSeleccionados');
+    // console.log('📊 Productos seleccionados encontrados:', productosSeleccionados.length);
+    // console.log('🗃️ Contenido completo del array productosSeleccionados:', productosSeleccionados);
 
     const cotizacionId = document.getElementById('id')?.value || document.getElementById('cotizacion_id')?.value;
     if (!cotizacionId) {
@@ -8297,7 +8244,7 @@ async function enviarProductosTablaABaseDatos(productosEnTabla) {
 
         // Iterar sobre los productos ya configurados en productosSeleccionados
         productosSeleccionados.forEach((producto, index) => {
-            console.log(`📝 Procesando producto ${index + 1}:`, producto);
+            // console.log(`📝 Procesando producto ${index + 1}:`, producto);
 
             const esCargoTabla = producto.tipo === 'cargo_tabla' || producto.flujo_tipo === 'nomina';
             const esParametrizacion = !esCargoTabla && (producto.tipo === 'parametrizacion' || producto.fuente === 'parametrizacion_costos');
@@ -8363,11 +8310,11 @@ async function enviarProductosTablaABaseDatos(productosEnTabla) {
                 novedades: producto.configuracionCosto?.novedades || []
             };
 
-            console.log(`✅ Producto mapeado ${index + 1}:`, productoMapeado);
+            // console.log(`✅ Producto mapeado ${index + 1}:`, productoMapeado);
             productos.push(productoMapeado);
         });
 
-        console.log('📦 Total de productos preparados para envío:', productos.length);
+        // console.log('📦 Total de productos preparados para envío:', productos.length);
 
         // Enviar productos uno por uno con manejo de errores individual
         let productosExitosos = 0;
@@ -8375,8 +8322,8 @@ async function enviarProductosTablaABaseDatos(productosEnTabla) {
 
         for (const producto of productos) {
             try {
-                console.log('🚀 Enviando producto a la API:', producto);
-                console.log('🔑 parametrizacion_id:', producto.parametrizacion_id, '| item_propio_id:', producto.item_propio_id, '| tabla_precios_id:', producto.tabla_precios_id);
+                // console.log('🚀 Enviando producto a la API:', producto);
+                // console.log('🔑 parametrizacion_id:', producto.parametrizacion_id, '| item_propio_id:', producto.item_propio_id, '| tabla_precios_id:', producto.tabla_precios_id);
 
                 const response = await fetch('/admin/admin.cotizaciones.productos.agregar', {
                     method: 'POST',
@@ -8400,7 +8347,7 @@ async function enviarProductosTablaABaseDatos(productosEnTabla) {
                 const result = await response.json();
 
                 if (result.success) {
-                    console.log(`✅ Producto "${producto.nombre}" guardado exitosamente:`, result);
+                    // console.log(`✅ Producto "${producto.nombre}" guardado exitosamente:`, result);
                     productosExitosos++;
                 } else {
                     console.error(`Error al guardar producto "${producto.nombre}":`, result.message, result.errors || '');
@@ -9168,8 +9115,6 @@ function mostrarProductosGuardados(productos) {
  * Mostrar estado vací­o cuando no hay productos
  */
 function mostrarEstadoVacioProductos() {
-    console.log('🏷️ ESTADO VACÍO - No hay productos, reseteando totales...');
-
     document.getElementById('emptyProductosGuardados').style.display = 'block';
     document.getElementById('tablaProductosGuardados').style.display = 'none';
     document.getElementById('footerProductosGuardados').classList.add('d-none');
@@ -9183,8 +9128,6 @@ function mostrarEstadoVacioProductos() {
  * Resetear totales a cero cuando no hay productos
  */
 function resetearTotalesACero() {
-    console.log('💰 RESETEANDO TOTALES A CERO...');
-
     try {
         // Totales en cero
         const totalesVacios = {
@@ -9193,11 +9136,8 @@ function resetearTotalesACero() {
             impuestos: 0,
             total: 0
         };
-
         // Usar la función existente para actualizar la vista
         actualizarTotalesEnVista(totalesVacios);
-
-        console.log('✅ Totales reseteados a cero exitosamente');
 
     } catch (error) {
         console.error('❌ Error al resetear totales:', error);
@@ -9388,8 +9328,6 @@ async function eliminarUtilidadesDelProducto(productoId) {
             const result = await response.json();
 
             if (result.success && result.data && result.data.length > 0) {
-                console.log(`Eliminando ${result.data.length} utilidades asociadas al producto ${productoId}`);
-
                 // Eliminar todas las utilidades (enfoque seguro si no podemos identificar específicas)
                 const eliminarPromesas = result.data.map(utilidad => eliminarUtilidadSilenciosa(utilidad.id));
                 await Promise.all(eliminarPromesas);
@@ -9417,8 +9355,6 @@ async function eliminarUtilidadesDelProducto(productoId) {
                     );
 
                     if (utilidadesDelProducto.length > 0) {
-                        console.log(`Eliminando ${utilidadesDelProducto.length} utilidades específicas del producto ${productoId}`);
-
                         // Eliminar utilidades específicas del producto
                         const eliminarPromesas = utilidadesDelProducto.map(utilidad => eliminarUtilidadSilenciosa(utilidad.id));
                         await Promise.all(eliminarPromesas);
@@ -9447,7 +9383,6 @@ async function eliminarUtilidadSilenciosa(utilidadId) {
         });
 
         if (response.ok) {
-            console.log(`Utilidad ${utilidadId} eliminada exitosamente`);
         } else {
             console.warn(`Error al eliminar utilidad ${utilidadId}`);
         }
@@ -10033,15 +9968,12 @@ async function actualizarTotalesCompletos() {
  * Función para forzar la actualización de totales - útil para debugging
  */
 function forzarActualizacionTotales() {
-    console.log('🚀 FORZANDO actualización de totales...');
     actualizarTotalesCompletos();
 }
-
 /**
  * Función para forzar el reseteo de totales a cero - útil cuando no hay productos
  */
 function forzarReseteoTotales() {
-    console.log('🔄 FORZANDO reseteo de totales a cero...');
     resetearTotalesACero();
 }
 
@@ -10049,8 +9981,6 @@ function forzarReseteoTotales() {
  * Configurar event listeners para actualización automática de totales
  */
 function setupAutoUpdateTotales() {
-    console.log('🔧 Configurando event listeners para auto-actualización de totales...');
-
     // Detectar cambios en campos de la cotización que podrían afectar totales
     const camposAMonitorear = [
         '#tercero_id',
@@ -10081,19 +10011,16 @@ function setupAutoUpdateTotales() {
     const formulario = document.querySelector('form');
     if (formulario) {
         formulario.addEventListener('submit', async (e) => {
-            console.log('📝 Formulario enviado, actualizando totales...');
+
             await actualizarTotalesCompletos();
         });
     }
-
-    console.log('✅ Event listeners configurados para auto-actualización');
 }
 
 /**
  * Función debounced para actualizar totales (evita llamadas excesivas)
  */
 const debounceUpdateTotales = debounce(async () => {
-    console.log('🔄 Campo de formulario modificado, actualizando totales...');
     await actualizarTotalesCompletos();
 }, 1000); // 1 segundo de delay
 
@@ -10116,14 +10043,9 @@ function debounce(func, wait) {
  * Función de debugging para verificar el estado de totales
  */
 window.verificarEstadoTotales = async function() {
-    console.log('🔍 === VERIFICANDO ESTADO DE TOTALES ===');
-
     const cotizacionId = document.getElementById('id')?.value;
-    console.log('📋 ID de cotización:', cotizacionId);
-
     // Verificar productos
     try {
-        console.log('📦 Verificando productos...');
         await cargarProductosGuardados();
     } catch (error) {
         console.error('❌ Error al cargar productos:', error);
@@ -10131,13 +10053,10 @@ window.verificarEstadoTotales = async function() {
 
     // Verificar totales
     try {
-        console.log('💰 Verificando totales...');
         await actualizarTotalesCompletos();
     } catch (error) {
         console.error('❌ Error al actualizar totales:', error);
     }
-
-    console.log('🏁 === VERIFICACIÓN COMPLETADA ===');
 };
 
 //  TAMBIÉN ejecutar cuando se haga clic en cualquier parte de los totales
@@ -10206,7 +10125,6 @@ window.forzarActualizacionTotales = async function() {
 // Función de utilidad adicional para resetear totales manualmente
 window.forzarReseteoTotales = forzarReseteoTotales;
 window.actualizarTotalesManualmente = async function() {
-    console.log('🔄 Actualizando totales manualmente desde consola...');
     await actualizarTotalesCompletos();
 };
 
@@ -10258,7 +10176,6 @@ async function cargarValoresPorDefecto(itemId, tipoItem, tipoCosto) {
     const valores = await obtenerValoresPorDefecto(itemId, tipoItem, tipoCosto);
 
     if (!valores || !valores.encontrado) {
-        console.log(`No se encontraron valores por defecto para el item ${itemId}`);
         return false;
     }
 
@@ -10335,8 +10252,6 @@ async function cargarValoresDefectoPorTipo(itemId, tipoCosto) {
             tipoItem = 'cargo_tabla';
             idReal = itemData.cargo_id || itemId;
         }
-
-        console.log(`Cargando valores para item ${itemId} (${tipoItem}) - Tipo costo: ${tipoCosto}`);
 
         // Cargar valores por defecto
         const cargaExitosa = await cargarValoresPorDefecto(idReal, tipoItem, tipoCosto);
@@ -10955,7 +10870,7 @@ async function calcularLiquidacionNomina(idx) {
 
             if (data.es_exonerado_ley1607) {
                 const valorEl2 = document.getElementById(`nominaValor_${idx}`);
-                if (valorEl2) valorEl2.insertAdjacentHTML('afterend', ' <small class="badge badge-info">Exonerado Ley 1607</small>');
+                // if (valorEl2) valorEl2.insertAdjacentHTML('afterend', ' <small class="badge badge-info">Exonerado Ley 1607</small>');
             }
         } else {
             // Fallback al cálculo local
