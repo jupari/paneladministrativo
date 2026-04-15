@@ -187,14 +187,42 @@ class CotizacionProductoService
                 $query->where('active', true);
             }
 
-            return $query->get();
+            $productos = $query->get();
+
+            // Para cada producto cargamos sus novedades operativas (CotizacionLista)
+            $productoIds = $productos->pluck('id');
+            if ($productoIds->isNotEmpty()) {
+                $novedadesPorProducto = \App\Models\CotizacionLista::with('novedadDetalle')
+                    ->whereIn('cotizacion_producto_id', $productoIds)
+                    ->get()
+                    ->groupBy('cotizacion_producto_id');
+
+                $productos->each(function ($producto) use ($novedadesPorProducto) {
+                    $novedades = $novedadesPorProducto->get($producto->id, collect());
+                    $producto->novedades_operativas = $novedades->map(fn($n) => [
+                        'id'                => $n->id,
+                        'nombre'            => $n->novedadDetalle?->nombre ?? 'Novedad',
+                        'valor'             => (float) $n->valor,
+                        'cantidad'          => (float) $n->cantidad,
+                        'subtotal'          => (float) $n->subtotal,
+                    ])->values();
+                    $producto->novedades_subtotal = $novedades->sum('subtotal');
+                });
+            } else {
+                $productos->each(function ($producto) {
+                    $producto->novedades_operativas = collect();
+                    $producto->novedades_subtotal   = 0;
+                });
+            }
+
+            return $productos;
         } catch (\Exception $e) {
             Log::error('Error al obtener productos de cotización', [
                 'cotizacion_id' => $cotizacionId,
                 'error' => $e->getMessage()
             ]);
 
-            return collect(); // Retornar colección vacía en caso de error
+            return collect();
         }
     }
 
@@ -640,8 +668,10 @@ class CotizacionProductoService
         try {
             Log::info('🔄 Actualizando totales automáticamente', ['cotizacion_id' => $cotizacionId]);
 
-            // Llamar al método de cálculo de totales
-            $this->obtenerTotalesCotizacion($cotizacionId);
+            $cotizacion = Cotizacion::with(['utilidades', 'conceptos.concepto', 'productos'])
+                ->findOrFail($cotizacionId);
+
+            app(\App\Services\CotizacionTotalesService::class)->recalcular($cotizacion);
 
             Log::info('✅ Totales actualizados automáticamente completado', ['cotizacion_id' => $cotizacionId]);
         } catch (\Exception $e) {

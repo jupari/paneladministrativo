@@ -2435,12 +2435,32 @@ async function cargarCategoriasPorSeleccionar() {
  * Validar selección de categorí­as y habilitar botón
  */
 function validarSeleccionCategorias() {
-    const categoriasSeleccionadas = document.querySelectorAll('.categoria-checkbox:checked');
+    const todas = document.querySelectorAll('.categoria-checkbox');
+    const seleccionadas = document.querySelectorAll('.categoria-checkbox:checked');
     const btnCargarItems = document.getElementById('btnCargarItems');
 
-    if (categoriasSeleccionadas.length > 0) {
+    // Determinar si alguna seleccionada es nómina y si alguna seleccionada es estándar
+    let nominaSeleccionada = false;
+    let estandarSeleccionada = false;
+    seleccionadas.forEach(cb => {
+        if (cb.dataset.tipo === 'nomina') nominaSeleccionada = true;
+        else estandarSeleccionada = true;
+    });
+
+    // Aplicar bloqueo bidireccional
+    todas.forEach(cb => {
+        const esNomina = cb.dataset.tipo === 'nomina';
+        let disabled = false;
+        if (nominaSeleccionada && !esNomina) disabled = true;   // nómina seleccionada → bloquear estándar
+        if (estandarSeleccionada && esNomina) disabled = true;  // estándar seleccionada → bloquear nómina
+        cb.disabled = disabled;
+        const wrapper = cb.closest('.form-check');
+        if (wrapper) wrapper.style.opacity = disabled ? '0.4' : '1';
+    });
+
+    if (seleccionadas.length > 0) {
         btnCargarItems.disabled = false;
-        btnCargarItems.innerHTML = `<i class="fas fa-arrow-right mr-1"></i>Cargar Items Propios (${categoriasSeleccionadas.length} categorí­a${categoriasSeleccionadas.length !== 1 ? 's' : ''})`;
+        btnCargarItems.innerHTML = `<i class="fas fa-arrow-right mr-1"></i>Cargar Items Propios (${seleccionadas.length} categorí­a${seleccionadas.length !== 1 ? 's' : ''})`;
     } else {
         btnCargarItems.disabled = true;
         btnCargarItems.innerHTML = '<i class="fas fa-arrow-right mr-1"></i>Cargar Items Propios';
@@ -2448,10 +2468,10 @@ function validarSeleccionCategorias() {
 }
 
 /**
- * Toggle todas las categorí­as
+ * Toggle todas las categorías (excluye nómina si hay estándar seleccionada y viceversa)
  */
 function toggleTodasCategorias() {
-    const checkboxes = document.querySelectorAll('.categoria-checkbox');
+    const checkboxes = document.querySelectorAll('.categoria-checkbox:not(:disabled)');
     const todasSeleccionadas = Array.from(checkboxes).every(cb => cb.checked);
 
     checkboxes.forEach(checkbox => {
@@ -9011,6 +9031,11 @@ function mostrarProductosGuardados(productos) {
         const descuentoPorcentaje = parseFloat(producto.descuento_porcentaje || 0);
         const total = parseFloat(producto.valor_total || 0);
 
+        const novedades         = Array.isArray(producto.novedades_operativas) ? producto.novedades_operativas : [];
+        const novedadesSubtotal = parseFloat(producto.novedades_subtotal || 0);
+        const bono              = parseFloat(producto.bono || 0);
+        const salarioBase       = valorUnitario * cantidad;
+
         if (esNomina) subtotalNomina += total;
         else subtotalInsumos += total;
 
@@ -9024,6 +9049,103 @@ function mostrarProductosGuardados(productos) {
         const badgeNomina = esNomina
             ? '<span class="badge badge-warning ml-1">Nómina</span>'
             : '';
+
+        // ─── Desglose de novedades operativas ───
+        let novedadesHtml = '';
+        if (esNomina) {
+            const novedadesRowsHtml = novedades.length > 0
+                ? novedades.map(nov => `
+                    <tr class="bg-light border-0" style="font-size:.82rem;">
+                        <td class="pl-5 py-1 text-muted border-0">
+                            <i class="fas fa-angle-right mr-1 text-warning"></i>${nov.nombre}
+                        </td>
+                        <td class="py-1 border-0 text-center">
+                            <span class="badge badge-secondary">${parseFloat(nov.cantidad).toFixed(3)}</span>
+                        </td>
+                        <td class="py-1 border-0">
+                            <span class="text-muted">$${parseFloat(nov.valor).toLocaleString('es-CO', {minimumFractionDigits: 2})}</span>
+                        </td>
+                        <td class="py-1 border-0"></td>
+                        <td class="py-1 border-0 font-weight-bold text-warning">
+                            +$${parseFloat(nov.subtotal).toLocaleString('es-CO', {minimumFractionDigits: 2})}
+                        </td>
+                        <td class="py-1 border-0"></td>
+                    </tr>`).join('')
+                : `<tr class="bg-light border-0" style="font-size:.82rem;">
+                        <td colspan="6" class="pl-5 py-1 text-muted border-0">
+                            <i class="fas fa-info-circle mr-1"></i>Sin novedades operativas
+                        </td>
+                    </tr>`;
+
+            novedadesHtml = `
+                <tr class="bg-light border-0" style="font-size:.82rem;" data-parent-producto="${producto.id}">
+                    <td class="border-0 py-1"></td>
+                    <td colspan="5" class="border-0 py-1">
+                        <button class="btn btn-xs btn-link text-warning p-0"
+                                style="font-size:.79rem;"
+                                type="button"
+                                data-toggle="collapse"
+                                data-target="#novedades_${producto.id}"
+                                aria-expanded="false">
+                            <i class="fas fa-chevron-right mr-1" id="chevron_${producto.id}"></i>
+                            Salario base:
+                            <strong>$${salarioBase.toLocaleString('es-CO', {minimumFractionDigits: 2})}</strong>
+                            ${bono > 0 ? `&nbsp;+&nbsp;<span class="text-info">Bono: <strong>+$${bono.toLocaleString('es-CO', {minimumFractionDigits: 2})}</strong></span>` : ''}
+                            ${novedades.length > 0
+                                ? `&nbsp;+&nbsp;<span class="text-warning">Novedades: <strong>+$${novedadesSubtotal.toLocaleString('es-CO', {minimumFractionDigits: 2})}</strong></span>
+                                   &nbsp;(${novedades.length} novedad${novedades.length > 1 ? 'es' : ''})`
+                                : '<span class="text-muted ml-1">Sin novedades operativas</span>'}
+                        </button>
+                    </td>
+                </tr>
+                <tr id="novedades_${producto.id}" class="collapse border-0">
+                    <td colspan="6" class="p-0 border-0">
+                        <table class="table table-sm mb-0" style="background:#fffdf0;">
+                            <thead style="font-size:.78rem;">
+                                <tr class="border-0">
+                                    <th class="pl-5 py-1">Novedad</th>
+                                    <th class="py-1 text-center">Cantidad</th>
+                                    <th class="py-1">Valor Unit.</th>
+                                    <th class="py-1"></th>
+                                    <th class="py-1">Subtotal</th>
+                                    <th class="py-1"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${novedadesRowsHtml}
+                                <tr class="border-0" style="font-size:.82rem;">
+                                    <td colspan="4" class="text-right py-1 border-0">
+                                        <strong class="text-muted">Salario base:</strong>
+                                    </td>
+                                    <td class="py-1 border-0 font-weight-bold">
+                                        $${salarioBase.toLocaleString('es-CO', {minimumFractionDigits: 2})}
+                                    </td>
+                                    <td class="border-0"></td>
+                                </tr>
+                                ${bono > 0 ? `
+                                <tr class="border-0" style="font-size:.82rem;">
+                                    <td colspan="4" class="text-right py-1 border-0">
+                                        <strong class="text-info">Bono:</strong>
+                                    </td>
+                                    <td class="py-1 border-0 font-weight-bold text-info">
+                                        +$${bono.toLocaleString('es-CO', {minimumFractionDigits: 2})}
+                                    </td>
+                                    <td class="border-0"></td>
+                                </tr>` : ''}
+                                <tr class="border-0" style="font-size:.82rem; background:#fff3cd;">
+                                    <td colspan="4" class="text-right py-1 border-0">
+                                        <strong>Total producto:</strong>
+                                    </td>
+                                    <td class="py-1 border-0 font-weight-bold text-success">
+                                        $${total.toLocaleString('es-CO', {minimumFractionDigits: 2})}
+                                    </td>
+                                    <td class="border-0"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>`;
+        }
 
         row.innerHTML = `
             <td>
@@ -9044,6 +9166,7 @@ function mostrarProductosGuardados(productos) {
                         <small class="text-muted">${producto.codigo || 'Sin código'}</small>
                         ${producto.descripcion ? `<br><small class="text-info">${producto.descripcion}</small>` : ''}
                         <br><span class="badge badge-secondary">${producto.unidad_medida}</span>
+                        ${esNomina && novedades.length > 0 ? `<br><small class="text-warning font-weight-bold"><i class="fas fa-plus-circle mr-1"></i>${novedades.length} novedad${novedades.length > 1 ? 'es' : ''} operativa${novedades.length > 1 ? 's' : ''} incluida${novedades.length > 1 ? 's' : ''}</small>` : ''}
                     </div>
                 </div>
             </td>
@@ -9075,6 +9198,22 @@ function mostrarProductosGuardados(productos) {
         `;
 
         tbody.appendChild(row);
+
+        // Insertar filas de desglose de novedades operativas (solo nómina)
+        if (esNomina && novedadesHtml) {
+            tbody.insertAdjacentHTML('beforeend', novedadesHtml);
+            const collapseEl = document.getElementById(`novedades_${producto.id}`);
+            if (collapseEl) {
+                $(collapseEl).on('show.bs.collapse', function () {
+                    const chevron = document.getElementById(`chevron_${producto.id}`);
+                    if (chevron) { chevron.classList.remove('fa-chevron-right'); chevron.classList.add('fa-chevron-down'); }
+                });
+                $(collapseEl).on('hide.bs.collapse', function () {
+                    const chevron = document.getElementById(`chevron_${producto.id}`);
+                    if (chevron) { chevron.classList.remove('fa-chevron-down'); chevron.classList.add('fa-chevron-right'); }
+                });
+            }
+        }
     });
 
     // Fila de subtotales por tipo (solo si hay ambos tipos)
@@ -10383,19 +10522,20 @@ function abrirModalNominaConfig(cargos) {
                                     <i class="fas fa-calendar-alt text-primary mr-1" style="font-size:.8rem;"></i>
                                     <span class="font-weight-bold text-uppercase text-primary"
                                           style="font-size:.72rem; letter-spacing:.05em;">Tiempo Ordinario</span>
-                                    <span class="ml-auto text-muted" style="font-size:.7rem;">máx. 30 d/mes</span>
+                                    <span class="ml-auto text-muted" style="font-size:.7rem;">máx. 7 horas</span>
                                 </div>
+                                <small class="text-danger d-block mb-1" id="errorTiempoOrd_${idx}" style="font-size:.7rem;"></small>
                                 <div class="row no-gutters" style="gap:4px 0;">
                                     <div class="col-6 pr-1">
                                         <label class="mb-0" style="font-size:.72rem; color:#555;">
                                             <i class="fas fa-sun text-warning" style="font-size:.65rem;"></i>
                                             Días diurnos
                                         </label>
-                                        <input type="number" class="form-control form-control-sm text-center"
-                                               id="nominaDiasDiurnos_${idx}" min="0" max="30" value="0"
+                                        <input type="number" class="form-control form-control-sm text-center nomina-tiempo-ord-${idx}"
+                                               id="nominaDiasDiurnos_${idx}" min="0" max="7" value="0"
                                                style="font-size:.85rem;"
-                                               onchange="${_fnCalc}(${idx})"
-                                               oninput="${_fnCalc}(${idx})">
+                                               onchange="validarTiempoOrdinario(${idx}); ${_fnCalc}(${idx});"
+                                               oninput="validarTiempoOrdinario(${idx}); ${_fnCalc}(${idx});">
                                     </div>
                                     <div class="col-6 pl-1">
                                         <label class="mb-0" style="font-size:.72rem; color:#555;">
@@ -10403,11 +10543,11 @@ function abrirModalNominaConfig(cargos) {
                                             Días nocturnos
                                             <span class="text-muted">(+35%)</span>
                                         </label>
-                                        <input type="number" class="form-control form-control-sm text-center"
-                                               id="nominaDiasNocturnos_${idx}" min="0" max="30" value="0"
+                                        <input type="number" class="form-control form-control-sm text-center nomina-tiempo-ord-${idx}"
+                                               id="nominaDiasNocturnos_${idx}" min="0" max="7" value="0"
                                                style="font-size:.85rem;"
-                                               onchange="${_fnCalc}(${idx})"
-                                               oninput="${_fnCalc}(${idx})">
+                                               onchange="validarTiempoOrdinario(${idx}); ${_fnCalc}(${idx});"
+                                               oninput="validarTiempoOrdinario(${idx}); ${_fnCalc}(${idx});">
                                     </div>
                                     <div class="col-6 pr-1 mt-1">
                                         <label class="mb-0" style="font-size:.72rem; color:#555;">
@@ -10415,11 +10555,11 @@ function abrirModalNominaConfig(cargos) {
                                             Dom./fest. diurnos
                                             <span class="text-muted">(+75%)</span>
                                         </label>
-                                        <input type="number" class="form-control form-control-sm text-center"
-                                               id="nominaDominicales_${idx}" min="0" max="30" value="0"
+                                        <input type="number" class="form-control form-control-sm text-center nomina-tiempo-ord-${idx}"
+                                               id="nominaDominicales_${idx}" min="0" max="7" value="0"
                                                style="font-size:.85rem;"
-                                               onchange="${_fnCalc}(${idx})"
-                                               oninput="${_fnCalc}(${idx})">
+                                               onchange="validarTiempoOrdinario(${idx}); ${_fnCalc}(${idx});"
+                                               oninput="validarTiempoOrdinario(${idx}); ${_fnCalc}(${idx});">
                                     </div>
                                     <div class="col-6 pl-1 mt-1">
                                         <label class="mb-0" style="font-size:.72rem; color:#555;">
@@ -10427,11 +10567,11 @@ function abrirModalNominaConfig(cargos) {
                                             Dom./fest. nocturnos
                                             <span class="text-muted">(+110%)</span>
                                         </label>
-                                        <input type="number" class="form-control form-control-sm text-center"
-                                               id="nominaDomNocturnos_${idx}" min="0" max="30" value="0"
+                                        <input type="number" class="form-control form-control-sm text-center nomina-tiempo-ord-${idx}"
+                                               id="nominaDomNocturnos_${idx}" min="0" max="7" value="0"
                                                style="font-size:.85rem;"
-                                               onchange="${_fnCalc}(${idx})"
-                                               oninput="${_fnCalc}(${idx})">
+                                               onchange="validarTiempoOrdinario(${idx}); ${_fnCalc}(${idx});"
+                                               oninput="validarTiempoOrdinario(${idx}); ${_fnCalc}(${idx});">
                                     </div>
                                 </div>
                             </div>
@@ -10444,8 +10584,9 @@ function abrirModalNominaConfig(cargos) {
                                     <i class="fas fa-clock text-orange mr-1" style="font-size:.8rem; color:#e65100;"></i>
                                     <span class="font-weight-bold text-uppercase"
                                           style="font-size:.72rem; letter-spacing:.05em; color:#e65100;">Horas Extra</span>
-                                    <span class="ml-auto text-muted" style="font-size:.7rem;">Art. 168 CST</span>
+                                    <span class="ml-auto text-muted" style="font-size:.7rem;">Art. 168 CST · máx. 2 h</span>
                                 </div>
+                                <small class="text-danger d-block mb-1" id="errorHorasExtra_${idx}" style="font-size:.7rem;"></small>
                                 <div class="row no-gutters" style="gap:4px 0;">
                                     <div class="col-6 pr-1">
                                         <label class="mb-0" style="font-size:.72rem; color:#555;">
@@ -10453,11 +10594,11 @@ function abrirModalNominaConfig(cargos) {
                                                   style="background:#fff3e0; color:#e65100; font-size:.65rem;">×1.25</span>
                                             HED diurna
                                         </label>
-                                        <input type="number" class="form-control form-control-sm text-center"
-                                               id="nominaHED_${idx}" min="0" value="0"
+                                        <input type="number" class="form-control form-control-sm text-center nomina-he-${idx}"
+                                               id="nominaHED_${idx}" min="0" max="2" value="0"
                                                style="font-size:.85rem; border-color:#ffe0b2;"
-                                               onchange="${_fnCalc}(${idx})"
-                                               oninput="${_fnCalc}(${idx})">
+                                               onchange="validarHorasExtra(${idx}); ${_fnCalc}(${idx});"
+                                               oninput="validarHorasExtra(${idx}); ${_fnCalc}(${idx});">
                                     </div>
                                     <div class="col-6 pl-1">
                                         <label class="mb-0" style="font-size:.72rem; color:#555;">
@@ -10465,11 +10606,11 @@ function abrirModalNominaConfig(cargos) {
                                                   style="background:#ede7f6; color:#6f42c1; font-size:.65rem;">×1.75</span>
                                             HEN nocturna
                                         </label>
-                                        <input type="number" class="form-control form-control-sm text-center"
-                                               id="nominaHEN_${idx}" min="0" value="0"
+                                        <input type="number" class="form-control form-control-sm text-center nomina-he-${idx}"
+                                               id="nominaHEN_${idx}" min="0" max="2" value="0"
                                                style="font-size:.85rem; border-color:#d1c4e9;"
-                                               onchange="${_fnCalc}(${idx})"
-                                               oninput="${_fnCalc}(${idx})">
+                                               onchange="validarHorasExtra(${idx}); ${_fnCalc}(${idx});"
+                                               oninput="validarHorasExtra(${idx}); ${_fnCalc}(${idx});">
                                     </div>
                                     <div class="col-6 pr-1 mt-1">
                                         <label class="mb-0" style="font-size:.72rem; color:#555;">
@@ -10477,11 +10618,11 @@ function abrirModalNominaConfig(cargos) {
                                                   style="background:#e8f5e9; color:#2e7d32; font-size:.65rem;">×2.00</span>
                                             HEDD dom. diurna
                                         </label>
-                                        <input type="number" class="form-control form-control-sm text-center"
-                                               id="nominaHEDD_${idx}" min="0" value="0"
+                                        <input type="number" class="form-control form-control-sm text-center nomina-he-${idx}"
+                                               id="nominaHEDD_${idx}" min="0" max="2" value="0"
                                                style="font-size:.85rem; border-color:#c8e6c9;"
-                                               onchange="${_fnCalc}(${idx})"
-                                               oninput="${_fnCalc}(${idx})">
+                                               onchange="validarHorasExtra(${idx}); ${_fnCalc}(${idx});"
+                                               oninput="validarHorasExtra(${idx}); ${_fnCalc}(${idx});">
                                     </div>
                                     <div class="col-6 pl-1 mt-1">
                                         <label class="mb-0" style="font-size:.72rem; color:#555;">
@@ -10489,11 +10630,11 @@ function abrirModalNominaConfig(cargos) {
                                                   style="background:#ffebee; color:#c62828; font-size:.65rem;">×2.50</span>
                                             HEDN dom. nocturna
                                         </label>
-                                        <input type="number" class="form-control form-control-sm text-center"
-                                               id="nominaHEDN_${idx}" min="0" value="0"
+                                        <input type="number" class="form-control form-control-sm text-center nomina-he-${idx}"
+                                               id="nominaHEDN_${idx}" min="0" max="2" value="0"
                                                style="font-size:.85rem; border-color:#ffcdd2;"
-                                               onchange="${_fnCalc}(${idx})"
-                                               oninput="${_fnCalc}(${idx})">
+                                               onchange="validarHorasExtra(${idx}); ${_fnCalc}(${idx});"
+                                               oninput="validarHorasExtra(${idx}); ${_fnCalc}(${idx});">
                                     </div>
                                 </div>
                             </div>
@@ -10528,16 +10669,17 @@ function abrirModalNominaConfig(cargos) {
                                     </div>
                                 </div>
                             </div>
+                            <small class="text-danger d-block mb-1" id="errorHETurno_${idx}" style="font-size:.7rem;"></small>
                             <div id="divHEDxDia_${idx}" class="form-group mb-2 d-none">
                                 <label style="font-size:.78rem; font-weight:600; color:#555;">
                                     <span class="badge badge-pill" style="background:#fff3e0;color:#e65100;font-size:.65rem;">×1.25</span>
-                                    HE Diurnas por día
+                                    HE Diurnas por día <small class="text-muted font-weight-normal">(máx. 2 h)</small>
                                 </label>
                                 <div class="input-group input-group-sm">
                                     <input type="number" class="form-control" id="nominaHEDxDia_${idx}"
                                            min="0" max="2" value="0"
-                                           onchange="${_fnCalc}(${idx})"
-                                           oninput="${_fnCalc}(${idx})">
+                                           onchange="validarHorasExtraTurno(${idx}); ${_fnCalc}(${idx});"
+                                           oninput="validarHorasExtraTurno(${idx}); ${_fnCalc}(${idx});">
                                     <div class="input-group-append">
                                         <span class="input-group-text">h/día</span>
                                     </div>
@@ -10546,13 +10688,13 @@ function abrirModalNominaConfig(cargos) {
                             <div id="divHENxDia_${idx}" class="form-group mb-2 d-none">
                                 <label style="font-size:.78rem; font-weight:600; color:#555;">
                                     <span class="badge badge-pill" style="background:#ede7f6;color:#6f42c1;font-size:.65rem;">×1.75</span>
-                                    HE Nocturnas por día
+                                    HE Nocturnas por día <small class="text-muted font-weight-normal">(máx. 2 h)</small>
                                 </label>
                                 <div class="input-group input-group-sm">
                                     <input type="number" class="form-control" id="nominaHENxDia_${idx}"
                                            min="0" max="2" value="0"
-                                           onchange="${_fnCalc}(${idx})"
-                                           oninput="${_fnCalc}(${idx})">
+                                           onchange="validarHorasExtraTurno(${idx}); ${_fnCalc}(${idx});"
+                                           oninput="validarHorasExtraTurno(${idx}); ${_fnCalc}(${idx});">
                                     <div class="input-group-append">
                                         <span class="input-group-text">h/día</span>
                                     </div>
@@ -10573,6 +10715,26 @@ function abrirModalNominaConfig(cargos) {
                             </div>
                             <input type="number" class="form-control" id="nominaBono_${idx}"
                                    min="0" value="0" step="1000" placeholder="0">
+                        </div>
+                    </div>
+
+                    <!-- ── Novedades Operativas ── -->
+                    <div class="mb-2 mt-1">
+                        <div class="d-flex align-items-center mb-1"
+                             style="border-bottom:1px dashed #e0e0e0; padding-bottom:4px;">
+                            <i class="fas fa-list-alt text-secondary mr-1" style="font-size:.8rem;"></i>
+                            <span class="font-weight-bold text-uppercase text-secondary"
+                                  style="font-size:.72rem; letter-spacing:.05em;">Novedades Operativas</span>
+                            <span class="badge badge-secondary ml-2" style="font-size:.65rem;">opcional</span>
+                        </div>
+                        <div id="tablaNovedadesNomina_${idx}">
+                            <div class="text-center py-2 text-muted" style="font-size:.78rem;">
+                                <i class="fas fa-spinner fa-spin mr-1"></i> Cargando novedades...
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end mt-1">
+                            <small class="text-muted mr-2" style="font-size:.72rem;">Total novedades:</small>
+                            <strong id="totalNovedadesNomina_${idx}" style="font-size:.85rem; color:#555;">$0</strong>
                         </div>
                     </div>
 
@@ -10662,6 +10824,11 @@ function abrirModalNominaConfig(cargos) {
     window.nominaCargosTemporal = cargos;
     window._nominaResultados = {};
     $('#modalNominaConfig').modal('show');
+
+    // Cargar novedades operativas para cada cargo tras mostrar el modal
+    $('#modalNominaConfig').one('shown.bs.modal', function () {
+        cargos.forEach((_, idx) => cargarNovedadesEnNomina(idx));
+    });
 }
 
 /**
@@ -10671,6 +10838,221 @@ function toggleCargoNomina(idx) {
     const check = document.getElementById(`checkNomina_${idx}`);
     const body = document.getElementById(`bodyNomina_${idx}`);
     if (check && body) body.style.display = check.checked ? '' : 'none';
+    actualizarSubtotalNomina();
+}
+
+// ============================================================
+// VALIDACIONES DE HORAS — Tiempo Ordinario y Horas Extra
+// ============================================================
+
+/**
+ * Valida que la suma de los 4 campos de Tiempo Ordinario no supere 7 horas.
+ * Revierte el campo al valor máximo permitido y muestra mensaje.
+ */
+function validarTiempoOrdinario(idx) {
+    const ids = [`nominaDiasDiurnos_${idx}`, `nominaDiasNocturnos_${idx}`,
+                 `nominaDominicales_${idx}`, `nominaDomNocturnos_${idx}`];
+    const inputs = ids.map(id => document.getElementById(id));
+    const valores = inputs.map(el => parseFloat(el?.value) || 0);
+    const suma = valores.reduce((a, b) => a + b, 0);
+    const errEl = document.getElementById(`errorTiempoOrd_${idx}`);
+
+    if (suma > 7) {
+        // Encontrar el último campo que causó el exceso y ajustarlo
+        const exceso = suma - 7;
+        const ultimo = inputs.find(el => parseFloat(el.value) > 0);
+        if (ultimo) {
+            const val = parseFloat(ultimo.value) || 0;
+            ultimo.value = Math.max(0, val - exceso);
+            ultimo.style.borderColor = '#dc3545';
+            setTimeout(() => { ultimo.style.borderColor = ''; }, 2000);
+        }
+        if (errEl) errEl.textContent = 'El tiempo máximo en horas de Tiempo Ordinario es 7';
+    } else {
+        if (errEl) errEl.textContent = '';
+        inputs.forEach(el => { if (el) el.style.borderColor = ''; });
+    }
+}
+
+/**
+ * Valida que la suma de los 4 campos de Horas Extra (Costo Hora) no supere 2.
+ */
+function validarHorasExtra(idx) {
+    const ids = [`nominaHED_${idx}`, `nominaHEN_${idx}`,
+                 `nominaHEDD_${idx}`, `nominaHEDN_${idx}`];
+    const inputs = ids.map(id => document.getElementById(id));
+    const valores = inputs.map(el => parseFloat(el?.value) || 0);
+    const suma = valores.reduce((a, b) => a + b, 0);
+    const errEl = document.getElementById(`errorHorasExtra_${idx}`);
+
+    if (suma > 2) {
+        const exceso = suma - 2;
+        const ultimo = inputs.slice().reverse().find(el => parseFloat(el?.value) > 0);
+        if (ultimo) {
+            const val = parseFloat(ultimo.value) || 0;
+            ultimo.value = Math.max(0, val - exceso);
+            ultimo.style.borderColor = '#dc3545';
+            setTimeout(() => { ultimo.style.borderColor = ''; }, 2000);
+        }
+        if (errEl) errEl.textContent = 'El máximo de horas extras es 2';
+    } else {
+        if (errEl) errEl.textContent = '';
+        inputs.forEach(el => { if (el) el.style.borderColor = ''; });
+    }
+}
+
+/**
+ * Valida que la suma de HE Diurnas + HE Nocturnas por día (Costo Día/Turno) no supere 2.
+ */
+function validarHorasExtraTurno(idx) {
+    const inpDiu = document.getElementById(`nominaHEDxDia_${idx}`);
+    const inpNoc = document.getElementById(`nominaHENxDia_${idx}`);
+    const errEl  = document.getElementById(`errorHETurno_${idx}`);
+    const valDiu = parseFloat(inpDiu?.value) || 0;
+    const valNoc = parseFloat(inpNoc?.value) || 0;
+    const suma   = valDiu + valNoc;
+
+    if (suma > 2) {
+        const exceso = suma - 2;
+        // Ajustar el campo sobre el que se acaba de escribir
+        if (inpNoc && parseFloat(inpNoc.value) > 0) {
+            inpNoc.value = Math.max(0, valNoc - exceso);
+            inpNoc.style.borderColor = '#dc3545';
+            setTimeout(() => { inpNoc.style.borderColor = ''; }, 2000);
+        } else if (inpDiu) {
+            inpDiu.value = Math.max(0, valDiu - exceso);
+            inpDiu.style.borderColor = '#dc3545';
+            setTimeout(() => { inpDiu.style.borderColor = ''; }, 2000);
+        }
+        if (errEl) errEl.textContent = 'El valor máximo son 2 horas extras';
+    } else {
+        if (errEl) errEl.textContent = '';
+        if (inpDiu) inpDiu.style.borderColor = '';
+        if (inpNoc) inpNoc.style.borderColor = '';
+    }
+}
+
+// ============================================================
+// NOVEDADES OPERATIVAS EN MODAL NÓMINA
+// ============================================================
+
+let _cacheNovedadesNomina = null;
+
+/**
+ * Carga las novedades con grupo_cotiza=1 y las renderiza en el panel del cargo.
+ */
+async function cargarNovedadesEnNomina(idx) {
+    const contenedor = document.getElementById(`tablaNovedadesNomina_${idx}`);
+    if (!contenedor) return;
+
+    try {
+        if (!_cacheNovedadesNomina) {
+            const baseUrl = document.querySelector('meta[name="app-url"]')?.getAttribute('content') || window.location.origin;
+            const resp = await fetch(`${baseUrl}/admin/admin.cotizaciones.novedades-grupo-cotiza`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            const data = await resp.json();
+            if (data.success) {
+                _cacheNovedadesNomina = data.data;
+            } else {
+                contenedor.innerHTML = '<div class="alert alert-warning py-1 mb-0" style="font-size:.78rem;">No se pudieron cargar las novedades.</div>';
+                return;
+            }
+        }
+        renderizarNovedadesEnNomina(idx, _cacheNovedadesNomina);
+    } catch (e) {
+        contenedor.innerHTML = '<div class="alert alert-danger py-1 mb-0" style="font-size:.78rem;">Error al cargar novedades operativas.</div>';
+    }
+}
+
+/**
+ * Renderiza la tabla de novedades dentro del card de un cargo del modal nómina.
+ */
+function renderizarNovedadesEnNomina(idx, novedades) {
+    const contenedor = document.getElementById(`tablaNovedadesNomina_${idx}`);
+    if (!contenedor) return;
+
+    let filas = '';
+    novedades.forEach(novedad => {
+        if (!novedad.detalles || novedad.detalles.length === 0) return;
+        novedad.detalles.forEach(detalle => {
+            const valorFmt = Number(detalle.valor_operativo).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            filas += `
+            <tr>
+                <td class="py-1 align-middle" style="font-size:.75rem;">
+                    <strong>${novedad.nombre}</strong> · ${detalle.nombre}
+                </td>
+                <td class="py-1 align-middle text-right" style="font-size:.75rem; white-space:nowrap;">$${valorFmt}</td>
+                <td class="py-1 align-middle" style="width:80px;">
+                    <input type="number" min="0" step="1" value="0"
+                           class="form-control form-control-sm text-center"
+                           id="novNomina_${idx}_${detalle.id}"
+                           data-detalle-id="${detalle.id}"
+                           data-valor="${detalle.valor_operativo}"
+                           oninput="recalcularNovedadNomina(${idx}, '${detalle.id}', ${detalle.valor_operativo})">
+                </td>
+                <td class="py-1 align-middle text-right" id="novNominaSub_${idx}_${detalle.id}" style="font-size:.75rem; white-space:nowrap;">
+                    <span class="text-muted">$0</span>
+                </td>
+            </tr>`;
+        });
+    });
+
+    if (!filas) {
+        contenedor.innerHTML = '<div class="text-center text-muted py-1" style="font-size:.78rem;"><i class="fas fa-info-circle mr-1"></i>Sin novedades configuradas con grupo cotiza.</div>';
+        return;
+    }
+
+    contenedor.innerHTML = `
+        <div class="table-responsive" style="max-height:160px; overflow-y:auto;">
+        <table class="table table-sm table-borderless mb-0" style="font-size:.78rem;">
+            <thead style="background:#f5f5f5; position:sticky; top:0; z-index:1;">
+                <tr>
+                    <th class="py-1">Novedad / Detalle</th>
+                    <th class="py-1 text-right">Valor Unit.</th>
+                    <th class="py-1 text-center">Cantidad</th>
+                    <th class="py-1 text-right">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>${filas}</tbody>
+        </table>
+        </div>`;
+}
+
+/**
+ * Recalcula el subtotal de una fila de novedad y actualiza el total de novedades del cargo.
+ */
+function recalcularNovedadNomina(idx, detalleId, valorUnitario) {
+    const inp = document.getElementById(`novNomina_${idx}_${detalleId}`);
+    const subEl = document.getElementById(`novNominaSub_${idx}_${detalleId}`);
+    if (!inp || !subEl) return;
+
+    const cantidad = parseFloat(inp.value) || 0;
+    const subtotal = cantidad * parseFloat(valorUnitario);
+    subEl.innerHTML = subtotal > 0
+        ? `<strong>$${Math.round(subtotal).toLocaleString('es-CO')}</strong>`
+        : '<span class="text-muted">$0</span>';
+
+    recalcularTotalNovedadesNomina(idx);
+}
+
+/**
+ * Suma todos los subtotales de novedades de un cargo y actualiza su display.
+ */
+function recalcularTotalNovedadesNomina(idx) {
+    const contenedor = document.getElementById(`tablaNovedadesNomina_${idx}`);
+    const totalEl    = document.getElementById(`totalNovedadesNomina_${idx}`);
+    if (!contenedor || !totalEl) return;
+
+    let total = 0;
+    contenedor.querySelectorAll('input[type="number"]').forEach(inp => {
+        const cantidad = parseFloat(inp.value) || 0;
+        const valor    = parseFloat(inp.dataset.valor) || 0;
+        total += cantidad * valor;
+    });
+
+    totalEl.textContent = '$' + Math.round(total).toLocaleString('es-CO');
+    window[`nominaNovedadesTotal_${idx}`] = total;
     actualizarSubtotalNomina();
 }
 
@@ -10740,7 +11122,10 @@ function actualizarSubtotalNomina() {
     let subtotal = 0;
     cargos.forEach((_, idx) => {
         const check = document.getElementById(`checkNomina_${idx}`);
-        if (!check || check.checked) subtotal += window[`nominaValorCalculado_${idx}`] || 0;
+        if (!check || check.checked) {
+            subtotal += window[`nominaValorCalculado_${idx}`] || 0;
+            subtotal += window[`nominaNovedadesTotal_${idx}`] || 0;
+        }
     });
     const el = document.getElementById('nominaSubtotalDisplay');
     if (el) el.textContent = '$' + subtotal.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -10989,6 +11374,32 @@ function finalizarNominaConfig() {
         return;
     }
 
+    // Validar horas antes de proceder
+    let hayErrores = false;
+    cargos.forEach((_, idx) => {
+        const check = document.getElementById(`checkNomina_${idx}`);
+        if (!check || !check.checked) return;
+        const modo = document.getElementById(`nominaModo_${idx}`)?.value || 'hora';
+
+        if (modo === 'hora') {
+            const sumaTO = ['nominaDiasDiurnos', 'nominaDiasNocturnos', 'nominaDominicales', 'nominaDomNocturnos']
+                .reduce((acc, name) => acc + (parseFloat(document.getElementById(`${name}_${idx}`)?.value) || 0), 0);
+            const sumaHE = ['nominaHED', 'nominaHEN', 'nominaHEDD', 'nominaHEDN']
+                .reduce((acc, name) => acc + (parseFloat(document.getElementById(`${name}_${idx}`)?.value) || 0), 0);
+            if (sumaTO > 7) { hayErrores = true; }
+            if (sumaHE > 2) { hayErrores = true; }
+        } else {
+            const heDiu = parseFloat(document.getElementById(`nominaHEDxDia_${idx}`)?.value) || 0;
+            const heNoc = parseFloat(document.getElementById(`nominaHENxDia_${idx}`)?.value) || 0;
+            if (heDiu + heNoc > 2) { hayErrores = true; }
+        }
+    });
+
+    if (hayErrores) {
+        Swal.fire({ type: 'warning', title: 'Horas inválidas', text: 'Corrija los errores de horas antes de continuar.', confirmButtonText: 'Entendido' });
+        return;
+    }
+
     const itemsAgregados = [];
     const errores = [];
 
@@ -11012,6 +11423,24 @@ function finalizarNominaConfig() {
         if (valorTotal <= 0) {
             // Cargo marcado pero sin días/horas — se omite silenciosamente
             return;
+        }
+
+        // Recopilar novedades con cantidad > 0
+        const novedadesRecopiladas = [];
+        const contenedorNov = document.getElementById(`tablaNovedadesNomina_${idx}`);
+        if (contenedorNov) {
+            contenedorNov.querySelectorAll('input[type="number"]').forEach(inp => {
+                const cantidad = parseFloat(inp.value) || 0;
+                if (cantidad > 0) {
+                    const valor = parseFloat(inp.dataset.valor) || 0;
+                    novedadesRecopiladas.push({
+                        novedad_detalle_id: parseInt(inp.dataset.detalleId),
+                        valor: valor,
+                        cantidad: cantidad,
+                        subtotal: cantidad * valor,
+                    });
+                }
+            });
         }
 
         // Usar resultado del motor si está disponible; si no, fallback a cálculo simple
@@ -11052,7 +11481,7 @@ function finalizarNominaConfig() {
                 diasRemuneradosDiurnos: diasDiurnos,
                 diasRemuneradosNocturnos: diasNocturnos,
                 incluirDominicales: dominicales > 0 || domNoct > 0,
-                novedades: []
+                novedades: novedadesRecopiladas
             },
             cotizacion_item_id: window.subitemTemporal?.item?.id || null,
             cotizacion_subitem_id: window.subitemTemporal?.subitem?.id || null,

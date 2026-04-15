@@ -7,6 +7,7 @@ use App\Http\Requests\CotizacionProductoRequest;
 use App\Models\Categoria;
 use App\Models\Cotizacion;
 use App\Services\CotizacionProductoService;
+use App\Services\CotizacionTotalesService;
 use App\Models\CotizacionProducto;
 use App\Models\ItemPropio;
 use App\Models\Novedad;
@@ -1215,26 +1216,33 @@ class CotizacionProductoController extends Controller
     }
 
     /**
-     * Obtener totales calculados de productos en cotización
+     * Obtener totales calculados de la cotización (productos + utilidades + conceptos + listas)
      */
     public function obtenerTotales($cotizacionId): JsonResponse
     {
         try {
-            // Simulación de cálculo de totales
-            $totales = [
-                'subtotal' => 1250.75,
-                'descuento_total' => 62.54,
-                'total' => 1188.21,
-                'cantidad_productos' => 15,
-                'cantidad_items' => 5
-            ];
+            $cotizacion = Cotizacion::with(['utilidades', 'conceptos.concepto', 'productos'])
+                ->findOrFail($cotizacionId);
+
+            $cotizacionActualizada = app(CotizacionTotalesService::class)->recalcular($cotizacion);
 
             return response()->json([
                 'success' => true,
-                'data' => $totales
+                'data' => [
+                    'subtotal'          => (float) $cotizacionActualizada->subtotal,
+                    'descuento_total'   => (float) $cotizacionActualizada->descuento,
+                    'impuestos'         => (float) $cotizacionActualizada->total_impuesto,
+                    'total'             => (float) $cotizacionActualizada->total,
+                    'cantidad_productos' => $cotizacion->productos->where('active', true)->count(),
+                ]
             ]);
 
         } catch (\Exception $e) {
+            Log::error('Error al calcular totales de cotización', [
+                'cotizacion_id' => $cotizacionId,
+                'error' => $e->getMessage()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error al calcular totales: ' . $e->getMessage()
@@ -1280,28 +1288,17 @@ class CotizacionProductoController extends Controller
     }
 
     /**
-     * Actualizar totales de la cotización
+     * Actualizar totales de la cotización (incluye utilidades, conceptos, retenciones y listas)
      */
     private function actualizarTotalesCotizacion($cotizacionId)
     {
         try {
-            $productos = CotizacionProducto::where('cotizacion_id', $cotizacionId)
-                ->where('active', true)
-                ->get();
+            $cotizacion = Cotizacion::with(['utilidades', 'conceptos.concepto', 'productos'])
+                ->findOrFail($cotizacionId);
 
-            $subtotal = $productos->sum('valor_total');
+            app(CotizacionTotalesService::class)->recalcular($cotizacion);
 
-            // Actualizar la cotización con los nuevos totales
-            Cotizacion::where('id', $cotizacionId)->update([
-                'subtotal' => $subtotal,
-                'total' => $subtotal // Por ahora sin impuestos
-            ]);
-
-            Log::info('Totales actualizados para cotización', [
-                'cotizacion_id' => $cotizacionId,
-                'subtotal' => $subtotal,
-                'productos_count' => $productos->count()
-            ]);
+            Log::info('Totales actualizados para cotización', ['cotizacion_id' => $cotizacionId]);
 
         } catch (\Exception $e) {
             Log::error('Error actualizando totales de cotización', [
@@ -1326,19 +1323,23 @@ class CotizacionProductoController extends Controller
                 ], 400);
             }
 
-            // DEBUG: Verificar datos básicos primero
-            Log::info('🔍 DEBUG - Iniciando cálculo de totales', [
-                'cotizacion_id' => $cotizacionId,
-                'timestamp' => now()
-            ]);
+            Log::info('🔍 Iniciando cálculo de totales completos', ['cotizacion_id' => $cotizacionId]);
 
-            $totales = $this->cotizacionProductoService->obtenerTotalesCotizacion($cotizacionId);
+            $cotizacion = Cotizacion::with(['utilidades', 'conceptos.concepto', 'productos'])
+                ->findOrFail($cotizacionId);
 
-            // DEBUG: Mostrar resultado final
-            Log::info('🎯 DEBUG - Resultado final del cálculo', [
-                'cotizacion_id' => $cotizacionId,
-                'totales_calculados' => $totales
-            ]);
+            $cotizacionActualizada = app(CotizacionTotalesService::class)->recalcular($cotizacion);
+
+            $totales = [
+                'subtotal'    => (float) $cotizacionActualizada->subtotal,
+                'descuento'   => (float) $cotizacionActualizada->descuento,
+                'impuestos'   => (float) $cotizacionActualizada->total_impuesto,
+                'total'       => (float) $cotizacionActualizada->total,
+                // Aliases para compatibilidad con el frontend
+                'descuento_total' => (float) $cotizacionActualizada->descuento,
+            ];
+
+            Log::info('🎯 Totales calculados', ['cotizacion_id' => $cotizacionId, 'totales' => $totales]);
 
             return response()->json([
                 'success' => true,
