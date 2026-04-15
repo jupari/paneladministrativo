@@ -77,7 +77,8 @@ class CotizacionProducto extends Model
         'horas_diurnas',
         'horas_remuneradas',
         'incluir_dominicales',
-        'tipo_costo'
+        'tipo_costo',
+        'bono',
     ];
 
     protected $casts = [
@@ -102,6 +103,7 @@ class CotizacionProducto extends Model
         'horas_diurnas' => 'integer',
         'horas_remuneradas' => 'integer',
         'incluir_dominicales' => 'boolean',
+        'bono' => 'float',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -168,7 +170,7 @@ class CotizacionProducto extends Model
         static::saving(function ($model) {
             $subtotal = $model->cantidad * $model->valor_unitario;
             $descuento = $model->descuento_valor + ($subtotal * ($model->descuento_porcentaje / 100));
-            $model->valor_total = $subtotal - $descuento;
+            $model->valor_total = round(($subtotal - $descuento) + ($model->bono ?? 0), 2);
         });
     }
 }

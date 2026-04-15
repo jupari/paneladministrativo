@@ -273,17 +273,22 @@
                         <input type="hidden" name="tipo" id="tipo" value="COT">
                         <input type="hidden" name="id" id="id">
                         <div class="row mb-3">
-                            <div class="col-md-4">
-                                <label for="num_documento" class="form-label">Número de Documento: <span class="text-danger">*</span></label>
+                            <div class="col-12 col-md-2">
+                                <label for="num_documento" class="form-label">Documento: <span class="text-danger">*</span></label>
                                 <input type="text" id="num_documento" name="num_documento" class="form-control" readonly>
                                 <div class="invalid-feedback" id="error_num_documento"></div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-2">
+                                <label for="version" class="form-label">Versión</label>
+                                <input type="number" class="form-control" id="version" name="version" readonly>
+                                <div class="invalid-feedback" id="error_version"></div>
+                            </div>
+                            <div class="col-12 col-md-4">
                                 <label for="proyecto" class="form-label">Proyecto:</label>
                                 <input type="text" id="proyecto" name="proyecto" class="form-control">
                                 <div class="invalid-feedback" id="error_proyecto"></div>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-12 col-md-4">
                                 <label for="autorizacion_id" class="form-label">Autorización:</label>
                                 <input type="text" id="autorizacion_id" name="autorizacion_id" class="form-control" readonly>
                                 <div class="invalid-feedback" id="error_autorizacion_id"></div>
@@ -295,11 +300,6 @@
                                 <label for="doc_origen" class="form-label">Origen de la Cotización:</label>
                                 <input type="text" class="form-control" id="doc_origen" name="doc_origen" readonly>
                                 <div class="invalid-feedback" id="error_doc_origen"></div>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="version" class="form-label">Versión de la Cotización:</label>
-                                <input type="number" class="form-control" id="version" name="version" readonly>
-                                <div class="invalid-feedback" id="error_version"></div>
                             </div>
                             <div class="col-md-4">
                                 <label for="fecha" class="form-label">Fecha:</label>
@@ -376,11 +376,143 @@
                                 <!-- Elemento requerido por documento.js -->
                                 <div id="accordionCotizacionDetails" style="display: none;"></div>
 
-                                <!-- Paso 1: Impuestos y Descuentos -->
-                                <div class="card mb-4 section-step d-none" id="paso-impuestos" data-paso="1">
+                                <!-- Paso 1: Cabecera (ya está en la parte superior del formulario, no se repite aquí) -->
+
+                                <!-- Paso 2: Items y Subitems -->
+                                <div class="card mb-4 section-step d-none" id="paso-items" data-paso="2">
+                                    <div class="card-header bg-gradient-success text-white d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <div class="step-circle mr-3">2</div>
+                                            <div>
+                                                <h6 class="mb-0">
+                                                    <i class="fas fa-list mr-2"></i>Capitulación del Proyecto
+                                                </h6>
+                                                <small class="opacity-75">Agregue los capítulos principales</small>
+                                            </div>
+                                        </div>
+                                        <div class="step-status">
+                                            <i class="fas fa-clock text-warning" id="status-items"></i>
+                                        </div>
+                                    </div>
+                                    <div class="card-body" id="conitems">
+                                        <div class="row mb-3">
+                                            <div class="col-12">
+                                                <p class="text-muted mb-3">Gestione los items y subitems de la cotización</p>
+                                            </div>
+                                        </div>
+                                        <!-- Formulario para agregar item -->
+                                        <div class="card mb-4">
+                                            <div class="card-header bg-light">
+                                                <h6 class="mb-0 text-primary"><i class="fas fa-plus mr-2"></i>Agregar Nueva Capitulación</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <form id="formAgregarItem">
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label for="item_nombre" class="form-label">Nombre<span class="text-danger">*</span></label>
+                                                                <input type="text" class="form-control" id="item_nombre" placeholder="Ingrese el nombre del item" maxlength="255" style="text-transform: uppercase;">
+                                                                <div class="invalid-feedback" id="error_item_nombre"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-12">
+                                                            <button type="button" class="btn btn-success" id="btn_agregar_item">
+                                                                <i class="fas fa-plus"></i> Agregar Capitulación
+                                                            </button>
+                                                            <button type="button" class="btn btn-secondary ml-2" id="btn_limpiar_item">
+                                                                <i class="fas fa-broom"></i> Limpiar
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        <!-- Tabla de items -->
+                                        <div class="card">
+                                            <div class="card-header bg-light">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <h6 class="mb-0 text-dark"><i class="fas fa-list mr-2"></i>Capitulaciones de la Cotización</h6>
+                                                    <div>
+                                                        <button type="button" class="btn btn-danger btn-sm" id="btn_eliminar_items_seleccionados" disabled>
+                                                            <i class="fas fa-trash"></i> Eliminar Seleccionados
+                                                        </button>
+                                                        <button type="button" class="btn btn-warning btn-sm ml-2" id="btn_limpiar_todos_items">
+                                                            <i class="fas fa-broom"></i> Limpiar Todo
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-body p-0">
+                                                <div class="table-responsive">
+                                                    <table class="table table-hover table-bordered mb-0" id="tabla_items">
+                                                        <thead class="table-light">
+                                                            <tr>
+                                                                <th width="40">
+                                                                    <input type="checkbox" id="select_all_items" onchange="toggleSelectAllItems()" title="Seleccionar todos">
+                                                                </th>
+                                                                <th width="60">#</th>
+                                                                <th width="200">Nombre de la Capitulación</th>
+                                                                <th>Items</th>
+                                                                <th width="100">Estado</th>
+                                                                <th width="150">Acciones</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody id="tbody_items">
+                                                            <tr class="" id="no_items_row_items">
+                                                                <td colspan="6" class="text-center text-muted py-3">
+                                                                    <i class="fas fa-inbox fa-2x mb-2"></i>
+                                                                    No hay registros agregados
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Información adicional -->
+                                        <div class="row mt-3">
+                                            <div class="col-md-12">
+                                                <div class="alert alert-info">
+                                                    <i class="fas fa-info-circle mr-2"></i>
+                                                    <strong>Información:</strong> Las capitulaciones representan categorías principales de la cotización.
+                                                    Para agregar detalles específicos como cantidades y precios, cree subcapitulaciones asociadas a cada capitulación.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Paso 3: Productos -->
+                                <div class="card mb-4 section-step d-none" id="paso-productos" data-paso="3">
+                                    <div class="card-header bg-gradient-danger text-white d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <div class="step-circle mr-3">3</div>
+                                            <div>
+                                                <h6 class="mb-0">
+                                                    <i class="fas fa-box mr-2"></i>Productos
+                                                </h6>
+                                                <small class="opacity-75">Agregue productos y salarios</small>
+                                            </div>
+                                        </div>
+                                        <div class="step-status">
+                                            <i class="fas fa-clock text-warning" id="status-productos"></i>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="d-flex gap-2 mb-3" id="botonesAgregarProductos">
+                                            <button class="btn btn-primary" id="agregarProductos" onclick="window.testModal ? window.testModal() : console.log('testModal no disponible')">
+                                                <i class="fas fa-plus-circle mr-2"></i>Agregar Productos
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Paso 4: Impuestos y Descuentos -->
+                                <div class="card mb-4 section-step d-none" id="paso-impuestos" data-paso="4">
                                     <div class="card-header bg-gradient-primary text-white d-flex justify-content-between align-items-center">
                                         <div class="d-flex align-items-center">
-                                            <div class="step-circle mr-3">1</div>
+                                            <div class="step-circle mr-3">4</div>
                                             <div>
                                                 <h6 class="mb-0">
                                                     <i class="fas fa-percent mr-2"></i>Impuestos y Descuentos
@@ -472,7 +604,6 @@
                                             </div>
                                         </div>
                                     </div>
-
                                     <!-- Tabla de Impuestos y Descuentos Agregados -->
                                     <div class="card">
                                         <div class="card-header bg-light">
@@ -503,22 +634,8 @@
                                                     </tbody>
                                                 </table>
                                             </div>
-
-                                            {{-- <div class="row mt-3">
-                                                <div class="col-md-12">
-                                                    <div class="btn-group" role="group">
-                                                        <button type="button" class="btn btn-outline-danger btn-sm" id="eliminar_seleccionados" disabled>
-                                                            <i class="fas fa-trash mr-1"></i> Eliminar Seleccionados
-                                                        </button>
-                                                        <button type="button" class="btn btn-outline-warning btn-sm" id="limpiar_todo">
-                                                            <i class="fas fa-broom mr-1"></i> Limpiar Todo
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div> --}}
                                         </div>
                                     </div>
-
                                     <div class="alert alert-info mt-3">
                                         <small>
                                             <strong>Nota:</strong> Los impuestos y descuentos se aplicarán automáticamente al subtotal de la cotización.
@@ -527,125 +644,11 @@
                                     </div>
                                 </div>
 
-                                <!-- Paso 2: Items y Subitems -->
-                                <div class="card mb-4 section-step d-none" id="paso-items" data-paso="2">
-                                    <div class="card-header bg-gradient-success text-white d-flex justify-content-between align-items-center">
-                                        <div class="d-flex align-items-center">
-                                            <div class="step-circle mr-3">2</div>
-                                            <div>
-                                                <h6 class="mb-0">
-                                                    <i class="fas fa-list mr-2"></i>Items del Proyecto
-                                                </h6>
-                                                <small class="opacity-75">Agregue los elementos principales</small>
-                                            </div>
-                                        </div>
-                                        <div class="step-status">
-                                            <i class="fas fa-clock text-warning" id="status-items"></i>
-                                        </div>
-                                    </div>
-                                    <div class="card-body" id="conitems">
-                                        <div class="row mb-3">
-                                            <div class="col-12">
-                                                <p class="text-muted mb-3">Gestione los items y subitems de la cotización</p>
-                                            </div>
-                                        </div>
-
-                                        <!-- Formulario para agregar item -->
-                                        <div class="card mb-4">
-                                            <div class="card-header bg-light">
-                                                <h6 class="mb-0 text-primary"><i class="fas fa-plus mr-2"></i>Agregar Nuevo Item</h6>
-                                            </div>
-                                            <div class="card-body">
-                                                <form id="formAgregarItem">
-                                                    <div class="row">
-                                                        <div class="col-md-6">
-                                                            <div class="form-group">
-                                                                <label for="item_nombre" class="form-label">Nombre del Item <span class="text-danger">*</span></label>
-                                                                <input type="text" class="form-control" id="item_nombre" placeholder="Ingrese el nombre del item" maxlength="255">
-                                                                <div class="invalid-feedback" id="error_item_nombre"></div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="row">
-                                                        <div class="col-12">
-                                                            <button type="button" class="btn btn-success" id="btn_agregar_item">
-                                                                <i class="fas fa-plus"></i> Agregar Item
-                                                            </button>
-                                                            <button type="button" class="btn btn-secondary ml-2" id="btn_limpiar_item">
-                                                                <i class="fas fa-broom"></i> Limpiar
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-
-                                        <!-- Tabla de items -->
-                                        <div class="card">
-                                            <div class="card-header bg-light">
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <h6 class="mb-0 text-dark"><i class="fas fa-list mr-2"></i>Items de la Cotización</h6>
-                                                    <div>
-                                                        <button type="button" class="btn btn-danger btn-sm" id="btn_eliminar_items_seleccionados" disabled>
-                                                            <i class="fas fa-trash"></i> Eliminar Seleccionados
-                                                        </button>
-                                                        <button type="button" class="btn btn-warning btn-sm ml-2" id="btn_limpiar_todos_items">
-                                                            <i class="fas fa-broom"></i> Limpiar Todo
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="card-body p-0">
-                                                <div class="table-responsive">
-                                                    <table class="table table-hover table-bordered mb-0" id="tabla_items">
-                                                        <thead class="table-light">
-                                                            <tr>
-                                                                <th width="40">
-                                                                    <input type="checkbox" id="select_all_items" onchange="toggleSelectAllItems()" title="Seleccionar todos">
-                                                                </th>
-                                                                <th width="60">#</th>
-                                                                <th width="200">Nombre del Item</th>
-                                                                <th>Subitems</th>
-                                                                <th width="100">Estado</th>
-                                                                <th width="150">Acciones</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody id="tbody_items">
-                                                            <tr class="" id="no_items_row_items">
-                                                                <td colspan="6" class="text-center text-muted py-3">
-                                                                    <i class="fas fa-inbox fa-2x mb-2"></i>
-                                                                    No hay items agregados
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Información adicional -->
-                                        <div class="row mt-3">
-                                            <div class="col-md-12">
-                                                <div class="alert alert-info">
-                                                    <i class="fas fa-info-circle mr-2"></i>
-                                                    <strong>Información:</strong> Los items representan categorías principales de la cotización.
-                                                    Para agregar detalles específicos como cantidades y precios, cree subitems asociados a cada item.
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="d-flex justify-content-end mt-3">
-                                            <button type="button" class="btn btn-success btn-sm" onclick="guardarObservacionesPaso()">
-                                                <i class="fas fa-save mr-1"></i> Guardar Observaciones
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Paso 3: Observaciones -->
-                                <div class="card mb-4 section-step d-none" id="paso-observaciones" data-paso="3">
+                                <!-- Paso 5: Observaciones -->
+                                <div class="card mb-4 section-step d-none" id="paso-observaciones" data-paso="5">
                                     <div class="card-header bg-gradient-info text-white d-flex justify-content-between align-items-center">
                                         <div class="d-flex align-items-center">
-                                            <div class="step-circle mr-3">3</div>
+                                            <div class="step-circle mr-3">5</div>
                                             <div>
                                                 <h6 class="mb-0">
                                                     <i class="fas fa-comment mr-2"></i>Observaciones Adicionales
@@ -680,7 +683,6 @@
                                                         </div>
                                                     </div>
                                                 </form>
-
                                                 <!-- Lista de observaciones agregadas -->
                                                 <div class="mt-3">
                                                     <h6>Observaciones Seleccionadas</h6>
@@ -706,11 +708,11 @@
                                     </div>
                                 </div>
 
-                                <!-- Paso 4: Condiciones Comerciales -->
-                                <div class="card mb-4 section-step d-none" id="paso-condiciones" data-paso="4">
+                                <!-- Paso 6: Condiciones Comerciales -->
+                                <div class="card mb-4 section-step d-none" id="paso-condiciones" data-paso="6">
                                     <div class="card-header bg-gradient-warning text-dark d-flex justify-content-between align-items-center">
                                         <div class="d-flex align-items-center">
-                                            <div class="step-circle mr-3">4</div>
+                                            <div class="step-circle mr-3">6</div>
                                             <div>
                                                 <h6 class="mb-0">
                                                     <i class="fas fa-handshake mr-2"></i>Condiciones Comerciales
@@ -787,30 +789,6 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Paso 5: Agregar Productos -->
-                                <div class="card mb-4 section-step d-none" id="paso-productos" data-paso="5">
-                                    <div class="card-header bg-gradient-danger text-white d-flex justify-content-between align-items-center">
-                                        <div class="d-flex align-items-center">
-                                            <div class="step-circle mr-3">5</div>
-                                            <div>
-                                                <h6 class="mb-0">
-                                                    <i class="fas fa-box mr-2"></i>Agregar Productos
-                                                </h6>
-                                                <small class="opacity-75">Finalice agregando productos y salarios</small>
-                                            </div>
-                                        </div>
-                                        <div class="step-status">
-                                            <i class="fas fa-clock text-warning" id="status-productos"></i>
-                                        </div>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="d-flex gap-2 mb-3" id="botonesAgregarProductos">
-                                            <button class="btn btn-primary" id="agregarProductos" onclick="window.testModal ? window.testModal() : console.log('testModal no disponible')">
-                                                <i class="fas fa-plus-circle mr-2"></i>Agregar Productos
-                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -2047,6 +2025,8 @@
 
 @section('js')
     <script>
+        // Turnos de nómina disponibles (Costo Día)
+        window.nominaTurnos = @json(\App\Models\NominaTurno::where('active', true)->orderBy('nombre')->get());
         // Configurar variables desde el servidor y delegar al coordinador
         document.addEventListener('DOMContentLoaded', function() {
             const config = {

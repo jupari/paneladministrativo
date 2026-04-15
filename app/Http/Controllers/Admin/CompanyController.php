@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\Facades\DataTables;
 
 class CompanyController extends Controller
@@ -17,7 +18,7 @@ class CompanyController extends Controller
     {
         // Solo usuarios con rol sysadmin pueden gestionar empresas
         $this->middleware('sysadmin');
-        
+
         $this->middleware('can:companies.index')->only(['index']);
         $this->middleware('can:companies.create')->only(['create', 'store']);
         $this->middleware('can:companies.edit')->only(['edit', 'update']);
@@ -102,19 +103,19 @@ class CompanyController extends Controller
                         ";
                     })
                     ->addColumn('actions', function ($company) {
-                        return '
-                            <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-sm btn-info" onclick="viewCompany(' . $company->id . ')" title="Ver detalles">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-warning" onclick="editCompany(' . $company->id . ')" title="Editar">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-primary" onclick="renewLicense(' . $company->id . ')" title="Renovar licencia">
-                                    <i class="fas fa-calendar-plus"></i>
-                                </button>
-                            </div>
-                        ';
+                        $href = '<div class="btn-group" role="group">';
+                        if (Auth::user()->can('companies.view')) {
+                            $href .= '<button class="btn btn-sm btn-info" onclick="viewCompany(' . $company->id . ')" title="Ver detalles"><i class="fas fa-eye"></i></button>&nbsp;';
+                        }
+                        if (Auth::user()->can('companies.edit')) {
+                            $href .= '<button class="btn btn-sm btn-warning" onclick="editCompany(' . $company->id . ')" title="Editar"><i class="fas fa-edit"></i></button>&nbsp;';
+                        }
+                        if (Auth::user()->can('companies.renew')) {
+                            $href .= '<button class="btn btn-sm btn-primary" onclick="renewLicense(' . $company->id . ')" title="Renovar licencia"><i class="fas fa-calendar-plus"></i></button>';
+                        }
+                        $href .= '</div>';
+
+                        return $href;
                     })
                     ->rawColumns(['status', 'license_info', 'users_count', 'actions'])
                     ->make(true);

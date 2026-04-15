@@ -59,6 +59,7 @@ function CargarCotizaciones() {
                 { data: 'DT_RowIndex', name: 'DT_RowIndex', className: 'exclude', orderable: false,searchable: false},
                 { data: 'id', name: 'id' , visible:false},
                 { data: 'num_documento', name: 'num_documento'},
+                { data: 'version', name: 'version'},
                 { data: 'cliente', name: 'cliente',className:'text-center'},
                 { data: 'sede', name: 'sede',className:'text-center'},
                 { data: 'proyecto', name: 'proyecto',className:'text-center'},

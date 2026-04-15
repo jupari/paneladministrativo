@@ -27,11 +27,15 @@ use Spatie\Permission\Models\Permission;
 
 class ClienteController extends Controller
 {
-    //
+
     protected $clienteRepo;
 
     public function __construct(ClienteService $clienteRepo)
     {
+        $this->middleware('can:clientes.index')->only('index');
+        $this->middleware('can:clientes.create')->only('store');
+        $this->middleware('can:clientes.edit')->only('update');
+        $this->middleware('can:clientes.destroy')->only('destroy');
         $this->clienteRepo = $clienteRepo;
     }
 
@@ -54,10 +58,14 @@ class ClienteController extends Controller
                     ->addColumn('celular', fn ($td) => $td->celular)
                     ->addColumn('created_at', fn ($td) => $td->created_at)
                     ->addColumn('acciones', function ($td) {
-                        return auth()->user()->can('roles.edit') ?
-                            '<button type="button" onclick="upCli(' . $td->id . ')" class="btn btn-warning btn-circle btn-sm">
-                                <i class="fas fa-pencil-alt"></i>
-                            </button>' : '';
+                        $href = '';
+                        if (auth()->user()->can('clientes.edit')) {
+                            $href .= '<button type="button" onclick="upCli(' . $td->id . ')" class="btn btn-warning btn-circle btn-sm" title="Editar Cliente"><i class="fas fa-pencil-alt"></i></button>&nbsp;';
+                        }
+                        if (auth()->user()->can('clientes.destroy')) {
+                            $href .= '<button type="button" onclick="deleteCli(' . $td->id . ')" class="btn btn-danger btn-circle btn-sm" title="Eliminar Cliente"><i class="fas fa-trash"></i></button>';
+                        }
+                        return $href;
                     })
                     ->rawColumns(['tipoid','identificacion','tipopersona','nombres','apellidos','nombre_estableciemiento','correo','telefono','telefono','celular','created_at','acciones'])
                     ->make(true);

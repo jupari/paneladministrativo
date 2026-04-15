@@ -59,7 +59,8 @@ class CotizacionProductoRequest extends FormRequest
             'dominicales_nocturnos' => 'nullable|integer|min:0|max:52',
             'horas_diurnas' => 'nullable|integer|min:0|max:24',
             'horas_remuneradas' => 'nullable|integer|min:0|max:8760',
-            'incluir_dominicales' => 'boolean'
+            'incluir_dominicales' => 'boolean',
+            'bono' => 'nullable|numeric|min:0|max:999999999.99',
         ];
     }
 
@@ -135,6 +136,7 @@ class CotizacionProductoRequest extends FormRequest
             'costo_dia' => $this->costo_dia ?? 0,
             'costo_hora' => $this->costo_hora ?? 0,
             'costo_unitario' => $this->costo_unitario ?? 0,
+            'bono' => $this->bono ?? 0,
         ]);
     }
 }

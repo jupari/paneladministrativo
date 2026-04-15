@@ -45,7 +45,16 @@ class EmpleadoController extends Controller
                     ->addColumn('cargo', fn($empleado) => optional($empleado->cargo)->nombre ?? 'Sin cargo')
                     ->addColumn('active', fn($empleado) => $empleado->active ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-danger">Inactivo</span>')
                     ->addColumn('created_at', fn($empleado) => optional($empleado->created_at)->format('d-m-Y H:i:s') ?? 'N/A')
-                    ->addColumn('acciones', fn($empleado) => '<button type="button" onclick="upEmpleado(' . $empleado->id . ')" class="btn btn-warning btn-sm" title="Editar"><i class="fas fa-edit"></i></button>')
+                    ->addColumn('acciones', function($empleado) {
+                        $href = '';
+                        if (auth()->user()->can('empleados.edit')) {
+                            $href .= '<button type="button" onclick="upEmpleado(' . $empleado->id . ')" class="btn btn-warning btn-sm" title="Editar"><i class="fas fa-edit"></i></button>&nbsp;';
+                        }
+                        if (auth()->user()->can('empleados.destroy')) {
+                            $href .= '<button type="button" onclick="deleteEmpleado(' . $empleado->id . ')" class="btn btn-danger btn-sm" title="Eliminar"><i class="fas fa-trash"></i></button>';
+                        }
+                        return $href;
+                    })
                     ->rawColumns(['active', 'acciones'])
                     ->make(true);
             }

@@ -16,6 +16,7 @@ class Novedad extends Model
         'total_admon',
         'total_operativo',
         'active',
+        'grupo_cotiza',
         'created_at',
         'updated_at'
     ];

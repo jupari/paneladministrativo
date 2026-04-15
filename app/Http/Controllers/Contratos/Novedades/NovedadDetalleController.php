@@ -21,4 +21,14 @@ class NovedadDetalleController extends Controller
             ->make(true);
     }
 
+    // Obtener detalle de novedad por ID
+    public function show($id)
+    {
+        $detalle = NovedadDetalle::find($id);
+        if (!$detalle) {
+            return response()->json(['error' => 'No encontrado'], 404);
+        }
+        return response()->json($detalle);
+    }
+
 }

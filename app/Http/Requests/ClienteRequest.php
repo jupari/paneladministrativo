@@ -8,6 +8,24 @@ use Illuminate\Http\Exceptions\HttpResponseException;
 
 class ClienteRequest extends FormRequest
 {
+    protected function prepareForValidation()
+    {
+        if ($this->has('nombres')) {
+            $this->merge([
+                'nombres' => mb_strtoupper($this->input('nombres'), 'UTF-8'),
+            ]);
+        }
+        if ($this->has('apellidos')) {
+            $this->merge([
+                'apellidos' => mb_strtoupper($this->input('apellidos'), 'UTF-8'),
+            ]);
+        }
+        if ($this->has('nombre_establecimiento')) {
+            $this->merge([
+                'nombre_establecimiento' => mb_strtoupper($this->input('nombre_establecimiento'), 'UTF-8'),
+            ]);
+        }
+    }
     public function authorize()
     {
         return true; // Permitir acceso
@@ -18,7 +36,7 @@ class ClienteRequest extends FormRequest
         return [
             'tercerotipo_id' => 'required|exists:terceros_tipos,id',
             'tipoidentificacion_id' => 'required|exists:tipo_identificacion,id',
-            'identificacion' => 'required|string|max:20|unique:terceros,identificacion,' . $this->route('id'),
+            'identificacion' => 'required|numeric|digits_between:5,20|unique:terceros,identificacion,' . $this->route('id'),
             'dv' => 'nullable|string|max:1',
             'tipopersona_id' => 'required|exists:tipo_persona,id',
             'nombres' => [

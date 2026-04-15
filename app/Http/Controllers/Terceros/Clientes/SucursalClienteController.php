@@ -26,13 +26,13 @@ class SucursalClienteController extends Controller
             if($request->ajax()) {
                 return Datatables::of($query)
                                 ->addIndexColumn()
-                                ->addColumn('comercial', function ($td) {
+                                ->addColumn('persona_contacto', function ($td) {
 
-                                    $href = $td->vendedores->nombre_completo??'';
+                                    $href = $td->persona_contacto??'';
                                     return $href;
 
                                 })
-                                 ->addColumn('nombre_sucursal', function ($td) {
+                                ->addColumn('nombre_sucursal', function ($td) {
 
                                     $href = $td->nombre_sucursal;
                                     return $href;
@@ -68,14 +68,8 @@ class SucursalClienteController extends Controller
                                     return $href;
 
                                 })
-                                ->addColumn('persona_contacto', function ($td) {
-
-                                    $href = $td->persona_contacto;
-                                    return $href;
-
-                                })
                                 ->addColumn('acciones', function ($td) {
-                                    if(Auth::user()->can('roles.edit')){
+                                    if(Auth::user()->can('clientes.edit')){
                                         $href = '<button type="button" onclick="showSucursal('.$td->id.')" class="btn btn-warning btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Editar Contacto"><i class="fas fa-pencil-alt"></i></button>&nbsp';
                                     }else{
                                         $href='';

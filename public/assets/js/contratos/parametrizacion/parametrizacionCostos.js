@@ -86,22 +86,6 @@ const verificarVariablesGlobales = () => {
 
 // Función de debug para diagnóstico de variables
 const debugVariablesGlobales = () => {
-    console.log('🔧 DEBUG: Estado de variables globales');
-    console.log('  - typeof categorias:', typeof categorias);
-    console.log('  - categorias:', categorias);
-    console.log('  - typeof unidades:', typeof unidades);
-    console.log('  - unidades:', unidades);
-    console.log('  - typeof itemsPropios:', typeof itemsPropios);
-    console.log('  - itemsPropios:', itemsPropios);
-
-    console.log('🔧 DEBUG: Verificación window object');
-    console.log('  - window.categorias:', window.categorias);
-    console.log('  - window.unidades:', window.unidades);
-    console.log('  - window.itemsPropios:', window.itemsPropios);
-
-    console.log('💰 DEBUG: Costo unitario');
-    console.log('  - Categorías con costo unitario:', categoriasConCostoUnitario);
-
     if (tablaCostos) {
         const datos = tablaCostos.getData();
         const categoriasUsadas = [...new Set(datos.map(d => d.categoria_id).filter(Boolean))];
@@ -120,7 +104,6 @@ const debugVariablesGlobales = () => {
 // Hacer disponible las funciones de debug globalmente
 window.debugParametrizacion = debugVariablesGlobales;
 window.testCostoUnitario = () => {
-    console.log('🧪 TEST: Costo Unitario');
     actualizarVisibilidadCostoUnitario();
     if (tablaCostos) {
         const datos = tablaCostos.getData();
@@ -158,8 +141,6 @@ const esCategoriaConCostoUnitario = (categoriaId) => {
 const categoriasConCostoUnitario = categorias.filter(c =>
     c.nombre.toLowerCase().includes('tarifa') || c.nombre.toLowerCase().includes('otros')
 );
-console.log('📊 Categorías con costo unitario habilitado:', categoriasConCostoUnitario.map(c => c.nombre));
-
 // Función para actualizar la visibilidad de la columna costo unitario
 const actualizarVisibilidadCostoUnitario = () => {
     if (!tablaCostos) return;
@@ -171,7 +152,6 @@ const actualizarVisibilidadCostoUnitario = () => {
     if (columna) {
         if (necesitaCostoUnitario) {
             columna.show();
-            console.log('✅ Columna costo unitario mostrada');
         } else {
             columna.hide();
             console.log('❌ Columna costo unitario ocultada');
@@ -557,7 +537,7 @@ const getInitialCountCostos = () =>
 const getGridCountCostos = () =>
     tablaCostos ? tablaCostos.getData().length : 0
 // =========================== Inicialización tabla ============================
-let tablaCostos
+window.tablaCostos = null
 
 async function CargarCostos (primeraCargac) {
     if (!primeraCargac) {

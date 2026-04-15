@@ -50,12 +50,17 @@ class CotizacionItemController extends Controller
     {
         try {
             $subitems = CotizacionSubImtes::with('unidadMedida')
-                ->orderBy('codigo')
                 ->get();
+
+            // Ordenamiento natural por el campo 'codigo'
+            $subitemsArray = $subitems->toArray();
+            usort($subitemsArray, function($a, $b) {
+                return strnatcmp($a['codigo'], $b['codigo']);
+            });
 
             return response()->json([
                 'success' => true,
-                'data' => $subitems
+                'data' => $subitemsArray
             ]);
         } catch (Exception $e) {
             Log::error('Error al obtener subitems: ' . $e->getMessage());
@@ -205,17 +210,22 @@ class CotizacionItemController extends Controller
     public function createSubitem(Request $request): JsonResponse
     {
         try {
-             $request->validate([
-                'codigo' => 'required|string|max:50|unique:ord_cotizaciones_subitems,codigo',
+            $request->validate([
+                'codigo' => 'nullable|string|max:20',
                 'nombre' => 'required|string|max:255',
                 'unidad_medida_id' => 'required|exists:unidades_medida,id',
                 'cantidad' => 'nullable|numeric|min:0',
                 'observacion' => 'nullable|string|max:500',
-                'cotizacion_item_id' => 'required|exists:ord_cotizaciones_items,id'
+                'cotizacion_item_id' => 'required|exists:ord_cotizaciones_items,id',
+                'parent_codigo' => 'nullable|string|max:20'
             ]);
             $subitem = new CotizacionSubImtes();
             $subitem->cotizacion_item_id = $request->cotizacion_item_id;
-            $subitem->codigo = $request->codigo;
+            if (!$request->codigo) {
+                $subitem->codigo = $this->getNextCodigo($request->cotizacion_item_id, $request->parent_codigo);
+            } else {
+                $subitem->codigo = $request->codigo;
+            }
             $subitem->nombre = $request->nombre;
             $subitem->unidad_medida_id = $request->unidad_medida_id;
             $subitem->cantidad = $request->cantidad ?? 1;
@@ -246,7 +256,7 @@ class CotizacionItemController extends Controller
     {
         try {
             $request->validate([
-                'codigo' => 'required|string|max:50',
+                'codigo' => 'required|string|max:20',
                 'nombre' => 'required|string|max:255',
                 'unidad_medida_id' => 'required|exists:unidades_medida,id',
                 'cantidad' => 'nullable|numeric|min:0',
@@ -286,7 +296,7 @@ class CotizacionItemController extends Controller
         try {
             $subitem = CotizacionSubImtes::findOrFail($subitemId);
             $cotizacionItemId = $subitem->cotizacion_item_id;
-            
+
             $subitem->delete();
 
             return response()->json([
@@ -332,6 +342,79 @@ class CotizacionItemController extends Controller
     {
         $maxOrden = CotizacionSubImtes::max('orden');
         return ($maxOrden ?? 0) + 1;
+    }
+
+    /**
+     * Sugerir el siguiente código disponible para un subitem, tipo numeración Word, sin saltos
+     * Si $parentCodigo es null, sugiere el siguiente principal (1, 2, 3...)
+     * Si $parentCodigo es '1.1', sugiere '1.1.1', '1.1.2', etc., buscando el primer hueco
+     */
+    private function getNextCodigo($cotizacionItemId, $parentCodigo = null)
+    {
+        $query = CotizacionSubImtes::where('cotizacion_item_id', $cotizacionItemId);
+        if ($parentCodigo) {
+            $query = $query->where('codigo', 'like', $parentCodigo . '.%');
+        }
+        $codigos = $query->pluck('codigo')->toArray();
+
+        $existentes = [];
+        if ($parentCodigo) {
+            foreach ($codigos as $codigo) {
+                $parts = explode('.', $codigo);
+                $last = intval(end($parts));
+                $existentes[$last] = true;
+            }
+            $i = 1;
+            while (isset($existentes[$i])) {
+                $i++;
+            }
+            return $parentCodigo . '.' . $i;
+        } else {
+            // Buscar subitems directos (ej: 1.1, 1.2, 1.3) para el item principal
+            $prefix = null;
+            if (!empty($codigos)) {
+                // Obtener el primer número del primer código existente (ej: 1.1 => 1)
+                $first = explode('.', $codigos[0]);
+                $prefix = $first[0];
+            }
+            if ($prefix) {
+                // Buscar todos los subitems que empiezan con "$prefix."
+                $subitems = CotizacionSubImtes::where('cotizacion_item_id', $cotizacionItemId)
+                    ->where('codigo', 'like', $prefix . '.%')
+                    ->pluck('codigo')->toArray();
+                $existentes = [];
+                foreach ($subitems as $codigo) {
+                    $parts = explode('.', $codigo);
+                    $last = intval(end($parts));
+                    $existentes[$last] = true;
+                }
+                $i = 1;
+                while (isset($existentes[$i])) {
+                    $i++;
+                }
+                return $prefix . '.' . $i;
+            } else {
+                // Si no hay subitems, sugerir 1.1
+                return '1.1';
+            }
+        }
+    }
+
+    /**
+     * Endpoint para sugerir el siguiente código disponible para un subitem
+     * GET /cotizacion/subitem/siguiente-codigo?cotizacion_item_id=...&parent_codigo=...
+     */
+    public function sugerirCodigoSubitem(Request $request): JsonResponse
+    {
+        $request->validate([
+            'cotizacion_item_id' => 'required|exists:ord_cotizaciones_items,id',
+            'parent_codigo' => 'nullable|string|max:20'
+        ]);
+        $codigo = $this->getNextCodigo($request->cotizacion_item_id, $request->parent_codigo);
+        return response()->json([
+            'success' => true,
+            'codigo' => $codigo
+        ]);
     }
 
     /**

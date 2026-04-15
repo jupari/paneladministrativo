@@ -231,8 +231,6 @@ async function fetchSucursales(terceroId) {
         defaultOption.text = 'Seleccione una sede';
         sedeSelect.appendChild(defaultOption);
 
-        console.log('data.data...sucursales', data.data);
-
         data.data.forEach(sede => {
             const option = document.createElement('option');
             option.value = sede.id;
@@ -250,8 +248,6 @@ async function fetchSucursales(terceroId) {
 
 async function fetchContactos(terceroId) {
     try {
-        console.log('Entre a fetchContactos...>', terceroId);
-
         const response = await fetch(`/admin/admin.cotizaciones.getContactos/${terceroId}`);
         const data = await response.json();
 
@@ -262,8 +258,6 @@ async function fetchContactos(terceroId) {
         defaultOption.value = '';
         defaultOption.text = 'Seleccione un contacto';
         contactoSelect.appendChild(defaultOption);
-
-        console.log('data.data>>>', data.data);
 
         data.data.forEach(contacto => {
             const option = document.createElement('option');
@@ -1778,7 +1772,7 @@ function poblarSelectSubitems() {
     const select = document.getElementById('item_subitem');
     if (!select) return;
 
-    select.innerHTML = '<option value="">Seleccione subitem...</option>';
+    select.innerHTML = '<option value="">Seleccione item...</option>';
 
     subitemsDisponibles.forEach(subitem => {
         const option = document.createElement('option');
@@ -2050,8 +2044,8 @@ function actualizarTablaItems() {
                     <button type="button" class="btn btn-sm btn-outline-primary mr-1" onclick="editarItem(${item.id})" title="Editar">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-primary mr-1" onclick="abrirModalCrearSubitem(${item.id})" title="Crear Subitem">
-                        <i class="fas fa-cube"></i>
+                    <button type="button" class="btn btn-sm btn-outline-primary mr-1" onclick="abrirModalCrearSubitem(${item.id})" title="Crear item">
+                        <i class="fas fa-list"></i>
                     </button>` : ''}
             <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarItem(${item.id || index})" title="Eliminar">
                 <i class="fas fa-trash"></i>
@@ -2095,7 +2089,6 @@ function actualizarTablaItemsAcordeon() {
         `;
         return;
     }
-    console.log('Actualizando tabla del acordeón con items::::', itemsCotizacion);
     // Agregar filas para cada item y sus subitems
     itemsCotizacion.forEach((item, itemIndex) => {
         // Fila del item principal (NO seleccionable)
@@ -2106,8 +2099,8 @@ function actualizarTablaItemsAcordeon() {
                 <i class="fas fa-folder text-secondary" title="Items principales no seleccionables"></i>
             </td>
             <td><strong><i class="fas fa-folder mr-1 text-secondary"></i>${item.nombre}</strong></td>
-            <td class="text-muted"><em>Item principal - No seleccionable</em></td>
-            <td><span class="badge bg-secondary">Item Principal</span></td>
+            <td class="text-muted"><em>Capitulación - No seleccionable</em></td>
+            <td><span class="badge bg-secondary">Capitulación</span></td>
         `;
         tbody.appendChild(itemRow);
 
@@ -2135,9 +2128,9 @@ function actualizarTablaItemsAcordeon() {
                 <td class="text-center">
                     <i class="fas fa-info-circle text-muted"></i>
                 </td>
-                <td class="ps-4 text-muted"><em>Sin subitems disponibles</em></td>
+                <td class="ps-4 text-muted"><em>Sin items disponibles</em></td>
                 <td class="text-muted">-</td>
-                <td><span class="badge bg-light text-dark">Sin subitems</span></td>
+                <td><span class="badge bg-light text-dark">Sin items</span></td>
             `;
             tbody.appendChild(noSubitemsRow);
         }
@@ -2232,7 +2225,6 @@ function usarItemSeleccionado() {
 
     // Buscar item seleccionado en el acordeón
     const itemSeleccionado = document.querySelector('input[name="itemSelected"]:checked');
-    console.log("itemSeleccionado>>>>",itemSeleccionado);
 
     if (!itemSeleccionado) {
         Swal.fire({
@@ -2409,12 +2401,15 @@ async function cargarCategoriasPorSeleccionar() {
         // Generar HTML de categorí­as
         let categoriasHtml = '';
         categorias.forEach(categoria => {
+            const esNomina = categoria.tipo === 'nomina';
             categoriasHtml += `
                 <div class="form-check mb-2">
-                    <input class="form-check-input categoria-checkbox" type="checkbox" value="${categoria.id}" id="categoria_${categoria.id}" onchange="validarSeleccionCategorias()">
+                    <input class="form-check-input categoria-checkbox" type="checkbox" value="${categoria.id}" id="categoria_${categoria.id}"
+                           data-tipo="${categoria.tipo || 'estandar'}" onchange="validarSeleccionCategorias()">
                     <label class="form-check-label" for="categoria_${categoria.id}">
                         <strong>${categoria.nombre}</strong>
-                        <small class="text-muted d-block">ID: ${categoria.id}</small>
+                        ${esNomina ? '<span class="badge badge-warning ml-2"><i class="fas fa-users mr-1"></i>Nómina</span>' : ''}
+                        <small class="text-muted d-block">Tipo: ${esNomina ? 'Cargo/Personal' : 'Productos/Insumos'}</small>
                     </label>
                 </div>
             `;
@@ -2570,14 +2565,26 @@ async function cargarItemsPorCategorias() {
             itemsPropios = [];
         }
 
-        // Cerrar modal de categorí­as y abrir modal de selección de items propios
-        $('#modalSeleccionCategorias').modal('hide');
+        // Separar items por tipo: nómina (cargo_tabla) vs estándar
+        const itemsNomina = itemsPropios.filter(i => i.tipo === 'cargo_tabla');
+        const itemsEstandar = itemsPropios.filter(i => i.tipo !== 'cargo_tabla');
 
+        // Cerrar modal de categorí­as y enrutar al flujo correcto
+        $('#modalSeleccionCategorias').modal('hide');
 
         // Dar tiempo a que se cierre el modal anterior
         setTimeout(() => {
-            // Abrir modal para seleccionar items propios
-            abrirModalSeleccionItemsPropios(itemsPropios, categoriaIds);
+            if (itemsNomina.length > 0 && itemsEstandar.length === 0) {
+                // Solo nómina → flujo dedicado de Cargo/Perfil
+                abrirModalNominaConfig(itemsNomina);
+            } else if (itemsNomina.length === 0) {
+                // Solo estándar → flujo existente
+                abrirModalSeleccionItemsPropios(itemsPropios, categoriaIds);
+            } else {
+                // Mixto: estándar primero, nómina después
+                window.itemsNominaPendientes = itemsNomina;
+                abrirModalSeleccionItemsPropios(itemsEstandar, categoriaIds);
+            }
         }, 500);
 
     } catch (error) {
@@ -3326,8 +3333,11 @@ function generarTarjetasItemsCostos(itemsPropios) {
     itemsPropios.forEach((item, index) => {
         const itemId = item.id;
 
+        // Detectar si la categoría es NOMINA
+        const esNomina = item.categoria && (item.categoria.nombre === 'NOMINA' || item.categoria.nombre === 'Nomina' || item.categoria.nombre === 'nómina');
+
         html += `
-            <div class="item-cost-card mb-4" id="cardItem_${itemId}">
+            <div class="item-cost-card mb-4" id="cardItem_${itemId}" data-es-nomina="${esNomina}">
                 <!-- Header de la tarjeta -->
                 <div class="card-header bg-primary text-white py-3" style="border-radius: 12px 12px 0 0;">
                     <div class="row align-items-center">
@@ -3371,8 +3381,8 @@ function generarTarjetasItemsCostos(itemsPropios) {
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="custom-control custom-radio">
-                                    <input type="radio" id="tipoUnitario_${itemId}" name="tipoCosto_${itemId}"
-                                           value="unitario" class="custom-control-input" onchange="cambiarTipoCostoVisual('${itemId}', 'unitario')">
+                                     <input type="radio" id="tipoUnitario_${itemId}" name="tipoCosto_${itemId}"
+                                         value="unitario" class="custom-control-input" onchange="cambiarTipoCostoVisual('${itemId}', 'unitario')" ${esNomina ? 'disabled' : ''}>
                                     <label class="custom-control-label" for="tipoUnitario_${itemId}">
                                         <div class="d-flex align-items-center">
                                             <i class="fas fa-calculator text-info mr-2"></i>
@@ -3422,6 +3432,28 @@ function generarTarjetasItemsCostos(itemsPropios) {
                         ${generarCamposConfiguracion(itemId)}
                     </div>
 
+                    ${esNomina ? `
+                    <!-- Panel de Novedades Operativas (exclusivo NOMINA) -->
+                    <div id="panelNovedades_${itemId}" class="d-none mt-3">
+                        <div class="card border-warning shadow-sm">
+                            <div class="card-header bg-warning text-dark py-2 d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-file-invoice-dollar mr-2"></i><strong>Novedades Operativas</strong></span>
+                                <small class="text-dark opacity-75">Costos adicionales al salario base</small>
+                            </div>
+                            <div class="card-body p-2" id="tablaNovedades_${itemId}">
+                                <div class="text-center py-3 text-muted">
+                                    <i class="fas fa-info-circle mr-1"></i> Seleccione el tipo de costo para ver las novedades
+                                </div>
+                            </div>
+                            <div class="card-footer py-2 text-right bg-light border-0">
+                                <strong>Total Novedades:
+                                    <span id="totalNovedades_${itemId}" class="text-warning ml-1">$0</span>
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+
                     <!-- Display del precio calculado -->
                     <div class="price-display d-none" id="precioDisplay_${itemId}">
                         <div class="row align-items-center">
@@ -3461,6 +3493,19 @@ function generarCamposConfiguracion(itemId) {
                 <i class="fas fa-cogs mr-2"></i>Configuración Básica
             </h6>
             <div class="row">
+                            <div class="row mt-2">
+                                <div class="col-12">
+                                    <div id="detalleCalculo_${itemId}" class="alert alert-info p-2 mb-0" style="font-size: 0.95em; display: none;"></div>
+                                </div>
+                            </div>
+                <div class="col-12 mb-2">
+                    <label class="form-label font-weight-bold">Tipo de Día</label>
+                    <select class="form-control" id="tipoDia_${itemId}">
+                        <option value="normal">Normal</option>
+                        <option value="festivo">Festivo/Dominical</option>
+                    </select>
+                    <small class="form-text text-muted">Seleccione si el turno es en día normal o festivo/dominical</small>
+                </div>
                 <div class="col-md-6">
                     <div class="form-group">
                         <label class="form-label font-weight-bold">
@@ -3528,34 +3573,46 @@ function generarCamposConfiguracion(itemId) {
                     <div class="col-md-6">
                         <div class="form-group">
                             <label class="form-label font-weight-bold">
-                                <i class="fas fa-sun mr-1 text-warning"></i>Horas Diurnas
+                                <i class="fas fa-sun mr-1 text-warning"></i>Turno (Hora Inicial y Final)
                             </label>
-                            <input type="number" class="form-control" id="horasDiurnas_${itemId}"
-                                   placeholder="0" step="1" min="0" max="7" onchange="validarHorasYActualizar('${itemId}')">
-                            <small class="form-text text-danger font-weight-bold">Máximo 7 horas permitidas</small>
+                            <div class="row">
+                                <div class="col-6">
+                                    <input type="time" class="form-control" id="horaInicial_${itemId}" value="07:00" onchange="calcularHorasTurno('${itemId}')" step="60">
+                                    <small class="form-text text-muted">Hora Inicial</small>
+                                </div>
+                                <div class="col-6">
+                                    <input type="time" class="form-control" id="horaFinal_${itemId}" value="14:00" onchange="calcularHorasTurno('${itemId}')" step="60">
+                                    <small class="form-text text-muted">Hora Final</small>
+                                </div>
+                            </div>
+                            <small class="form-text text-danger font-weight-bold">Máximo 7 horas normales y 2 extras</small>
                         </div>
                     </div>
                 </div>
-
-                <div class="d-none" id="campoHorasRemuneradas_${itemId}">
-                    <div class="alert alert-warning border-warning">
-                        <div class="form-group mb-0">
-                            <label class="form-label font-weight-bold">
-                                <i class="fas fa-calculator mr-1"></i>Cantidad de Horas Remuneradas
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label font-weight-bold text-success">
+                                <i class="fas fa-check mr-1"></i>Horas Normales
                             </label>
-                            <input type="number" class="form-control" id="horasRemuneradas_${itemId}"
-                                   placeholder="0" step="1" min="0" onchange="actualizarPrecioVisual('${itemId}')">
-                            <small class="form-text text-muted">Ingrese el total de horas que serán remuneradas</small>
+                            <input type="number" class="form-control" id="horasNormales_${itemId}" value="7" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label font-weight-bold text-danger">
+                                <i class="fas fa-plus mr-1"></i>Horas Extras
+                            </label>
+                            <input type="number" class="form-control" id="horasExtras_${itemId}" value="0" readonly>
                         </div>
                     </div>
                 </div>
             </div>
-
             <!-- Costo Dí­a -->
             <div class="d-none" id="camposCostoDia_${itemId}">
                 <div class="form-group">
                     <label class="form-label font-weight-bold text-success">
-                        <i class="fas fa-calendar-day mr-1"></i>Valor del Costo por Dí­a
+                        <i class="fas fa-calendar-day mr-1"></i>Valor del Costo por Día
                     </label>
                     <div class="input-group">
                         <div class="input-group-prepend">
@@ -3564,7 +3621,7 @@ function generarCamposConfiguracion(itemId) {
                         <input type="number" class="form-control" id="costoDia_${itemId}"
                                placeholder="0.00" step="0.01" min="0" onchange="actualizarPrecioVisual('${itemId}')">
                     </div>
-                    <small class="form-text text-muted">Costo por cada dí­a de trabajo</small>
+                    <small class="form-text text-muted">Costo por cada día de trabajo</small>
                 </div>
 
                 <div class="row mb-3">
@@ -3659,6 +3716,58 @@ function generarCamposConfiguracion(itemId) {
     `;
 }
 
+
+/**
+ * Calcular horas normales y extras según hora inicial y final
+ */
+function calcularHorasTurno(itemId) {
+    const horaInicial = document.getElementById(`horaInicial_${itemId}`).value;
+    const horaFinal = document.getElementById(`horaFinal_${itemId}`).value;
+    const inputNormales = document.getElementById(`horasNormales_${itemId}`);
+    const inputExtras = document.getElementById(`horasExtras_${itemId}`);
+
+    if (!horaInicial || !horaFinal) {
+        inputNormales.value = 0;
+        inputExtras.value = 0;
+        return;
+    }
+
+    // Convertir a minutos
+    const [hIni, mIni] = horaInicial.split(":").map(Number);
+    const [hFin, mFin] = horaFinal.split(":").map(Number);
+    let minutos = (hFin * 60 + mFin) - (hIni * 60 + mIni);
+    if (minutos < 0) minutos += 24 * 60; // Soporta turnos que cruzan medianoche
+    let horas = minutos / 60;
+
+    // Lógica: máximo 7 normales, hasta 2 extras
+    let normales = Math.min(7, Math.max(0, Math.floor(horas)));
+    let extras = Math.max(0, Math.floor(horas) - 7);
+    let total = normales + extras;
+    if (total > 9) {
+        // Mostrar alerta y limitar valores
+        Swal.fire({
+            icon: 'warning',
+            title: 'Selección de horas no permitida',
+            text: 'Solo puede liquidar hasta 7 horas normales y 2 extras (máximo 9 horas por turno).',
+            confirmButtonText: 'Entendido',
+            toast: true,
+            position: 'top-end',
+            timer: 4000
+        });
+        normales = 7;
+        extras = 2;
+    } else if (extras > 2) {
+        extras = 2;
+        normales = Math.min(7, Math.floor(horas) - (Math.floor(horas) - 9));
+    }
+    inputNormales.value = normales;
+    inputExtras.value = extras;
+    // Si se requiere, actualizar el precio visual
+    if (typeof actualizarPrecioVisual === 'function') {
+        actualizarPrecioVisual(itemId);
+    }
+}
+
 /**
  * Cambiar tipo de costo en la nueva interfaz visual
  */
@@ -3717,7 +3826,151 @@ function cambiarTipoCostoVisual(itemId, tipoCosto) {
 
     // Cargar valores por defecto desde backend
     cargarValoresDefectoPorTipo(itemId, tipoCosto);
+
+    // Mostrar/ocultar panel de novedades (solo para items NOMINA)
+    const _cardNom = document.getElementById(`cardItem_${itemId}`);
+    const _esNomina = _cardNom?.dataset?.esNomina === 'true';
+    const _panelNov = document.getElementById(`panelNovedades_${itemId}`);
+    if (_esNomina && _panelNov) {
+        if (tipoCosto === 'hora' || tipoCosto === 'dia') {
+            _panelNov.classList.remove('d-none');
+            cargarNovedadesEnPanel(itemId);
+        } else {
+            _panelNov.classList.add('d-none');
+        }
+    }
 }
+
+// ============================================================
+// FUNCIONES NOVEDADES OPERATIVAS (NOMINA)
+// ============================================================
+
+let _cacheNovedadesOperativas = null;
+
+async function cargarNovedadesEnPanel(itemId) {
+    const contenedor = document.getElementById(`tablaNovedades_${itemId}`);
+    if (!contenedor) return;
+
+    // Si ya está renderizada la tabla (no es el placeholder inicial) no recargar
+    if (contenedor.querySelector('table')) return;
+
+    contenedor.innerHTML = '<div class="text-center py-2 text-muted"><i class="fas fa-spinner fa-spin mr-1"></i> Cargando novedades...</div>';
+
+    try {
+        if (!_cacheNovedadesOperativas) {
+            const resp = await fetch('/admin/admin.cotizaciones.novedades-grupo-cotiza');
+            const data = await resp.json();
+            if (data.success) {
+                _cacheNovedadesOperativas = data.data;
+            } else {
+                contenedor.innerHTML = '<div class="alert alert-warning py-2 mb-0">No se pudieron cargar las novedades.</div>';
+                return;
+            }
+        }
+        renderizarTablaNovedades(itemId, _cacheNovedadesOperativas);
+    } catch (e) {
+        console.error('Error cargando novedades:', e);
+        contenedor.innerHTML = '<div class="alert alert-danger py-2 mb-0">Error al cargar novedades operativas.</div>';
+    }
+}
+
+function renderizarTablaNovedades(itemId, novedades) {
+    const contenedor = document.getElementById(`tablaNovedades_${itemId}`);
+    if (!contenedor) return;
+
+    let filas = '';
+    novedades.forEach(novedad => {
+        if (!novedad.detalles || novedad.detalles.length === 0) return;
+        novedad.detalles.forEach(detalle => {
+            const valorFmt = Number(detalle.valor_operativo).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            filas += `
+            <tr>
+                <td class="py-1 align-middle">
+                    <small class="text-dark"><strong>${novedad.nombre}</strong> · ${detalle.nombre}</small>
+                </td>
+                <td class="py-1 align-middle text-right">
+                    <small>$${valorFmt}</small>
+                </td>
+                <td class="py-1 align-middle" style="width:90px">
+                    <input type="number" min="0" step="0.5" value="0"
+                           class="form-control form-control-sm text-center"
+                           id="novCant_${itemId}_${detalle.id}"
+                           data-detalle-id="${detalle.id}"
+                           data-valor="${detalle.valor_operativo}"
+                           oninput="recalcularFilaNovedad('${itemId}', '${detalle.id}', ${detalle.valor_operativo})">
+                </td>
+                <td class="py-1 align-middle text-right" id="novSub_${itemId}_${detalle.id}">
+                    <small class="text-muted">$0</small>
+                </td>
+            </tr>`;
+        });
+    });
+
+    if (!filas) {
+        contenedor.innerHTML = '<div class="text-center text-muted py-2"><i class="fas fa-info-circle mr-1"></i>No hay novedades con grupo cotiza activo.</div>';
+        return;
+    }
+
+    contenedor.innerHTML = `
+        <div class="table-responsive">
+        <table class="table table-sm table-borderless mb-0">
+            <thead class="thead-light">
+                <tr>
+                    <th>Novedad / Detalle</th>
+                    <th class="text-right">Valor Unit.</th>
+                    <th class="text-center">Cantidad</th>
+                    <th class="text-right">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>${filas}</tbody>
+        </table>
+        </div>`;
+}
+
+function recalcularFilaNovedad(itemId, detalleId, valorUnitario) {
+    const cantInput = document.getElementById(`novCant_${itemId}_${detalleId}`);
+    const subCell  = document.getElementById(`novSub_${itemId}_${detalleId}`);
+    if (!cantInput || !subCell) return;
+
+    const cantidad = parseFloat(cantInput.value) || 0;
+    const subtotal = cantidad * parseFloat(valorUnitario);
+    const fmt = subtotal.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    subCell.innerHTML = `<small class="${subtotal > 0 ? 'text-success font-weight-bold' : 'text-muted'}">$${fmt}</small>`;
+    actualizarTotalNovedadesPanel(itemId);
+}
+
+function actualizarTotalNovedadesPanel(itemId) {
+    const inputs = document.querySelectorAll(`[id^="novCant_${itemId}_"]`);
+    let total = 0;
+    inputs.forEach(inp => {
+        total += (parseFloat(inp.value) || 0) * (parseFloat(inp.dataset.valor) || 0);
+    });
+    const el = document.getElementById(`totalNovedades_${itemId}`);
+    if (el) {
+        el.textContent = '$' + total.toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        el.style.color = total > 0 ? '#e67e00' : '';
+    }
+    // Recalcular Precio Total para reflejar el nuevo total de novedades
+    actualizarPrecioVisual(itemId);
+}
+
+function recolectarNovedadesDeItem(itemId) {
+    const inputs = document.querySelectorAll(`[id^="novCant_${itemId}_"]`);
+    const novedades = [];
+    inputs.forEach(inp => {
+        const cantidad = parseFloat(inp.value) || 0;
+        if (cantidad > 0) {
+            novedades.push({
+                novedad_detalle_id: parseInt(inp.dataset.detalleId),
+                valor: parseFloat(inp.dataset.valor),
+                cantidad: cantidad,
+            });
+        }
+    });
+    return novedades;
+}
+
+// ============================================================
 
 /**
  * Validar horas y actualizar en la nueva interfaz
@@ -3850,33 +4103,55 @@ function actualizarPrecioVisual(itemId) {
 
     // Calcular precio según tipo
     switch (tipoCosto) {
-        case 'unitario':
-            const costoUnitario = parseFloat(document.getElementById(`costoUnitario_${itemId}`).value) || 0;
+        case 'unitario': {
+            const costoUnitarioInput = document.getElementById(`costoUnitario_${itemId}`);
+            const costoUnitario = costoUnitarioInput ? parseFloat(costoUnitarioInput.value) || 0 : 0;
             precio = costoUnitario * cantidadOperarios;
             break;
-
-        case 'hora':
-            const costoHora = parseFloat(document.getElementById(`costoHora_${itemId}`).value) || 0;
-            const horasRemuneradas = parseFloat(document.getElementById(`horasRemuneradas_${itemId}`).value) || 0;
-            precio = costoHora * horasRemuneradas * cantidadOperarios;
+        }
+        case 'hora': {
+            const costoHoraInput = document.getElementById(`costoHora_${itemId}`);
+            const horasNormalesInput = document.getElementById(`horasNormales_${itemId}`);
+            const horasExtrasInput = document.getElementById(`horasExtras_${itemId}`);
+            const costoHora = costoHoraInput ? parseFloat(costoHoraInput.value) || 0 : 0;
+            const horasNormales = horasNormalesInput ? parseFloat(horasNormalesInput.value) || 0 : 0;
+            const horasExtras = horasExtrasInput ? parseFloat(horasExtrasInput.value) || 0 : 0;
+            // Si se requiere, puedes aplicar un factor diferente para horas extras
+            const factorExtra = 1.5; // Por ejemplo, 50% más
+            precio = (costoHora * horasNormales + costoHora * factorExtra * horasExtras) * cantidadOperarios;
             break;
-
-        case 'dia':
-            const costoDia = parseFloat(document.getElementById(`costoDia_${itemId}`).value) || 0;
-            const diasRemuneradosDiurnos = parseFloat(document.getElementById(`diasRemuneradosDiurnos_${itemId}`).value) || 0;
-            const diasRemuneradosNocturnos = parseFloat(document.getElementById(`diasRemuneradosNocturnos_${itemId}`).value) || 0;
-            const dominicalesDiurnos = parseFloat(document.getElementById(`dominicalesDiurnos_${itemId}`).value) || 0;
-            const dominicalesNocturnos = parseFloat(document.getElementById(`dominicalesNocturnos_${itemId}`).value) || 0;
-
+        }
+        case 'dia': {
+            const costoDiaInput = document.getElementById(`costoDia_${itemId}`);
+            const diasRemuneradosDiurnosInput = document.getElementById(`diasRemuneradosDiurnos_${itemId}`);
+            const diasRemuneradosNocturnosInput = document.getElementById(`diasRemuneradosNocturnos_${itemId}`);
+            const dominicalesDiurnosInput = document.getElementById(`dominicalesDiurnos_${itemId}`);
+            const dominicalesNocturnosInput = document.getElementById(`dominicalesNocturnos_${itemId}`);
+            const costoDia = costoDiaInput ? parseFloat(costoDiaInput.value) || 0 : 0;
+            const diasRemuneradosDiurnos = diasRemuneradosDiurnosInput ? parseFloat(diasRemuneradosDiurnosInput.value) || 0 : 0;
+            const diasRemuneradosNocturnos = diasRemuneradosNocturnosInput ? parseFloat(diasRemuneradosNocturnosInput.value) || 0 : 0;
+            const dominicalesDiurnos = dominicalesDiurnosInput ? parseFloat(dominicalesDiurnosInput.value) || 0 : 0;
+            const dominicalesNocturnos = dominicalesNocturnosInput ? parseFloat(dominicalesNocturnosInput.value) || 0 : 0;
             const totalDias = diasRemuneradosDiurnos + diasRemuneradosNocturnos + dominicalesDiurnos + dominicalesNocturnos;
             precio = costoDia * totalDias * cantidadOperarios;
             break;
+        }
+    }
+
+    // Sumar Total Novedades × Operarios para items NOMINA
+    const cardItem = document.getElementById(`cardItem_${itemId}`);
+    if (cardItem?.dataset?.esNomina === 'true') {
+        const _novInputs = document.querySelectorAll(`[id^="novCant_${itemId}_"]`);
+        let _totalNov = 0;
+        _novInputs.forEach(inp => {
+            _totalNov += (parseFloat(inp.value) || 0) * (parseFloat(inp.dataset.valor) || 0);
+        });
+        precio += _totalNov * cantidadOperarios;
     }
 
     // Actualizar display del precio
     const valorPrecio = document.getElementById(`valorPrecio_${itemId}`);
     const statusBadge = document.getElementById(`statusBadge_${itemId}`);
-    const cardItem = document.getElementById(`cardItem_${itemId}`);
 
     valorPrecio.textContent = `$${precio.toFixed(2)}`;
 
@@ -4331,32 +4606,121 @@ function calcularPrecioItem(itemId) {
     let precio = 0;
 
     switch (tipoCosto) {
-        case 'unitario':
-            const costoUnitario = parseFloat(document.getElementById(`costoUnitario_${itemId}`).value) || 0;
+        case 'unitario': {
+            const costoUnitarioInput = document.getElementById(`costoUnitario_${itemId}`);
+            const costoUnitario = costoUnitarioInput ? parseFloat(costoUnitarioInput.value) || 0 : 0;
             precio = costoUnitario * cantidadOperarios;
             break;
-
-        case 'hora':
-            const costoHora = parseFloat(document.getElementById(`costoHora_${itemId}`).value) || 0;
-            const horasRemuneradas = parseFloat(document.getElementById(`horasRemuneradas_${itemId}`).value) || 0;
-            precio = costoHora * horasRemuneradas * cantidadOperarios;
+        }
+        case 'hora': {
+            // Usar los nuevos campos si existen, si no, fallback a horasRemuneradas
+            const costoHoraInput = document.getElementById(`costoHora_${itemId}`);
+            const horasNormalesInput = document.getElementById(`horasNormales_${itemId}`);
+            const horasExtrasInput = document.getElementById(`horasExtras_${itemId}`);
+            const horasRemuneradasInput = document.getElementById(`horasRemuneradas_${itemId}`);
+            const costoHora = costoHoraInput ? parseFloat(costoHoraInput.value) || 0 : 0;
+            let precioHora = 0;
+            if (horasNormalesInput && horasExtrasInput) {
+                const horasNormales = parseFloat(horasNormalesInput.value) || 0;
+                const horasExtras = parseFloat(horasExtrasInput.value) || 0;
+                // Determinar tipo de día
+                const tipoDiaSelect = document.getElementById(`tipoDia_${itemId}`);
+                const tipoDia = tipoDiaSelect ? tipoDiaSelect.value : 'normal';
+                // Determinar si las horas extras son diurnas o nocturnas
+                const horaInicialInput = document.getElementById(`horaInicial_${itemId}`);
+                const horaFinalInput = document.getElementById(`horaFinal_${itemId}`);
+                let detalle = [];
+                let precioHoraDetalle = 0;
+                if (horaInicialInput && horaFinalInput && horasExtras > 0) {
+                    const hIni = parseInt(horaInicialInput.value.split(":")[0], 10);
+                    let horaExtraIni = hIni + horasNormales;
+                    for (let i = 0; i < horasExtras; i++) {
+                        let horaActual = (horaExtraIni + i) % 24;
+                        let esNocturna = (horaActual >= 21 || horaActual < 6);
+                        let esDiurna = !esNocturna;
+                        let recargo = 1.5; // default
+                        let tipo = '';
+                        if (tipoDia === 'normal') {
+                            recargo = esDiurna ? 1.25 : 1.75;
+                            tipo = esDiurna ? 'Extra Diurna' : 'Extra Nocturna';
+                        } else if (tipoDia === 'festivo') {
+                            recargo = esDiurna ? 2.0 : 2.5;
+                            tipo = esDiurna ? 'Extra Diurna Festiva/Dominical' : 'Extra Nocturna Festiva/Dominical';
+                        }
+                        precioHoraDetalle += costoHora * recargo;
+                        detalle.push(`<b>${tipo}</b> (${horaActual}:00): $${(costoHora * recargo).toFixed(2)} (Recargo x${recargo})`);
+                    }
+                    // Horas normales siempre pagan 1x
+                    if (horasNormales > 0) {
+                        precioHoraDetalle += costoHora * horasNormales;
+                        detalle.unshift(`<b>Horas Normales</b>: ${horasNormales} x $${costoHora.toFixed(2)} = $${(costoHora * horasNormales).toFixed(2)}`);
+                    }
+                    precioHoraDetalle = precioHoraDetalle * cantidadOperarios;
+                    detalle.push(`<b>Total x Operarios:</b> $${precioHoraDetalle.toFixed(2)} (${cantidadOperarios} operario(s))`);
+                    // Mostrar detalle en interfaz
+                    const detalleDiv = document.getElementById(`detalleCalculo_${itemId}`);
+                    if (detalleDiv) {
+                        detalleDiv.innerHTML = detalle.join('<br>');
+                        detalleDiv.style.display = '';
+                    }
+                } else {
+                    // Fallback si no hay info de hora
+                    let factorExtra = 1.5;
+                    let tipo = '';
+                    if (tipoDia === 'normal') {
+                        factorExtra = 1.25;
+                        tipo = 'Extra Diurna';
+                    } else if (tipoDia === 'festivo') {
+                        factorExtra = 2.0;
+                        tipo = 'Extra Diurna Festiva/Dominical';
+                    }
+                    precioHoraDetalle = (costoHora * horasNormales + costoHora * factorExtra * horasExtras) * cantidadOperarios;
+                    detalle.push(`<b>Horas Normales</b>: ${horasNormales} x $${costoHora.toFixed(2)} = $${(costoHora * horasNormales).toFixed(2)}`);
+                    if (horasExtras > 0) {
+                        detalle.push(`<b>${tipo}</b>: ${horasExtras} x $${(costoHora * factorExtra).toFixed(2)} (Recargo x${factorExtra})`);
+                    }
+                    detalle.push(`<b>Total x Operarios:</b> $${precioHoraDetalle.toFixed(2)} (${cantidadOperarios} operario(s))`);
+                    const detalleDiv = document.getElementById(`detalleCalculo_${itemId}`);
+                    if (detalleDiv) {
+                        detalleDiv.innerHTML = detalle.join('<br>');
+                        detalleDiv.style.display = '';
+                    }
+                }
+                precio = precioHoraDetalle;
+            } else if (horasRemuneradasInput) {
+                const horasRemuneradas = parseFloat(horasRemuneradasInput.value) || 0;
+                precioHora = costoHora * horasRemuneradas * cantidadOperarios;
+                const detalleDiv = document.getElementById(`detalleCalculo_${itemId}`);
+                if (detalleDiv) {
+                    detalleDiv.innerHTML = `<b>Horas Remuneradas</b>: ${horasRemuneradas} x $${costoHora.toFixed(2)} = $${precioHora.toFixed(2)}`;
+                    detalleDiv.style.display = '';
+                }
+                precio = precioHora;
+            }
             break;
-
-        case 'dia':
-            const costoDia = parseFloat(document.getElementById(`costoDia_${itemId}`).value) || 0;
-            const diasRemuneradosDiurnos = parseFloat(document.getElementById(`diasRemuneradosDiurnos_${itemId}`).value) || 0;
-            const diasRemuneradosNocturnos = parseFloat(document.getElementById(`diasRemuneradosNocturnos_${itemId}`).value) || 0;
-            const dominicalesDiurnos = parseFloat(document.getElementById(`dominicalesDiurnos_${itemId}`).value) || 0;
-            const dominicalesNocturnos = parseFloat(document.getElementById(`dominicalesNocturnos_${itemId}`).value) || 0;
-
+        }
+        case 'dia': {
+            const costoDiaInput = document.getElementById(`costoDia_${itemId}`);
+            const diasRemuneradosDiurnosInput = document.getElementById(`diasRemuneradosDiurnos_${itemId}`);
+            const diasRemuneradosNocturnosInput = document.getElementById(`diasRemuneradosNocturnos_${itemId}`);
+            const dominicalesDiurnosInput = document.getElementById(`dominicalesDiurnos_${itemId}`);
+            const dominicalesNocturnosInput = document.getElementById(`dominicalesNocturnos_${itemId}`);
+            const costoDia = costoDiaInput ? parseFloat(costoDiaInput.value) || 0 : 0;
+            const diasRemuneradosDiurnos = diasRemuneradosDiurnosInput ? parseFloat(diasRemuneradosDiurnosInput.value) || 0 : 0;
+            const diasRemuneradosNocturnos = diasRemuneradosNocturnosInput ? parseFloat(diasRemuneradosNocturnosInput.value) || 0 : 0;
+            const dominicalesDiurnos = dominicalesDiurnosInput ? parseFloat(dominicalesDiurnosInput.value) || 0 : 0;
+            const dominicalesNocturnos = dominicalesNocturnosInput ? parseFloat(dominicalesNocturnosInput.value) || 0 : 0;
             const totalDias = diasRemuneradosDiurnos + diasRemuneradosNocturnos + dominicalesDiurnos + dominicalesNocturnos;
             precio = costoDia * totalDias * cantidadOperarios;
             break;
+        }
     }
 
     // Actualizar campo de precio
     const campoPrecio = document.getElementById(`precio_${itemId}`);
-    campoPrecio.value = precio.toFixed(2);
+    if (campoPrecio) {
+        campoPrecio.value = precio.toFixed(2);
+    }
 }
 
 /**
@@ -4442,10 +4806,6 @@ function volverASeleccionItemsPropios() {
 async function finalizarConfiguracionCostos() {
     const itemsPropiosSeleccionados = window.itemsPropiosSeleccionadosTemporal;
 
-    console.log('window.itemsPropiosSeleccionadosTemporal><>>><>',window.itemsPropiosSeleccionadosTemporal);
-    console.log('window.subitemTemporal><>>><>',window.subitemTemporal);
-
-
     const errores = [];
     const itemsConCostos = [];
 
@@ -4457,12 +4817,14 @@ async function finalizarConfiguracionCostos() {
         const tipoRadios = document.querySelectorAll(`input[name="tipoCosto_${itemId}"]:checked`);
         const tipoCosto = tipoRadios.length > 0 ? tipoRadios[0].value : '';
 
-        const unidadMedida = document.getElementById(`unidadMedida_${itemId}`).value.trim();
-        const cantidadOperarios = document.getElementById(`cantidadOperarios_${itemId}`).value;
+        const unidadMedidaInput = document.getElementById(`unidadMedida_${itemId}`);
+        const cantidadOperariosInput = document.getElementById(`cantidadOperarios_${itemId}`);
+        const unidadMedida = unidadMedidaInput ? unidadMedidaInput.value.trim() : '';
+        const cantidadOperarios = cantidadOperariosInput ? cantidadOperariosInput.value : '';
 
         // Obtener precio del display visual o input oculto
         let precio = document.getElementById(`valorPrecio_${itemId}`)?.textContent?.replace('$', '') ||
-                    document.getElementById(`precio_${itemId}`)?.value || '0';
+                document.getElementById(`precio_${itemId}`)?.value || '0';
 
         if (!tipoCosto) {
             errores.push(`Debe seleccionar el tipo de costo para "${item.nombre}"`);
@@ -4487,30 +4849,43 @@ async function finalizarConfiguracionCostos() {
         // Validaciones especí­ficas por tipo de costo
         let costoEspecifico = 0;
         switch (tipoCosto) {
-            case 'unitario':
-                costoEspecifico = document.getElementById(`costoUnitario_${itemId}`).value;
+            case 'unitario': {
+                const costoUnitarioInput = document.getElementById(`costoUnitario_${itemId}`);
+                costoEspecifico = costoUnitarioInput ? costoUnitarioInput.value : '';
                 if (!costoEspecifico || costoEspecifico <= 0) {
                     errores.push(`Debe ingresar un costo unitario válido para "${item.nombre}"`);
                     continue;
                 }
                 break;
-            case 'hora':
-                costoEspecifico = document.getElementById(`costoHora_${itemId}`).value;
-                const horasRemuneradas = document.getElementById(`horasRemuneradas_${itemId}`).value;
+            }
+            case 'hora': {
+                const horasnormales = document.getElementById(`horasNormales_${itemId}`)?.value || 0;
+                const horasExtras = document.getElementById(`horasExtras_${itemId}`)?.value || 0;
+
+                if (parseFloat(horasnormales) + parseFloat(horasExtras) <= 0) {
+                    errores.push(`Debe ingresar al menos una hora remunerada (normal o extra) para "${item.nombre}"`);
+                    continue;
+                }
+                const costoHoraInput = document.getElementById(`costoHora_${itemId}`);
+                costoEspecifico = costoHoraInput ? costoHoraInput.value : '';
+                const horasRemuneradas = parseFloat(horasnormales) + parseFloat(horasExtras);
                 if (!costoEspecifico || costoEspecifico <= 0) {
                     errores.push(`Debe ingresar un costo por hora válido para "${item.nombre}"`);
                     continue;
                 }
-                if (!horasRemuneradas || horasRemuneradas <= 0) {
-                    errores.push(`Debe ingresar las horas remuneradas para "${item.nombre}"`);
+                if (horasRemuneradas <= 0) {
+                    errores.push(`Debe ingresar las horas remuneradas para "${item.nombre}"...`);
                     continue;
                 }
                 break;
-            case 'dia':
-                costoEspecifico = document.getElementById(`costoDia_${itemId}`).value;
-                const diasRemuneradosDiurnos = document.getElementById(`diasRemuneradosDiurnos_${itemId}`).value || 0;
-                const diasRemuneradosNocturnos = document.getElementById(`diasRemuneradosNocturnos_${itemId}`).value || 0;
-
+            }
+            case 'dia': {
+                const costoDiaInput = document.getElementById(`costoDia_${itemId}`);
+                const diasRemuneradosDiurnosInput = document.getElementById(`diasRemuneradosDiurnos_${itemId}`);
+                const diasRemuneradosNocturnosInput = document.getElementById(`diasRemuneradosNocturnos_${itemId}`);
+                costoEspecifico = costoDiaInput ? costoDiaInput.value : '';
+                const diasRemuneradosDiurnos = diasRemuneradosDiurnosInput ? diasRemuneradosDiurnosInput.value : 0;
+                const diasRemuneradosNocturnos = diasRemuneradosNocturnosInput ? diasRemuneradosNocturnosInput.value : 0;
                 if (!costoEspecifico || costoEspecifico <= 0) {
                     errores.push(`Debe ingresar un costo por dí­a válido para "${item.nombre}"`);
                     continue;
@@ -4520,6 +4895,7 @@ async function finalizarConfiguracionCostos() {
                     continue;
                 }
                 break;
+            }
         }
 
         item.cotizacion_item_id = window.subitemTemporal.item.id;
@@ -4536,6 +4912,14 @@ async function finalizarConfiguracionCostos() {
             item.item_propio_id = esParametrizacion ? null : item.id;
         }
 
+        // Recolectar novedades si el item es NOMINA
+        const _esNominaItem = item.categoria && (
+            item.categoria.nombre === 'NOMINA' ||
+            item.categoria.nombre === 'Nomina' ||
+            item.categoria.nombre === 'nómina'
+        );
+        const _novedadesItem = _esNominaItem ? recolectarNovedadesDeItem(itemId) : [];
+
         // Recopilar toda la configuración del item
         const itemConCosto = {
             ...item,
@@ -4544,18 +4928,19 @@ async function finalizarConfiguracionCostos() {
                 unidadMedida,
                 cantidadOperarios: parseFloat(cantidadOperarios),
                 precio: parseFloat(precio),
-                costoUnitario: tipoCosto === 'unitario' ? parseFloat(document.getElementById(`costoUnitario_${itemId}`).value) : null,
-                costoHora: tipoCosto === 'hora' ? parseFloat(document.getElementById(`costoHora_${itemId}`).value) : null,
-                costoDia: tipoCosto === 'dia' ? parseFloat(document.getElementById(`costoDia_${itemId}`).value) : null,
-                horasDiurnas: tipoCosto === 'hora' ? (parseFloat(document.getElementById(`horasDiurnas_${itemId}`).value) || 0) : null,
-                horasRemuneradas: tipoCosto === 'hora' ? (parseFloat(document.getElementById(`horasRemuneradas_${itemId}`).value) || 0) : null,
-                diasDiurnos: tipoCosto === 'dia' ? (parseFloat(document.getElementById(`diasDiurnos_${itemId}`).value) || 0) : null,
-                diasNocturnos: tipoCosto === 'dia' ? (parseFloat(document.getElementById(`diasNocturnos_${itemId}`).value) || 0) : null,
-                diasRemuneradosDiurnos: tipoCosto === 'dia' ? (parseFloat(document.getElementById(`diasRemuneradosDiurnos_${itemId}`).value) || 0) : null,
-                diasRemuneradosNocturnos: tipoCosto === 'dia' ? (parseFloat(document.getElementById(`diasRemuneradosNocturnos_${itemId}`).value) || 0) : null,
-                dominicalesDiurnos: tipoCosto === 'dia' ? (parseFloat(document.getElementById(`dominicalesDiurnos_${itemId}`).value) || 0) : null,
-                dominicalesNocturnos: tipoCosto === 'dia' ? (parseFloat(document.getElementById(`dominicalesNocturnos_${itemId}`).value) || 0) : null,
-                incluirDominicales: tipoCosto === 'dia' ? document.getElementById(`incluirDominicales_${itemId}`).checked : false
+                costoUnitario: tipoCosto === 'unitario' ? (document.getElementById(`costoUnitario_${itemId}`)?.value ? parseFloat(document.getElementById(`costoUnitario_${itemId}`).value) : null) : null,
+                costoHora: tipoCosto === 'hora' ? (document.getElementById(`costoHora_${itemId}`)?.value ? parseFloat(document.getElementById(`costoHora_${itemId}`).value) : null) : null,
+                costoDia: tipoCosto === 'dia' ? (document.getElementById(`costoDia_${itemId}`)?.value ? parseFloat(document.getElementById(`costoDia_${itemId}`).value) : null) : null,
+                horasDiurnas: tipoCosto === 'hora' ? (document.getElementById(`horasDiurnas_${itemId}`)?.value ? parseFloat(document.getElementById(`horasDiurnas_${itemId}`).value) : 0) : null,
+                horasRemuneradas: tipoCosto === 'hora' ? (document.getElementById(`horasRemuneradas_${itemId}`)?.value ? parseFloat(document.getElementById(`horasRemuneradas_${itemId}`).value) : 0) : null,
+                diasDiurnos: tipoCosto === 'dia' ? (document.getElementById(`diasDiurnos_${itemId}`)?.value ? parseFloat(document.getElementById(`diasDiurnos_${itemId}`).value) : 0) : null,
+                diasNocturnos: tipoCosto === 'dia' ? (document.getElementById(`diasNocturnos_${itemId}`)?.value ? parseFloat(document.getElementById(`diasNocturnos_${itemId}`).value) : 0) : null,
+                diasRemuneradosDiurnos: tipoCosto === 'dia' ? (document.getElementById(`diasRemuneradosDiurnos_${itemId}`)?.value ? parseFloat(document.getElementById(`diasRemuneradosDiurnos_${itemId}`).value) : 0) : null,
+                diasRemuneradosNocturnos: tipoCosto === 'dia' ? (document.getElementById(`diasRemuneradosNocturnos_${itemId}`)?.value ? parseFloat(document.getElementById(`diasRemuneradosNocturnos_${itemId}`).value) : 0) : null,
+                dominicalesDiurnos: tipoCosto === 'dia' ? (document.getElementById(`dominicalesDiurnos_${itemId}`)?.value ? parseFloat(document.getElementById(`dominicalesDiurnos_${itemId}`).value) : 0) : null,
+                dominicalesNocturnos: tipoCosto === 'dia' ? (document.getElementById(`dominicalesNocturnos_${itemId}`)?.value ? parseFloat(document.getElementById(`dominicalesNocturnos_${itemId}`).value) : 0) : null,
+                incluirDominicales: tipoCosto === 'dia' ? (document.getElementById(`incluirDominicales_${itemId}`)?.checked || false) : false,
+                novedades: _novedadesItem
             }
         };
 
@@ -4566,7 +4951,7 @@ async function finalizarConfiguracionCostos() {
         Swal.fire({
             type: 'error',
             title: 'Errores de validación',
-            html: errores.map(error => `â€¢ ${error}`).join('<br>'),
+            html: errores.map(error => `${error}`).join('<br>'),
             confirmButtonText: 'Entendido'
         });
         return;
@@ -4605,6 +4990,13 @@ async function finalizarConfiguracionCostos() {
         // SINCRONIZAR: Convertir items de la tabla a productosSeleccionados
         sincronizarItemsTablaConProductosSeleccionados(itemsConCostos);
         actualizarTotalGeneral();
+
+        // Si hay items de nómina pendientes (flujo mixto), abrir su modal
+        if (window.itemsNominaPendientes && window.itemsNominaPendientes.length > 0) {
+            const nominaPendientes = window.itemsNominaPendientes;
+            window.itemsNominaPendientes = null;
+            setTimeout(() => abrirModalNominaConfig(nominaPendientes), 800);
+        }
 
 
     } catch (error) {
@@ -5606,7 +5998,7 @@ function generarListaSubitems(itemId, subitems) {
         return `
             <div class="subitems-container">
                 <button class="btn btn-sm btn-outline-secondary" data-item-id="${itemId}" type="button" disabled>
-                    <i class="fas fa-cube"></i> Sin subitems
+                    <i class="fas fa-cube"></i> Sin Items
                 </button>
             </div>
         `;
@@ -5616,7 +6008,7 @@ function generarListaSubitems(itemId, subitems) {
     let subitemsTableHtml = `
         <div class="subitems-container">
             <button class="btn btn-sm btn-primary toggle-subitems" type="button" data-item-id="${itemId}" onclick="toggleSubitems(${itemId})">
-                <i class="fas fa-eye" id="icon_${itemId}"></i> Ver subitems (${subitems.length})
+                <i class="fas fa-eye" id="icon_${itemId}"></i> Ver Items (${subitems.length})
             </button>
             <div class="subitems-table-container mt-2" id="subitems_${itemId}" style="display: none;">
                 <div class="table-responsive">
@@ -5639,7 +6031,7 @@ function generarListaSubitems(itemId, subitems) {
         const isReadOnly = variable === 'ver';
 
         subitemsTableHtml += `
-            <tr>
+            <tr data-subitem-id="${subitem.id}">
                 <td><code class="text-primary">${subitem.codigo}</code></td>
                 <td><strong>${subitem.nombre}</strong></td>
                 <td class="text-center">${subitem.cantidad || 1} ${unidadMedida}</td>
@@ -5680,21 +6072,34 @@ async function cargarSubitemsDelItem(itemId) {
             // Encontrar el item en la lista local y actualizar sus subitems
             const itemIndex = itemsCotizacion.findIndex(item => item.id === itemId);
             if (itemIndex !== -1) {
-                // Actualizar con los subitems recibidos (puede ser un array vací­o)
+                // Actualizar con los subitems recibidos (puede ser un array vacío)
                 itemsCotizacion[itemIndex].subitems = data.data || [];
 
+                // Guardar estado de visibilidad antes de reemplazar el DOM
+                const oldContainer = document.getElementById(`subitems_${itemId}`);
+                const wasVisible = oldContainer && window.getComputedStyle(oldContainer).display !== 'none';
 
-                // Encontrar y actualizar solo el HTML especí­fico del item
+                // Encontrar y actualizar solo el HTML específico del item
                 const itemRow = document.querySelector(`tr:has([data-item-id="${itemId}"])`);
                 if (itemRow) {
                     const subitemsCell = itemRow.cells[3]; // La celda de subitems
                     if (subitemsCell) {
                         subitemsCell.innerHTML = generarListaSubitems(itemId, data.data || []);
+
+                        // Restaurar visibilidad si el panel estaba abierto y aún hay subitems
+                        if (wasVisible && data.data && data.data.length > 0) {
+                            const newContainer = document.getElementById(`subitems_${itemId}`);
+                            if (newContainer) {
+                                newContainer.style.display = 'block';
+                            }
+                            const newIcon = document.getElementById(`icon_${itemId}`);
+                            if (newIcon) {
+                                newIcon.classList.remove('fa-eye');
+                                newIcon.classList.add('fa-eye-slash');
+                            }
+                        }
                     }
                 }
-
-                // Mantener sincronizada la tabla principal (refresca también el acordeón)
-                //actualizarTablaItems();
             }
         } else {
             console.error('Error en la respuesta del servidor:', data.message);
@@ -5968,7 +6373,7 @@ function configurarPermisosItems() {
 function abrirModalCrearSubitem(cotizacionItemId) {
     // Verificar que el item tenga un ID válido
     if (!cotizacionItemId) {
-        toastr.error('El item debe estar guardado antes de poder agregar subitems');
+        toastr.error('La capitulación debe estar guardada antes de poder agregar un Item. Por favor, guarde la capitulación primero.');
         return;
     }
 
@@ -5985,15 +6390,32 @@ function abrirModalCrearSubitem(cotizacionItemId) {
     document.getElementById('subitem_id_edit').value = ''; // Limpiar ID de edición
     limpiarErroresSubitem();
 
-    // Restaurar tí­tulos y botones para modo crear
+    // Obtener sugerencia de código desde el backend
+    let parentCodigo = null;
+    // Si hay subitems y el usuario seleccionó un padre, puedes obtener el código padre aquí
+    // Por ahora, solo sugerimos el siguiente subitem directo
+    fetch(`/admin/admin.cotizaciones.items.sugerirCodigoSubitem?cotizacion_item_id=${cotizacionItemId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.codigo) {
+                document.getElementById('subitem_codigo').value = data.codigo;
+            } else {
+                document.getElementById('subitem_codigo').value = '';
+            }
+        })
+        .catch(() => {
+            document.getElementById('subitem_codigo').value = '';
+        });
+
+    // Restaurar títulos y botones para modo crear
     const modalTitle = document.querySelector('#modalCrearSubitem .modal-title');
     if (modalTitle) {
-        modalTitle.textContent = 'Crear Nuevo Subitem';
+        modalTitle.textContent = 'Crear Nuevo Item';
     }
 
     const btnGuardar = document.getElementById('btn_guardar_subitem');
     if (btnGuardar) {
-        btnGuardar.textContent = 'Crear Subitem';
+        btnGuardar.textContent = 'Crear item';
     }
 
     // Mostrar modal usando jQuery (Bootstrap 4)
@@ -6096,21 +6518,19 @@ async function guardarSubitem(event) {
             // Refrescar vistas: acordeón (modal) y tabla principal
             actualizarTablaItems();
 
-            toastr.success(isEdit ? 'Subitem actualizado exitosamente' : 'Subitem creado exitosamente');            // Cerrar modal usando jQuery (Bootstrap 4)
+            toastr.success(isEdit ? 'Item actualizado exitosamente' : 'Item creado exitosamente');            // Cerrar modal usando jQuery (Bootstrap 4)
             $('#modalCrearSubitem').modal('hide');
 
 
         } else {
             btnGuardar.innerHTML = textoOriginal;
             btnGuardar.disabled = false;
-            throw new Error(result.message || 'Error al crear subitem');
+            throw new Error(result.message || 'Error al crear Item');
         }
 
     } catch (error) {
         btnGuardar.innerHTML = textoOriginal;
         btnGuardar.disabled = false;
-        console.error('Error al guardar subitem:', error);
-        toastr.error('Error al crear el subitem: ' + error.message);
 
         if (error.response?.status === 422) {
             // Mostrar errores de validación
@@ -6302,13 +6722,13 @@ async function editarSubitem(subitemId) {
             // Cambiar tí­tulo del modal
             const modalTitle = document.querySelector('#modalCrearSubitem .modal-title');
             if (modalTitle) {
-                modalTitle.textContent = 'Editar Subitem';
+                modalTitle.textContent = 'Editar Item';
             }
 
             // Cambiar texto del botón
             const btnGuardar = document.getElementById('btn_guardar_subitem');
             if (btnGuardar) {
-                btnGuardar.textContent = 'Actualizar Subitem';
+                btnGuardar.textContent = 'Actualizar Item';
             }
 
             // Limpiar errores
@@ -6318,43 +6738,81 @@ async function editarSubitem(subitemId) {
             $('#modalCrearSubitem').modal('show');
 
         } else {
-            toastr.error('Error al cargar los datos del subitem');
+            toastr.error('Error al cargar los datos del item');
         }
     } catch (error) {
-        console.error('Error al editar subitem:', error);
-        toastr.error('Error al cargar el subitem para edición');
+        console.error('Error al editar item:', error);
+        toastr.error('Error al cargar el item para edición');
     }
 }
 
 /**
- * Eliminar un subitem
+ * Eliminar un item
  */
 async function eliminarSubitem(subitemId, itemId) {
-    if (!confirm('Â¿Está seguro de eliminar este subitem?')) {
-        return;
-    }
-
-    try {
-        const response = await fetch(`/admin/admin.cotizaciones.items.destroySubitem/${subitemId}`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            // Recargar subitems del item
-            await cargarSubitemsDelItem(itemId);
-            toastr.success('Subitem eliminado exitosamente');
-        } else {
-            toastr.error('Error al eliminar el subitem: ' + result.message);
+    Swal.fire({
+        title: '¿Está seguro de eliminar este Item?',
+        text: 'Esta acción no se puede deshacer.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+        if (!result.value) {
+            return;
         }
-    } catch (error) {
-        console.error('Error al eliminar subitem:', error);
-        toastr.error('Error al eliminar el subitem');
-    }
+        try {
+            const response = await fetch(`/admin/admin.cotizaciones.items.destroySubitem/${subitemId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+
+            const resultData = await response.json();
+
+            if (resultData.success) {
+                // 1. Eliminar la fila directamente del DOM
+                const fila = document.querySelector(`tr[data-subitem-id="${subitemId}"]`);
+                if (fila) {
+                    fila.remove();
+                }
+
+                // 2. Actualizar itemsCotizacion en memoria
+                const itemIndex = itemsCotizacion.findIndex(i => i.id === itemId);
+                if (itemIndex !== -1 && itemsCotizacion[itemIndex].subitems) {
+                    itemsCotizacion[itemIndex].subitems = itemsCotizacion[itemIndex].subitems.filter(s => s.id !== subitemId);
+                    const restantes = itemsCotizacion[itemIndex].subitems.length;
+
+                    // 3. Actualizar el contador del botón toggle
+                    const toggleBtn = document.querySelector(`button.toggle-subitems[data-item-id="${itemId}"]`);
+                    if (restantes === 0) {
+                        // No quedan subitems: reemplazar todo el contenedor
+                        const contenedor = toggleBtn ? toggleBtn.closest('.subitems-container') : null;
+                        if (contenedor) {
+                            contenedor.outerHTML = `
+                                <div class="subitems-container">
+                                    <button class="btn btn-sm btn-outline-secondary" data-item-id="${itemId}" type="button" disabled>
+                                        <i class="fas fa-cube"></i> Sin Items
+                                    </button>
+                                </div>`;
+                        }
+                    } else if (toggleBtn) {
+                        // Actualizar el contador en el botón
+                        toggleBtn.innerHTML = `<i class="fas fa-eye-slash" id="icon_${itemId}"></i> Ver Items (${restantes})`;
+                    }
+                }
+
+                toastr.success('Item eliminado exitosamente');
+            } else {
+                toastr.error('Error al eliminar el item: ' + resultData.message);
+            }
+        } catch (error) {
+            console.error('Error al eliminar item:', error);
+        }
+    });
 }
 
 // ========================================
@@ -6586,9 +7044,6 @@ function crearProductosDesdeItemsPropios() {
             let precio = 0;
             if (precioElement) {
                 const precioText = precioElement.textContent;
-                console.log('=== DEBUGGING PRECIO (crearProductos) ===');
-                console.log('Texto completo del precio:', precioText);
-                console.log('Elemento precio HTML:', precioElement.outerHTML);
 
                 // Método simplificado: buscar diferentes patrones paso a paso
                 let precioUnitario = null;
@@ -6598,11 +7053,9 @@ function crearProductosDesdeItemsPropios() {
                 if (patron1) {
                     const numero1 = parseFloat(patron1[1].replace(/,/g, '')) || 0;
                     const numero2 = parseFloat(patron1[2].replace(/,/g, '')) || 0;
-                    console.log(`Patrón X x Y encontrado: ${numero1} x ${numero2}`);
 
                     // Si numero1 * numero2 parece ser el total mostrado, entonces numero1 es unitario
                     const totalCalculado = numero1 * numero2;
-                    console.log(`Total calculado: ${totalCalculado}`);
 
                     // Buscar si aparece el total en alguna parte del texto
                     const textoSinFormato = precioText.replace(/[^0-9]/g, '');
@@ -6610,11 +7063,9 @@ function crearProductosDesdeItemsPropios() {
 
                     if (textoSinFormato.includes(totalEnTexto)) {
                         precioUnitario = numero1;
-                        console.log(`✅ Precio unitario calculado: ${precioUnitario}`);
                     } else {
                         // Si no encuentra el total, tomar el menor número como unitario
                         precioUnitario = Math.min(numero1, numero2);
-                        console.log(`⚠️ Tomando menor valor como unitario: ${precioUnitario}`);
                     }
                 }
 
@@ -6623,7 +7074,6 @@ function crearProductosDesdeItemsPropios() {
                     const patron2 = precioText.match(/\(\$?([0-9.,]+)\s*(?:c\/u|cada|unitario)\)/i);
                     if (patron2) {
                         precioUnitario = parseFloat(patron2[1].replace(/,/g, '')) || 0;
-                        console.log(`✅ Precio por unidad encontrado: ${precioUnitario}`);
                     }
                 }
 
@@ -6632,24 +7082,19 @@ function crearProductosDesdeItemsPropios() {
                     const patron3 = precioText.match(/\$([0-9.,]+)/i);
                     if (patron3) {
                         const soloNumero = parseFloat(patron3[1].replace(/,/g, '')) || 0;
-                        console.log(`Solo número con $: ${soloNumero}`);
 
                         // Si hay "x" en el texto, es probable que sea un total
                         if (precioText.toLowerCase().includes('x') && precioText.match(/x\s*([0-9]+)/)) {
                             const cantidad = parseInt(precioText.match(/x\s*([0-9]+)/)[1]) || 1;
                             precioUnitario = cantidad > 1 ? soloNumero / cantidad : soloNumero;
-                            console.log(`⚠️ Dividiendo total entre cantidad: ${soloNumero} ÷ ${cantidad} = ${precioUnitario}`);
                         } else {
                             precioUnitario = soloNumero;
-                            console.log(`✅ Precio unitario directo: ${precioUnitario}`);
                         }
                     }
                 }
 
                 // Resultado final
                 precio = precioUnitario || 0;
-                console.log('🎯 PRECIO FINAL EXTRAÍDO (crearProductos):', precio);
-                console.log('==========================\n');
             }
 
             // Verificar si ya existe en productos disponibles
@@ -6716,9 +7161,6 @@ function seleccionarProductoDesdeItem(itemElement) {
         let precio = 0;
         if (precioElement) {
             const precioText = precioElement.textContent;
-            console.log('=== DEBUGGING PRECIO ===');
-            console.log('Texto completo del precio:', precioText);
-            console.log('Elemento precio HTML:', precioElement.outerHTML);
 
             // Método simplificado: buscar diferentes patrones paso a paso
             let precioUnitario = null;
@@ -6728,11 +7170,10 @@ function seleccionarProductoDesdeItem(itemElement) {
             if (patron1) {
                 const numero1 = parseFloat(patron1[1].replace(/,/g, '')) || 0;
                 const numero2 = parseFloat(patron1[2].replace(/,/g, '')) || 0;
-                console.log(`Patrón X x Y encontrado: ${numero1} x ${numero2}`);
 
                 // Si numero1 * numero2 parece ser el total mostrado, entonces numero1 es unitario
                 const totalCalculado = numero1 * numero2;
-                console.log(`Total calculado: ${totalCalculado}`);
+
 
                 // Buscar si aparece el total en alguna parte del texto
                 const textoSinFormato = precioText.replace(/[^0-9]/g, '');
@@ -6740,11 +7181,9 @@ function seleccionarProductoDesdeItem(itemElement) {
 
                 if (textoSinFormato.includes(totalEnTexto)) {
                     precioUnitario = numero1;
-                    console.log(`✅ Precio unitario calculado: ${precioUnitario}`);
                 } else {
                     // Si no encuentra el total, tomar el menor número como unitario
                     precioUnitario = Math.min(numero1, numero2);
-                    console.log(`⚠️ Tomando menor valor como unitario: ${precioUnitario}`);
                 }
             }
 
@@ -6753,7 +7192,6 @@ function seleccionarProductoDesdeItem(itemElement) {
                 const patron2 = precioText.match(/\(\$?([0-9.,]+)\s*(?:c\/u|cada|unitario)\)/i);
                 if (patron2) {
                     precioUnitario = parseFloat(patron2[1].replace(/,/g, '')) || 0;
-                    console.log(`✅ Precio por unidad encontrado: ${precioUnitario}`);
                 }
             }
 
@@ -6762,24 +7200,19 @@ function seleccionarProductoDesdeItem(itemElement) {
                 const patron3 = precioText.match(/\$([0-9.,]+)/i);
                 if (patron3) {
                     const soloNumero = parseFloat(patron3[1].replace(/,/g, '')) || 0;
-                    console.log(`Solo número con $: ${soloNumero}`);
 
                     // Si hay "x" en el texto, es probable que sea un total
                     if (precioText.toLowerCase().includes('x') && precioText.match(/x\s*([0-9]+)/)) {
                         const cantidad = parseInt(precioText.match(/x\s*([0-9]+)/)[1]) || 1;
                         precioUnitario = cantidad > 1 ? soloNumero / cantidad : soloNumero;
-                        console.log(`⚠️ Dividiendo total entre cantidad: ${soloNumero} ÷ ${cantidad} = ${precioUnitario}`);
                     } else {
                         precioUnitario = soloNumero;
-                        console.log(`✅ Precio unitario directo: ${precioUnitario}`);
                     }
                 }
             }
 
             // Resultado final
             precio = precioUnitario || 0;
-            console.log('🎯 PRECIO FINAL EXTRAÍDO:', precio);
-            console.log('==========================\n');
         }
 
         // Verificar si ya está seleccionado
@@ -6802,8 +7235,6 @@ function seleccionarProductoDesdeItem(itemElement) {
         };
 
         productosSeleccionados.push(producto);
-
-        console.log('productosSeleccionados seleccionarProductoDesdeItem(6597)', productosSeleccionados);
 
         // Actualizar UI
         actualizarTablaProductosSeleccionados();
@@ -7016,8 +7447,6 @@ function abrirModalQuitarProductos() {
 function usarItemsSeleccionados() {
     const itemsSeleccionados = obtenerItemsSeleccionados();
 
-    console.log('itemsSeleccionados usarItemsSeleccionados(6816)', itemsSeleccionados);
-
     if (itemsSeleccionados.length === 0) {
         Swal.fire({
             title: 'Sin selección',
@@ -7049,7 +7478,7 @@ function usarItemsSeleccionados() {
                 precio: 0, // Precio inicial, se puede editar
                 cantidad: 1,
                 total: 0,
-                    categoria: item.tipo === 'item' ? 'Item Principal' : 'Subitem',
+                    categoria: item.tipo === 'item' ? 'Capitulación' : 'item',
                     parametrizacion_id: (item.tipo === 'parametrizacion' || item.fuente === 'parametrizacion_costos') ? item.id : null,
                     item_propio_id: (item.tipo === 'parametrizacion' || item.fuente === 'parametrizacion_costos') ? null : item.id
             });
@@ -7235,27 +7664,18 @@ function actualizarTablaProductosSeleccionados() {
  * Actualizar el total general de productos seleccionados
  */
 function actualizarTotalGeneral() {
-    console.log('🔍 Iniciando actualización del total general...');
-    console.log('📦 Productos seleccionados:', productosSeleccionados);
 
     const totalGeneral = calcularTotalGeneral();
     productosSeleccionados.forEach(producto => {
         const productoTotal = producto.total || 0;
-        console.log(`   - ${producto.nombre}: $${productoTotal}`);
     });
-
-    console.log('💰 Total calculado:', totalGeneral);
-
     const elementoTotalGeneral = document.getElementById('totalGeneral');
-    console.log('🎯 Elemento totalGeneral encontrado:', !!elementoTotalGeneral);
-
     if (elementoTotalGeneral) {
         const totalFormateado = totalGeneral.toLocaleString('es-CO', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });
         elementoTotalGeneral.textContent = totalFormateado;
-        console.log('✅ Total general actualizado en el DOM:', totalFormateado);
     } else {
         console.error('❌ No se encontró el elemento #totalGeneral en el DOM');
     }
@@ -7310,12 +7730,10 @@ window.debugTotalGeneral = function() {
  * Actualizar cantidad de producto
  */
 function actualizarCantidadProducto(productoId, nuevaCantidad) {
-    console.log('🔢 Actualizando cantidad producto:', productoId, 'cantidad:', nuevaCantidad);
     const producto = productosSeleccionados.find(p => p.id === productoId);
     if (producto) {
         producto.cantidad = parseInt(nuevaCantidad) || 1;
         producto.total = producto.precio * producto.cantidad;
-        console.log(`   - ${producto.nombre}: cantidad=${producto.cantidad}, precio=${producto.precio}, total=${producto.total}`);
         actualizarTablaProductosSeleccionados();
     } else {
         console.error('❌ Producto no encontrado para actualizar cantidad:', productoId);
@@ -7326,12 +7744,10 @@ function actualizarCantidadProducto(productoId, nuevaCantidad) {
  * Actualizar precio de producto
  */
 function actualizarPrecioProducto(productoId, nuevoPrecio) {
-    console.log('💲 Actualizando precio producto:', productoId, 'precio:', nuevoPrecio);
     const producto = productosSeleccionados.find(p => p.id === productoId);
     if (producto) {
         producto.precio = parseFloat(nuevoPrecio) || 0;
         producto.total = producto.precio * producto.cantidad;
-        console.log(`   - ${producto.nombre}: cantidad=${producto.cantidad}, precio=${producto.precio}, total=${producto.total}`);
         actualizarTablaProductosSeleccionados();
     } else {
         console.error('❌ Producto no encontrado para actualizar precio:', productoId);
@@ -7808,9 +8224,9 @@ function procesarProductosSeleccionadosDeTabla() {
  * Enviar productos de la tabla a la base de datos
  */
 async function enviarProductosTablaABaseDatos(productosEnTabla) {
-    console.log('🔍 Iniciando envío de productos desde array productosSeleccionados');
-    console.log('📊 Productos seleccionados encontrados:', productosSeleccionados.length);
-    console.log('🗃️ Contenido completo del array productosSeleccionados:', productosSeleccionados);
+    // console.log('🔍 Iniciando envío de productos desde array productosSeleccionados');
+    // console.log('📊 Productos seleccionados encontrados:', productosSeleccionados.length);
+    // console.log('🗃️ Contenido completo del array productosSeleccionados:', productosSeleccionados);
 
     const cotizacionId = document.getElementById('id')?.value || document.getElementById('cotizacion_id')?.value;
     if (!cotizacionId) {
@@ -7828,11 +8244,13 @@ async function enviarProductosTablaABaseDatos(productosEnTabla) {
 
         // Iterar sobre los productos ya configurados en productosSeleccionados
         productosSeleccionados.forEach((producto, index) => {
-            console.log(`📝 Procesando producto ${index + 1}:`, producto);
+            // console.log(`📝 Procesando producto ${index + 1}:`, producto);
 
-            const esParametrizacion = producto.tipo === 'parametrizacion' || producto.fuente === 'parametrizacion_costos';
+            const esCargoTabla = producto.tipo === 'cargo_tabla' || producto.flujo_tipo === 'nomina';
+            const esParametrizacion = !esCargoTabla && (producto.tipo === 'parametrizacion' || producto.fuente === 'parametrizacion_costos');
             const rawParametrizacionId = producto.parametrizacion_id ?? (esParametrizacion ? producto.id : null);
-            const rawItemPropioId = producto.item_propio_id ?? (esParametrizacion ? null : (producto.id ?? null));
+            // Para cargo_tabla: item_propio_id siempre null; para parametrizacion: null; para ítem propio: su id
+            const rawItemPropioId = esCargoTabla ? null : (producto.item_propio_id ?? (esParametrizacion ? null : (producto.id ?? null)));
 
             const parametrizacionId = rawParametrizacionId !== undefined && rawParametrizacionId !== null && rawParametrizacionId !== ''
                 ? Number(rawParametrizacionId)
@@ -7883,14 +8301,20 @@ async function enviarProductosTablaABaseDatos(productosEnTabla) {
                 // Configuración de horas
                 horas_diurnas: producto.configuracionCosto?.horasDiurnas || null,
                 horas_remuneradas: producto.configuracionCosto?.horasRemuneradas || null,
-                incluir_dominicales: producto.configuracionCosto?.incluirDominicales || 0
+                incluir_dominicales: producto.configuracionCosto?.incluirDominicales || 0,
+
+                // Bono adicional (nómina)
+                bono: parseFloat(producto.bono || producto.configuracionCosto?.bono || 0),
+
+                // Novedades operativas NOMINA
+                novedades: producto.configuracionCosto?.novedades || []
             };
 
-            console.log(`✅ Producto mapeado ${index + 1}:`, productoMapeado);
+            // console.log(`✅ Producto mapeado ${index + 1}:`, productoMapeado);
             productos.push(productoMapeado);
         });
 
-        console.log('📦 Total de productos preparados para envío:', productos.length);
+        // console.log('📦 Total de productos preparados para envío:', productos.length);
 
         // Enviar productos uno por uno con manejo de errores individual
         let productosExitosos = 0;
@@ -7898,8 +8322,8 @@ async function enviarProductosTablaABaseDatos(productosEnTabla) {
 
         for (const producto of productos) {
             try {
-                console.log('🚀 Enviando producto a la API:', producto);
-                console.log('🔑 parametrizacion_id:', producto.parametrizacion_id, '| item_propio_id:', producto.item_propio_id, '| tabla_precios_id:', producto.tabla_precios_id);
+                // console.log('🚀 Enviando producto a la API:', producto);
+                // console.log('🔑 parametrizacion_id:', producto.parametrizacion_id, '| item_propio_id:', producto.item_propio_id, '| tabla_precios_id:', producto.tabla_precios_id);
 
                 const response = await fetch('/admin/admin.cotizaciones.productos.agregar', {
                     method: 'POST',
@@ -7923,7 +8347,7 @@ async function enviarProductosTablaABaseDatos(productosEnTabla) {
                 const result = await response.json();
 
                 if (result.success) {
-                    console.log(`✅ Producto "${producto.nombre}" guardado exitosamente:`, result);
+                    // console.log(`✅ Producto "${producto.nombre}" guardado exitosamente:`, result);
                     productosExitosos++;
                 } else {
                     console.error(`Error al guardar producto "${producto.nombre}":`, result.message, result.errors || '');
@@ -8564,9 +8988,14 @@ function mostrarProductosGuardados(productos) {
 
     tbody.innerHTML = '';
 
-    productos.forEach((producto, index) => {
+    let subtotalInsumos = 0;
+    let subtotalNomina = 0;
+
+    productos.forEach((producto) => {
+        const esNomina = producto.cargo_id !== null && producto.cargo_id !== undefined;
         const row = document.createElement('tr');
         row.setAttribute('data-producto-id', producto.id);
+        if (esNomina) row.classList.add('table-warning');
 
         // Agregar atributos para identificar utilidades asociadas
         if (producto.categoria_id) {
@@ -8582,8 +9011,19 @@ function mostrarProductosGuardados(productos) {
         const descuentoPorcentaje = parseFloat(producto.descuento_porcentaje || 0);
         const total = parseFloat(producto.valor_total || 0);
 
+        if (esNomina) subtotalNomina += total;
+        else subtotalInsumos += total;
+
         // Calcular descuento total
         const descuentoTotal = descuentoValor + (valorUnitario * cantidad * descuentoPorcentaje / 100);
+
+        const iconoProducto = esNomina
+            ? '<i class="fas fa-user-tie text-warning"></i>'
+            : '<i class="fas fa-cube text-primary"></i>';
+
+        const badgeNomina = esNomina
+            ? '<span class="badge badge-warning ml-1">Nómina</span>'
+            : '';
 
         row.innerHTML = `
             <td>
@@ -8597,10 +9037,10 @@ function mostrarProductosGuardados(productos) {
             <td>
                 <div class="d-flex align-items-center">
                     <div class="product-icon me-2">
-                        <i class="fas fa-cube text-primary"></i>
+                        ${iconoProducto}
                     </div>
                     <div>
-                        <strong class="d-block">${producto.nombre}</strong>
+                        <strong class="d-block">${producto.nombre}${badgeNomina}</strong>
                         <small class="text-muted">${producto.codigo || 'Sin código'}</small>
                         ${producto.descripcion ? `<br><small class="text-info">${producto.descripcion}</small>` : ''}
                         <br><span class="badge badge-secondary">${producto.unidad_medida}</span>
@@ -8637,6 +9077,28 @@ function mostrarProductosGuardados(productos) {
         tbody.appendChild(row);
     });
 
+    // Fila de subtotales por tipo (solo si hay ambos tipos)
+    if (subtotalInsumos > 0 || subtotalNomina > 0) {
+        const mostrarDesglose = subtotalInsumos > 0 && subtotalNomina > 0;
+        if (mostrarDesglose) {
+            const trDesglose = document.createElement('tr');
+            trDesglose.classList.add('table-secondary', 'text-right');
+            trDesglose.innerHTML = `
+                <td colspan="5" class="text-right pr-3">
+                    <small>
+                        <i class="fas fa-cube text-primary mr-1"></i>Subtotal Insumos/Servicios:
+                        <strong>$${subtotalInsumos.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</strong>
+                        &nbsp;&nbsp;
+                        <i class="fas fa-user-tie text-warning mr-1"></i>Subtotal Nómina:
+                        <strong>$${subtotalNomina.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</strong>
+                    </small>
+                </td>
+                <td colspan="2"></td>
+            `;
+            tbody.appendChild(trDesglose);
+        }
+    }
+
     // Mostrar tabla y footer
     tabla.style.display = 'block';
     footer.classList.remove('d-none');
@@ -8653,8 +9115,6 @@ function mostrarProductosGuardados(productos) {
  * Mostrar estado vací­o cuando no hay productos
  */
 function mostrarEstadoVacioProductos() {
-    console.log('🏷️ ESTADO VACÍO - No hay productos, reseteando totales...');
-
     document.getElementById('emptyProductosGuardados').style.display = 'block';
     document.getElementById('tablaProductosGuardados').style.display = 'none';
     document.getElementById('footerProductosGuardados').classList.add('d-none');
@@ -8668,8 +9128,6 @@ function mostrarEstadoVacioProductos() {
  * Resetear totales a cero cuando no hay productos
  */
 function resetearTotalesACero() {
-    console.log('💰 RESETEANDO TOTALES A CERO...');
-
     try {
         // Totales en cero
         const totalesVacios = {
@@ -8678,11 +9136,8 @@ function resetearTotalesACero() {
             impuestos: 0,
             total: 0
         };
-
         // Usar la función existente para actualizar la vista
         actualizarTotalesEnVista(totalesVacios);
-
-        console.log('✅ Totales reseteados a cero exitosamente');
 
     } catch (error) {
         console.error('❌ Error al resetear totales:', error);
@@ -8873,8 +9328,6 @@ async function eliminarUtilidadesDelProducto(productoId) {
             const result = await response.json();
 
             if (result.success && result.data && result.data.length > 0) {
-                console.log(`Eliminando ${result.data.length} utilidades asociadas al producto ${productoId}`);
-
                 // Eliminar todas las utilidades (enfoque seguro si no podemos identificar específicas)
                 const eliminarPromesas = result.data.map(utilidad => eliminarUtilidadSilenciosa(utilidad.id));
                 await Promise.all(eliminarPromesas);
@@ -8902,8 +9355,6 @@ async function eliminarUtilidadesDelProducto(productoId) {
                     );
 
                     if (utilidadesDelProducto.length > 0) {
-                        console.log(`Eliminando ${utilidadesDelProducto.length} utilidades específicas del producto ${productoId}`);
-
                         // Eliminar utilidades específicas del producto
                         const eliminarPromesas = utilidadesDelProducto.map(utilidad => eliminarUtilidadSilenciosa(utilidad.id));
                         await Promise.all(eliminarPromesas);
@@ -8932,7 +9383,6 @@ async function eliminarUtilidadSilenciosa(utilidadId) {
         });
 
         if (response.ok) {
-            console.log(`Utilidad ${utilidadId} eliminada exitosamente`);
         } else {
             console.warn(`Error al eliminar utilidad ${utilidadId}`);
         }
@@ -9518,15 +9968,12 @@ async function actualizarTotalesCompletos() {
  * Función para forzar la actualización de totales - útil para debugging
  */
 function forzarActualizacionTotales() {
-    console.log('🚀 FORZANDO actualización de totales...');
     actualizarTotalesCompletos();
 }
-
 /**
  * Función para forzar el reseteo de totales a cero - útil cuando no hay productos
  */
 function forzarReseteoTotales() {
-    console.log('🔄 FORZANDO reseteo de totales a cero...');
     resetearTotalesACero();
 }
 
@@ -9534,8 +9981,6 @@ function forzarReseteoTotales() {
  * Configurar event listeners para actualización automática de totales
  */
 function setupAutoUpdateTotales() {
-    console.log('🔧 Configurando event listeners para auto-actualización de totales...');
-
     // Detectar cambios en campos de la cotización que podrían afectar totales
     const camposAMonitorear = [
         '#tercero_id',
@@ -9566,19 +10011,16 @@ function setupAutoUpdateTotales() {
     const formulario = document.querySelector('form');
     if (formulario) {
         formulario.addEventListener('submit', async (e) => {
-            console.log('📝 Formulario enviado, actualizando totales...');
+
             await actualizarTotalesCompletos();
         });
     }
-
-    console.log('✅ Event listeners configurados para auto-actualización');
 }
 
 /**
  * Función debounced para actualizar totales (evita llamadas excesivas)
  */
 const debounceUpdateTotales = debounce(async () => {
-    console.log('🔄 Campo de formulario modificado, actualizando totales...');
     await actualizarTotalesCompletos();
 }, 1000); // 1 segundo de delay
 
@@ -9601,14 +10043,9 @@ function debounce(func, wait) {
  * Función de debugging para verificar el estado de totales
  */
 window.verificarEstadoTotales = async function() {
-    console.log('🔍 === VERIFICANDO ESTADO DE TOTALES ===');
-
     const cotizacionId = document.getElementById('id')?.value;
-    console.log('📋 ID de cotización:', cotizacionId);
-
     // Verificar productos
     try {
-        console.log('📦 Verificando productos...');
         await cargarProductosGuardados();
     } catch (error) {
         console.error('❌ Error al cargar productos:', error);
@@ -9616,13 +10053,10 @@ window.verificarEstadoTotales = async function() {
 
     // Verificar totales
     try {
-        console.log('💰 Verificando totales...');
         await actualizarTotalesCompletos();
     } catch (error) {
         console.error('❌ Error al actualizar totales:', error);
     }
-
-    console.log('🏁 === VERIFICACIÓN COMPLETADA ===');
 };
 
 //  TAMBIÉN ejecutar cuando se haga clic en cualquier parte de los totales
@@ -9691,7 +10125,6 @@ window.forzarActualizacionTotales = async function() {
 // Función de utilidad adicional para resetear totales manualmente
 window.forzarReseteoTotales = forzarReseteoTotales;
 window.actualizarTotalesManualmente = async function() {
-    console.log('🔄 Actualizando totales manualmente desde consola...');
     await actualizarTotalesCompletos();
 };
 
@@ -9743,7 +10176,6 @@ async function cargarValoresPorDefecto(itemId, tipoItem, tipoCosto) {
     const valores = await obtenerValoresPorDefecto(itemId, tipoItem, tipoCosto);
 
     if (!valores || !valores.encontrado) {
-        console.log(`No se encontraron valores por defecto para el item ${itemId}`);
         return false;
     }
 
@@ -9821,8 +10253,6 @@ async function cargarValoresDefectoPorTipo(itemId, tipoCosto) {
             idReal = itemData.cargo_id || itemId;
         }
 
-        console.log(`Cargando valores para item ${itemId} (${tipoItem}) - Tipo costo: ${tipoCosto}`);
-
         // Cargar valores por defecto
         const cargaExitosa = await cargarValoresPorDefecto(idReal, tipoItem, tipoCosto);
 
@@ -9860,4 +10290,960 @@ function mostrarNotificacionValoresCargados(tipoCosto, costo, unidadMedida) {
             showConfirmButton: false
         });
     }
+}
+
+// ============================================================
+// FLUJO DEDICADO DE NÓMINA
+// ============================================================
+
+/**
+ * Abre el modal dedicado para configurar items de Nómina (Cargo/Perfil).
+ * @param {Array} cargos - Array de items tipo 'cargo_tabla' del backend
+ */
+function abrirModalNominaConfig(cargos) {
+    // Remover modal anterior si existe
+    const modalAnterior = document.getElementById('modalNominaConfig');
+    if (modalAnterior) modalAnterior.remove();
+
+    window._nominaResultados = window._nominaResultados || {};
+    const _fnCalc = `calcularLiquidacionNomina`;
+    const filasCargos = cargos.map((cargo, idx) => {
+        const costoDia  = Number(cargo.costo_dia  || cargo.base_costo_dia  || 0);
+        const nombreCargo = cargo.nombre || cargo.cargo?.nombre || 'Sin nombre';
+        return `
+            <div class="card mb-3 shadow-sm nomina-cargo-card" id="cardNomina_${idx}"
+                 style="border:1px solid #dee2e6; border-left:4px solid #ffc107; border-radius:6px;">
+
+                <!-- ── Encabezado del cargo ── -->
+                <div class="card-header py-2 px-3"
+                     style="background:#fffbf0; border-bottom:1px solid #ffe082; border-radius:5px 5px 0 0;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input nomina-cargo-check"
+                                   id="checkNomina_${idx}" checked
+                                   onchange="toggleCargoNomina(${idx})">
+                            <label class="custom-control-label font-weight-bold text-dark" for="checkNomina_${idx}"
+                                   style="font-size:.9rem;">
+                                <i class="fas fa-hard-hat text-warning mr-1"></i>${nombreCargo}
+                            </label>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <small class="text-muted mr-2">
+                                <i class="fas fa-coins mr-1 text-warning"></i>Base/día:
+                                <strong>$${costoDia.toLocaleString('es-CO')}</strong>
+                            </small>
+                            <span class="badge badge-warning badge-pill px-2"
+                                  id="nominaBadgePersonas_${idx}">1 persona</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── Cuerpo del cargo ── -->
+                <div class="card-body p-3" id="bodyNomina_${idx}">
+
+                    <!-- PERSONAS -->
+                    <div class="d-flex align-items-center mb-3 pb-2"
+                         style="border-bottom:1px dashed #e0e0e0;">
+                        <i class="fas fa-users text-secondary mr-2"></i>
+                        <label class="mb-0 mr-2 font-weight-bold text-secondary"
+                               style="font-size:.8rem; white-space:nowrap;">N° PERSONAS</label>
+                        <input type="number" class="form-control form-control-sm"
+                               id="nominaPersonas_${idx}" min="1" value="1"
+                               style="width:80px; font-weight:700; font-size:1rem; text-align:center;"
+                               onchange="${_fnCalc}(${idx}); document.getElementById('nominaBadgePersonas_${idx}').textContent = (this.value||1) + ' persona' + ((this.value||1)>1?'s':'');"
+                               oninput="${_fnCalc}(${idx}); document.getElementById('nominaBadgePersonas_${idx}').textContent = (this.value||1) + ' persona' + ((this.value||1)>1?'s':'');">
+                        <small class="text-muted ml-3">
+                            <i class="fas fa-info-circle"></i>
+                            Salario base: <strong>${costoDia > 0 ? '$' + (costoDia * 30).toLocaleString('es-CO') : 'SMLV'}</strong>/mes
+                        </small>
+                    </div>
+
+                    <!-- MODO DE COSTO -->
+                    <input type="hidden" id="nominaModo_${idx}" value="hora">
+                    <div class="btn-group btn-group-sm w-100 mb-2" role="group" style="border:1px solid #dee2e6; border-radius:6px; overflow:hidden;">
+                        <button type="button" class="btn btn-primary active" id="btnModoHora_${idx}"
+                                onclick="onNominaModoChange(${idx}, 'hora')" style="font-size:.8rem;">
+                            <i class="fas fa-clock mr-1"></i>Costo Hora
+                        </button>
+                        <button type="button" class="btn btn-outline-success" id="btnModoDia_${idx}"
+                                onclick="onNominaModoChange(${idx}, 'dia')" style="font-size:.8rem;">
+                            <i class="fas fa-calendar-day mr-1"></i>Costo Día (Turno)
+                        </button>
+                    </div>
+
+                    <!-- ── Sección Costo Hora (existente — NO modificar lógica) ── -->
+                    <div id="seccionCostoHora_${idx}">
+                    <!-- DOS COLUMNAS: TIEMPO ORDINARIO | HORAS EXTRA -->
+                    <div class="row no-gutters" style="gap:0;">
+
+                        <!-- Columna izquierda: Tiempo Ordinario -->
+                        <div class="col-md-6 pr-md-2">
+                            <div class="rounded p-2 mb-2" style="background:#f8f9fa; border:1px solid #e9ecef;">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-calendar-alt text-primary mr-1" style="font-size:.8rem;"></i>
+                                    <span class="font-weight-bold text-uppercase text-primary"
+                                          style="font-size:.72rem; letter-spacing:.05em;">Tiempo Ordinario</span>
+                                    <span class="ml-auto text-muted" style="font-size:.7rem;">máx. 30 d/mes</span>
+                                </div>
+                                <div class="row no-gutters" style="gap:4px 0;">
+                                    <div class="col-6 pr-1">
+                                        <label class="mb-0" style="font-size:.72rem; color:#555;">
+                                            <i class="fas fa-sun text-warning" style="font-size:.65rem;"></i>
+                                            Días diurnos
+                                        </label>
+                                        <input type="number" class="form-control form-control-sm text-center"
+                                               id="nominaDiasDiurnos_${idx}" min="0" max="30" value="0"
+                                               style="font-size:.85rem;"
+                                               onchange="${_fnCalc}(${idx})"
+                                               oninput="${_fnCalc}(${idx})">
+                                    </div>
+                                    <div class="col-6 pl-1">
+                                        <label class="mb-0" style="font-size:.72rem; color:#555;">
+                                            <i class="fas fa-moon text-indigo" style="font-size:.65rem; color:#6f42c1;"></i>
+                                            Días nocturnos
+                                            <span class="text-muted">(+35%)</span>
+                                        </label>
+                                        <input type="number" class="form-control form-control-sm text-center"
+                                               id="nominaDiasNocturnos_${idx}" min="0" max="30" value="0"
+                                               style="font-size:.85rem;"
+                                               onchange="${_fnCalc}(${idx})"
+                                               oninput="${_fnCalc}(${idx})">
+                                    </div>
+                                    <div class="col-6 pr-1 mt-1">
+                                        <label class="mb-0" style="font-size:.72rem; color:#555;">
+                                            <i class="fas fa-church text-success" style="font-size:.65rem;"></i>
+                                            Dom./fest. diurnos
+                                            <span class="text-muted">(+75%)</span>
+                                        </label>
+                                        <input type="number" class="form-control form-control-sm text-center"
+                                               id="nominaDominicales_${idx}" min="0" max="30" value="0"
+                                               style="font-size:.85rem;"
+                                               onchange="${_fnCalc}(${idx})"
+                                               oninput="${_fnCalc}(${idx})">
+                                    </div>
+                                    <div class="col-6 pl-1 mt-1">
+                                        <label class="mb-0" style="font-size:.72rem; color:#555;">
+                                            <i class="fas fa-church text-danger" style="font-size:.65rem;"></i>
+                                            Dom./fest. nocturnos
+                                            <span class="text-muted">(+110%)</span>
+                                        </label>
+                                        <input type="number" class="form-control form-control-sm text-center"
+                                               id="nominaDomNocturnos_${idx}" min="0" max="30" value="0"
+                                               style="font-size:.85rem;"
+                                               onchange="${_fnCalc}(${idx})"
+                                               oninput="${_fnCalc}(${idx})">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Columna derecha: Horas Extra -->
+                        <div class="col-md-6 pl-md-2">
+                            <div class="rounded p-2 mb-2" style="background:#fff8f0; border:1px solid #ffe0b2;">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-clock text-orange mr-1" style="font-size:.8rem; color:#e65100;"></i>
+                                    <span class="font-weight-bold text-uppercase"
+                                          style="font-size:.72rem; letter-spacing:.05em; color:#e65100;">Horas Extra</span>
+                                    <span class="ml-auto text-muted" style="font-size:.7rem;">Art. 168 CST</span>
+                                </div>
+                                <div class="row no-gutters" style="gap:4px 0;">
+                                    <div class="col-6 pr-1">
+                                        <label class="mb-0" style="font-size:.72rem; color:#555;">
+                                            <span class="badge badge-pill"
+                                                  style="background:#fff3e0; color:#e65100; font-size:.65rem;">×1.25</span>
+                                            HED diurna
+                                        </label>
+                                        <input type="number" class="form-control form-control-sm text-center"
+                                               id="nominaHED_${idx}" min="0" value="0"
+                                               style="font-size:.85rem; border-color:#ffe0b2;"
+                                               onchange="${_fnCalc}(${idx})"
+                                               oninput="${_fnCalc}(${idx})">
+                                    </div>
+                                    <div class="col-6 pl-1">
+                                        <label class="mb-0" style="font-size:.72rem; color:#555;">
+                                            <span class="badge badge-pill"
+                                                  style="background:#ede7f6; color:#6f42c1; font-size:.65rem;">×1.75</span>
+                                            HEN nocturna
+                                        </label>
+                                        <input type="number" class="form-control form-control-sm text-center"
+                                               id="nominaHEN_${idx}" min="0" value="0"
+                                               style="font-size:.85rem; border-color:#d1c4e9;"
+                                               onchange="${_fnCalc}(${idx})"
+                                               oninput="${_fnCalc}(${idx})">
+                                    </div>
+                                    <div class="col-6 pr-1 mt-1">
+                                        <label class="mb-0" style="font-size:.72rem; color:#555;">
+                                            <span class="badge badge-pill"
+                                                  style="background:#e8f5e9; color:#2e7d32; font-size:.65rem;">×2.00</span>
+                                            HEDD dom. diurna
+                                        </label>
+                                        <input type="number" class="form-control form-control-sm text-center"
+                                               id="nominaHEDD_${idx}" min="0" value="0"
+                                               style="font-size:.85rem; border-color:#c8e6c9;"
+                                               onchange="${_fnCalc}(${idx})"
+                                               oninput="${_fnCalc}(${idx})">
+                                    </div>
+                                    <div class="col-6 pl-1 mt-1">
+                                        <label class="mb-0" style="font-size:.72rem; color:#555;">
+                                            <span class="badge badge-pill"
+                                                  style="background:#ffebee; color:#c62828; font-size:.65rem;">×2.50</span>
+                                            HEDN dom. nocturna
+                                        </label>
+                                        <input type="number" class="form-control form-control-sm text-center"
+                                               id="nominaHEDN_${idx}" min="0" value="0"
+                                               style="font-size:.85rem; border-color:#ffcdd2;"
+                                               onchange="${_fnCalc}(${idx})"
+                                               oninput="${_fnCalc}(${idx})">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    </div><!-- /seccionCostoHora -->
+
+                    <!-- ── Sección Costo Día (Turno) ── -->
+                    <div id="seccionCostoDia_${idx}" class="d-none">
+                        <div class="rounded p-2 mb-2" style="background:#f0f8ff; border:1px solid #b8daff;">
+                            <div class="form-group mb-2">
+                                <label class="font-weight-bold mb-1" style="font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; color:#004085;">
+                                    <i class="fas fa-calendar-alt mr-1"></i>Turno de Trabajo
+                                </label>
+                                <select class="form-control form-control-sm" id="nominaTurno_${idx}"
+                                        onchange="onNominaTurnoChange(${idx})">
+                                    <option value="">— Seleccione turno —</option>
+                                </select>
+                                <small class="text-danger d-block mt-1" id="errorTurno_${idx}"></small>
+                            </div>
+                            <div class="form-group mb-2">
+                                <label style="font-size:.78rem; font-weight:600; color:#555;">
+                                    <i class="fas fa-calendar-check mr-1 text-success"></i>Días trabajados
+                                </label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" id="nominaDiasTurno_${idx}"
+                                           min="1" max="31" value="26"
+                                           onchange="${_fnCalc}(${idx})"
+                                           oninput="${_fnCalc}(${idx})">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">días</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="divHEDxDia_${idx}" class="form-group mb-2 d-none">
+                                <label style="font-size:.78rem; font-weight:600; color:#555;">
+                                    <span class="badge badge-pill" style="background:#fff3e0;color:#e65100;font-size:.65rem;">×1.25</span>
+                                    HE Diurnas por día
+                                </label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" id="nominaHEDxDia_${idx}"
+                                           min="0" max="2" value="0"
+                                           onchange="${_fnCalc}(${idx})"
+                                           oninput="${_fnCalc}(${idx})">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">h/día</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="divHENxDia_${idx}" class="form-group mb-2 d-none">
+                                <label style="font-size:.78rem; font-weight:600; color:#555;">
+                                    <span class="badge badge-pill" style="background:#ede7f6;color:#6f42c1;font-size:.65rem;">×1.75</span>
+                                    HE Nocturnas por día
+                                </label>
+                                <div class="input-group input-group-sm">
+                                    <input type="number" class="form-control" id="nominaHENxDia_${idx}"
+                                           min="0" max="2" value="0"
+                                           onchange="${_fnCalc}(${idx})"
+                                           oninput="${_fnCalc}(${idx})">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">h/día</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div><!-- /seccionCostoDia -->
+
+                    <!-- ── Bono adicional (visible en ambos modos) ── -->
+                    <div class="form-group mb-2 mt-1">
+                        <label class="font-weight-bold mb-1" style="font-size:.78rem; color:#555;">
+                            <i class="fas fa-gift text-info mr-1"></i>Bono adicional
+                            <span class="text-muted font-weight-normal">(opcional — monto plano que suma al total)</span>
+                        </label>
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-info text-white">$</span>
+                            </div>
+                            <input type="number" class="form-control" id="nominaBono_${idx}"
+                                   min="0" value="0" step="1000" placeholder="0">
+                        </div>
+                    </div>
+
+                    <!-- ── Resultado ── -->
+                    <div class="rounded px-3 py-2 mt-1 d-flex justify-content-between align-items-center"
+                         style="background: linear-gradient(90deg,#e8f5e9,#f1f8e9); border:1px solid #a5d6a7;">
+                        <div>
+                            <div style="font-size:.72rem; color:#555; text-transform:uppercase; letter-spacing:.04em;">
+                                <i class="fas fa-calculator text-success mr-1"></i>Costo empresa / mes
+                            </div>
+                            <strong id="nominaValor_${idx}" style="font-size:1.15rem; color:#2e7d32;">$0</strong>
+                            <small id="nominaPersonasLabel_${idx}" class="text-muted ml-1"></small>
+                        </div>
+                        <div class="text-right">
+                            <div id="nominaResumenRapido_${idx}" style="display:none; font-size:.75rem; color:#555; margin-bottom:4px;">
+                                Dev: <strong id="nominaDevengado_${idx}">—</strong> &bull;
+                                IBC: <strong id="nominaIBC_${idx}">—</strong> &bull;
+                                Neto: <strong id="nominaNeto_${idx}">—</strong>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-success"
+                                    id="btnDesglose_${idx}" style="display:none; font-size:.78rem;"
+                                    onclick="renderDesgloseLiquidacion(${idx})">
+                                <i class="fas fa-table mr-1"></i>Ver Desglose
+                            </button>
+                        </div>
+                    </div>
+
+                </div><!-- /card-body -->
+            </div>
+        `;
+    }).join('');
+
+    const modalHtml = `
+        <div class="modal fade" id="modalNominaConfig" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-white rounded-circle p-2 mr-3 shadow-sm">
+                                <i class="fas fa-users text-warning" style="font-size:1.2rem;"></i>
+                            </div>
+                            <div>
+                                <h5 class="modal-title mb-0 font-weight-bold text-dark">Configuración de Nómina</h5>
+                                <small class="text-dark" style="opacity:.75;">Configure el personal por cargo/perfil</small>
+                            </div>
+                        </div>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body" style="max-height:70vh; overflow-y:auto;">
+                        <div class="alert alert-info py-2 mb-3">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Configure las personas y los días/horas trabajados. El motor calcula el costo empresa
+                            incluyendo prestaciones sociales, seguridad social y parafiscales (Ley 1607).
+                        </div>
+                        <div id="nominaCargosContainer">
+                            ${filasCargos}
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-3 px-1">
+                            <small class="text-muted">
+                                <i class="fas fa-shield-alt text-info mr-1"></i>
+                                Cálculo incluye SS + Parafiscales + Prestaciones (Ley 1607)
+                            </small>
+                            <div class="text-right">
+                                <span class="text-muted mr-1" style="font-size:.8rem;">SUBTOTAL NÓMINA</span>
+                                <strong class="text-success" id="nominaSubtotalDisplay"
+                                        style="font-size:1.1rem;">$0</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="background:#fafafa;">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">
+                            <i class="fas fa-times mr-1"></i>Cancelar
+                        </button>
+                        <button type="button" class="btn btn-warning font-weight-bold" onclick="finalizarNominaConfig()">
+                            <i class="fas fa-plus-circle mr-1"></i>Agregar Cargos a Cotización
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    window.nominaCargosTemporal = cargos;
+    window._nominaResultados = {};
+    $('#modalNominaConfig').modal('show');
+}
+
+/**
+ * Alterna visibilidad del body de un cargo cuando se desactiva su checkbox
+ */
+function toggleCargoNomina(idx) {
+    const check = document.getElementById(`checkNomina_${idx}`);
+    const body = document.getElementById(`bodyNomina_${idx}`);
+    if (check && body) body.style.display = check.checked ? '' : 'none';
+    actualizarSubtotalNomina();
+}
+
+/**
+ * Alterna los campos visibles según el tipo de costo seleccionado
+ */
+function onNominaTipoCostoChange(idx) {
+    const tipo = document.getElementById(`nominaTipoCosto_${idx}`)?.value;
+    const campoDias = document.getElementById(`nominaCampoDias_${idx}`);
+    const campoHoras = document.getElementById(`nominaCampoHoras_${idx}`);
+    if (tipo === 'hora') {
+        if (campoDias) campoDias.style.display = 'none';
+        if (campoHoras) campoHoras.style.display = '';
+    } else {
+        if (campoDias) campoDias.style.display = '';
+        if (campoHoras) campoHoras.style.display = 'none';
+    }
+    calcularValorCargoNomina(idx);
+}
+
+/**
+ * Calcula el valor estimado de un cargo de nómina en tiempo real
+ */
+function calcularValorCargoNomina(idx) {
+    const cargos = window.nominaCargosTemporal;
+    if (!cargos || !cargos[idx]) return;
+
+    const cargo = cargos[idx];
+    const check = document.getElementById(`checkNomina_${idx}`);
+    if (check && !check.checked) {
+        window[`nominaValorCalculado_${idx}`] = 0;
+        actualizarSubtotalNomina();
+        return;
+    }
+
+    const personas = parseFloat(document.getElementById(`nominaPersonas_${idx}`)?.value) || 1;
+    const tipoCosto = document.getElementById(`nominaTipoCosto_${idx}`)?.value || 'dia';
+    const diasDiurnos = parseFloat(document.getElementById(`nominaDiasDiurnos_${idx}`)?.value) || 0;
+    const horasDiurnas = parseFloat(document.getElementById(`nominaHorasDiurnas_${idx}`)?.value) || 0;
+    const diasNocturnos = parseFloat(document.getElementById(`nominaDiasNocturnos_${idx}`)?.value) || 0;
+    const dominicales = parseFloat(document.getElementById(`nominaDominicales_${idx}`)?.value) || 0;
+
+    const costoDia = Number(cargo.costo_dia || cargo.base_costo_dia || 0);
+    const costoHora = Number(cargo.costo_hora || cargo.base_costo_hora || 0);
+
+    let valor = 0;
+    if (tipoCosto === 'dia') {
+        valor = (diasDiurnos + diasNocturnos + dominicales) * costoDia * personas;
+    } else {
+        valor = (horasDiurnas + diasNocturnos + dominicales) * costoHora * personas;
+    }
+
+    const valorEl = document.getElementById(`nominaValor_${idx}`);
+    if (valorEl) {
+        valorEl.textContent = '$' + valor.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    window[`nominaValorCalculado_${idx}`] = valor;
+    actualizarSubtotalNomina();
+}
+
+/**
+ * Actualiza el subtotal total sumando todos los cargos activos de nómina
+ */
+function actualizarSubtotalNomina() {
+    const cargos = window.nominaCargosTemporal;
+    if (!cargos) return;
+    let subtotal = 0;
+    cargos.forEach((_, idx) => {
+        const check = document.getElementById(`checkNomina_${idx}`);
+        if (!check || check.checked) subtotal += window[`nominaValorCalculado_${idx}`] || 0;
+    });
+    const el = document.getElementById('nominaSubtotalDisplay');
+    if (el) el.textContent = '$' + subtotal.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/**
+ * Llama al Motor de Liquidación de Nómina (backend PHP) y actualiza el display del cargo.
+ * Si el endpoint falla, cae al cálculo simple local como fallback.
+ */
+async function calcularLiquidacionNomina(idx) {
+    const cargos = window.nominaCargosTemporal;
+    if (!cargos || !cargos[idx]) return;
+
+    const cargo = cargos[idx];
+    const check = document.getElementById(`checkNomina_${idx}`);
+    if (check && !check.checked) {
+        window[`nominaValorCalculado_${idx}`] = 0;
+        window._nominaResultados[idx] = null;
+        actualizarSubtotalNomina();
+        return;
+    }
+
+    const personas      = parseInt(document.getElementById(`nominaPersonas_${idx}`)?.value)       || 1;
+    const modo          = document.getElementById(`nominaModo_${idx}`)?.value || 'hora';
+
+    let diasDiurnos, diasNoct, domDiurnos, domNoct, hedHoras, henHoras, heddHoras, hednHoras;
+
+    if (modo === 'dia') {
+        // Modo Costo Día: mapear turno + días + HE al Motor
+        const params = construirParamsDesdreTurno(idx);
+        if (!params) {
+            // Sin turno seleccionado — limpiar resultado
+            const valorEl = document.getElementById(`nominaValor_${idx}`);
+            if (valorEl) valorEl.textContent = '$0';
+            window[`nominaValorCalculado_${idx}`] = 0;
+            window._nominaResultados[idx] = null;
+            actualizarSubtotalNomina();
+            return;
+        }
+        diasDiurnos = params.dias_diurnos;
+        diasNoct    = params.dias_nocturnos;
+        domDiurnos  = params.dominicales_diurnos;
+        domNoct     = params.dominicales_nocturnos;
+        hedHoras    = params.horas_extra_diurnas;
+        henHoras    = params.horas_extra_nocturnas;
+        heddHoras   = params.horas_extra_dom_diurnas;
+        hednHoras   = params.horas_extra_dom_nocturnas;
+    } else {
+        // Modo Costo Hora: leer inputs existentes (sin cambios)
+        diasDiurnos = parseInt(document.getElementById(`nominaDiasDiurnos_${idx}`)?.value)     || 0;
+        diasNoct    = parseInt(document.getElementById(`nominaDiasNocturnos_${idx}`)?.value)   || 0;
+        domDiurnos  = parseInt(document.getElementById(`nominaDominicales_${idx}`)?.value)     || 0;
+        domNoct     = parseInt(document.getElementById(`nominaDomNocturnos_${idx}`)?.value)    || 0;
+        hedHoras    = parseInt(document.getElementById(`nominaHED_${idx}`)?.value)             || 0;
+        henHoras    = parseInt(document.getElementById(`nominaHEN_${idx}`)?.value)             || 0;
+        heddHoras   = parseInt(document.getElementById(`nominaHEDD_${idx}`)?.value)            || 0;
+        hednHoras   = parseInt(document.getElementById(`nominaHEDN_${idx}`)?.value)            || 0;
+    }
+
+    // Solo calcular si hay algo configurado
+    const diasTotal = diasDiurnos + diasNoct + domDiurnos + domNoct;
+    if (diasTotal === 0 && hedHoras === 0 && henHoras === 0 && heddHoras === 0 && hednHoras === 0) {
+        const valorEl = document.getElementById(`nominaValor_${idx}`);
+        if (valorEl) valorEl.textContent = '$0';
+        window[`nominaValorCalculado_${idx}`] = 0;
+        window._nominaResultados[idx] = null;
+        actualizarSubtotalNomina();
+        return;
+    }
+
+    const cargoId = cargo.cargo_id || cargo.cargo?.id || cargo.id;
+    const baseUrl = document.querySelector('meta[name="app-url"]')?.getAttribute('content') || window.location.origin;
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    const año = new Date().getFullYear();
+
+    try {
+        const resp = await fetch(`${baseUrl}/admin/cotizaciones/nomina/calcular`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                cargo_id:                   cargoId,
+                año:                        año,
+                cantidad_personas:          personas,
+                dias_diurnos:               diasDiurnos,
+                dias_nocturnos:             diasNoct,
+                dominicales_diurnos:        domDiurnos,
+                dominicales_nocturnos:      domNoct,
+                horas_extra_diurnas:        hedHoras,
+                horas_extra_nocturnas:      henHoras,
+                horas_extra_dom_diurnas:    heddHoras,
+                horas_extra_dom_nocturnas:  hednHoras,
+            }),
+        });
+
+        const json = await resp.json();
+
+        if (json.success && json.data) {
+            const data = json.data;
+            window._nominaResultados[idx] = data;
+            window[`nominaValorCalculado_${idx}`] = data.costo_empresa_total;
+
+            // Actualizar display
+            const fmt = v => '$' + Math.round(v).toLocaleString('es-CO');
+            const valorEl = document.getElementById(`nominaValor_${idx}`);
+            if (valorEl) valorEl.textContent = fmt(data.costo_empresa_total);
+
+            const labelEl = document.getElementById(`nominaPersonasLabel_${idx}`);
+            if (labelEl && personas > 1) labelEl.textContent = `(${personas} pers. × ${fmt(data.costo_empresa_mes)})`;
+            else if (labelEl) labelEl.textContent = '';
+
+            // Resumen rápido
+            const resumenEl = document.getElementById(`nominaResumenRapido_${idx}`);
+            if (resumenEl) {
+                document.getElementById(`nominaDevengado_${idx}`).textContent = fmt(data.devengados.total_devengado);
+                document.getElementById(`nominaIBC_${idx}`).textContent       = fmt(data.ibc);
+                document.getElementById(`nominaNeto_${idx}`).textContent      = fmt(data.neto_empleado);
+                resumenEl.style.display = '';
+            }
+
+            // Mostrar botón Ver Desglose
+            const btnDesglose = document.getElementById(`btnDesglose_${idx}`);
+            if (btnDesglose) btnDesglose.style.display = '';
+
+            if (data.es_exonerado_ley1607) {
+                const valorEl2 = document.getElementById(`nominaValor_${idx}`);
+                // if (valorEl2) valorEl2.insertAdjacentHTML('afterend', ' <small class="badge badge-info">Exonerado Ley 1607</small>');
+            }
+        } else {
+            // Fallback al cálculo local
+            calcularValorCargoNomina(idx);
+        }
+    } catch (e) {
+        // Fallback silencioso al cálculo local si el endpoint no está disponible
+        calcularValorCargoNomina(idx);
+    }
+
+    actualizarSubtotalNomina();
+}
+
+/**
+ * Muestra el modal de desglose detallado de liquidación para un cargo
+ */
+function renderDesgloseLiquidacion(idx) {
+    const data = window._nominaResultados?.[idx];
+    if (!data) return;
+
+    const fmt = v => '$' + Math.round(v).toLocaleString('es-CO');
+    const exStr = data.es_exonerado_ley1607
+        ? '<span class="badge badge-info">EXONERADO Ley 1607</span> $0'
+        : fmt(data.costo_empleador.seguridad_social.salud);
+
+    const existente = document.getElementById('modalDesgloseNomina');
+    if (existente) existente.remove();
+
+    const html = `
+    <div class="modal fade" id="modalDesgloseNomina" tabindex="-1" role="dialog" style="z-index:1060;">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-dark text-white py-2">
+                    <h6 class="modal-title mb-0">
+                        <i class="fas fa-list-alt mr-1"></i>
+                        Desglose Liquidación: ${data.cargo.nombre}
+                        (${data.cantidad_personas} persona${data.cantidad_personas > 1 ? 's' : ''})
+                    </h6>
+                    <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body p-3" style="font-size:.85rem;">
+                    <!-- Devengados -->
+                    <table class="table table-sm table-borderless mb-2">
+                        <thead><tr><th colspan="2" class="bg-light">DEVENGADOS (por persona)</th></tr></thead>
+                        <tbody>
+                            ${data.devengados.salario_ordinario > 0 ? `<tr><td>Salario ordinario</td><td class="text-right">${fmt(data.devengados.salario_ordinario)}</td></tr>` : ''}
+                            ${data.devengados.recargo_nocturno > 0 ? `<tr><td>Recargo nocturno (×1.35)</td><td class="text-right">${fmt(data.devengados.recargo_nocturno)}</td></tr>` : ''}
+                            ${data.devengados.dominicales_diurnos > 0 ? `<tr><td>Dominicales diurnos (×1.75)</td><td class="text-right">${fmt(data.devengados.dominicales_diurnos)}</td></tr>` : ''}
+                            ${data.devengados.dominicales_nocturnos > 0 ? `<tr><td>Dominicales nocturnos (×2.10)</td><td class="text-right">${fmt(data.devengados.dominicales_nocturnos)}</td></tr>` : ''}
+                            ${data.devengados.horas_extra_diurnas > 0 ? `<tr><td>HED (×1.25)</td><td class="text-right">${fmt(data.devengados.horas_extra_diurnas)}</td></tr>` : ''}
+                            ${data.devengados.horas_extra_nocturnas > 0 ? `<tr><td>HEN (×1.75)</td><td class="text-right">${fmt(data.devengados.horas_extra_nocturnas)}</td></tr>` : ''}
+                            ${data.devengados.horas_extra_dom_diurnas > 0 ? `<tr><td>HEDD (×2.00)</td><td class="text-right">${fmt(data.devengados.horas_extra_dom_diurnas)}</td></tr>` : ''}
+                            ${data.devengados.horas_extra_dom_nocturnas > 0 ? `<tr><td>HEDN (×2.50)</td><td class="text-right">${fmt(data.devengados.horas_extra_dom_nocturnas)}</td></tr>` : ''}
+                            ${data.devengados.aux_transporte_proporcional > 0 ? `<tr><td>Aux. transporte proporcional</td><td class="text-right">${fmt(data.devengados.aux_transporte_proporcional)}</td></tr>` : ''}
+                            <tr class="font-weight-bold border-top"><td>Total devengado</td><td class="text-right">${fmt(data.devengados.total_devengado)}</td></tr>
+                        </tbody>
+                    </table>
+                    <!-- IBC y neto -->
+                    <table class="table table-sm table-borderless mb-2">
+                        <thead><tr><th colspan="2" class="bg-light">EMPLEADO</th></tr></thead>
+                        <tbody>
+                            <tr><td>IBC</td><td class="text-right">${fmt(data.ibc)}</td></tr>
+                            <tr><td>− Salud empleado (4%)</td><td class="text-right text-danger">−${fmt(data.deducciones_empleado.salud)}</td></tr>
+                            <tr><td>− Pensión empleado (4%)</td><td class="text-right text-danger">−${fmt(data.deducciones_empleado.pension)}</td></tr>
+                            <tr class="font-weight-bold border-top"><td>Neto empleado</td><td class="text-right text-primary">${fmt(data.neto_empleado)}</td></tr>
+                        </tbody>
+                    </table>
+                    <!-- Costo empresa -->
+                    <table class="table table-sm table-borderless mb-2">
+                        <thead><tr><th colspan="2" class="bg-light">COSTO EMPRESA (Seguridad Social + Parafiscales)</th></tr></thead>
+                        <tbody>
+                            <tr><td>Salud empleador (8.5%)</td><td class="text-right">${exStr}</td></tr>
+                            <tr><td>Pensión empleador (12%)</td><td class="text-right">${fmt(data.costo_empleador.seguridad_social.pension)}</td></tr>
+                            <tr><td>ARL Nivel ${data.arl_nivel} (${data.arl_porcentaje}%)</td><td class="text-right">${fmt(data.costo_empleador.seguridad_social.arl)}</td></tr>
+                            <tr><td>SENA (2%)</td><td class="text-right">${data.es_exonerado_ley1607 ? '<span class="badge badge-info">EXONERADO</span> $0' : fmt(data.costo_empleador.parafiscales.sena)}</td></tr>
+                            <tr><td>ICBF (3%)</td><td class="text-right">${data.es_exonerado_ley1607 ? '<span class="badge badge-info">EXONERADO</span> $0' : fmt(data.costo_empleador.parafiscales.icbf)}</td></tr>
+                            <tr><td>Caja Compensación (4%)</td><td class="text-right">${fmt(data.costo_empleador.parafiscales.caja)}</td></tr>
+                        </tbody>
+                    </table>
+                    <table class="table table-sm table-borderless mb-2">
+                        <thead><tr><th colspan="2" class="bg-light">PRESTACIONES SOCIALES</th></tr></thead>
+                        <tbody>
+                            <tr><td>Prima (8.333%)</td><td class="text-right">${fmt(data.costo_empleador.provisiones.prima)}</td></tr>
+                            <tr><td>Cesantías (8.333%)</td><td class="text-right">${fmt(data.costo_empleador.provisiones.cesantias)}</td></tr>
+                            <tr><td>Int. Cesantías (1%/mes)</td><td class="text-right">${fmt(data.costo_empleador.provisiones.intereses_cesantias)}</td></tr>
+                            <tr><td>Vacaciones (4.167%)</td><td class="text-right">${fmt(data.costo_empleador.provisiones.vacaciones)}</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="alert alert-warning py-2 text-right mb-0">
+                        <span>COSTO EMPRESA / mes / persona:</span>
+                        <strong class="ml-2" style="font-size:1.05rem;">${fmt(data.costo_empresa_mes)}</strong>
+                        ${data.cantidad_personas > 1 ? `<br><span class="text-muted">× ${data.cantidad_personas} personas = </span><strong>${fmt(data.costo_empresa_total)}</strong>` : ''}
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>`;
+
+    document.body.insertAdjacentHTML('beforeend', html);
+    $('#modalDesgloseNomina').modal('show');
+    $('#modalDesgloseNomina').on('hidden.bs.modal', function () {
+        document.getElementById('modalDesgloseNomina')?.remove();
+    });
+}
+
+/**
+ * Finaliza la configuración de nómina y agrega los cargos a productosSeleccionados
+ */
+function finalizarNominaConfig() {
+    const cargos = window.nominaCargosTemporal;
+    if (!cargos || cargos.length === 0) {
+        toastr.warning('No hay cargos disponibles');
+        return;
+    }
+
+    const itemsAgregados = [];
+    const errores = [];
+
+    cargos.forEach((cargo, idx) => {
+        const check = document.getElementById(`checkNomina_${idx}`);
+        if (!check || !check.checked) return;
+
+        const personas      = parseFloat(document.getElementById(`nominaPersonas_${idx}`)?.value)     || 1;
+        const modo          = document.getElementById(`nominaModo_${idx}`)?.value || 'hora';
+        const bono          = parseFloat(document.getElementById(`nominaBono_${idx}`)?.value)         || 0;
+        const diasDiurnos   = parseFloat(document.getElementById(`nominaDiasDiurnos_${idx}`)?.value)   || 0;
+        const diasNocturnos = parseFloat(document.getElementById(`nominaDiasNocturnos_${idx}`)?.value) || 0;
+        const dominicales   = parseFloat(document.getElementById(`nominaDominicales_${idx}`)?.value)   || 0;
+        const domNoct       = parseFloat(document.getElementById(`nominaDomNocturnos_${idx}`)?.value)  || 0;
+        const hedHoras      = parseFloat(document.getElementById(`nominaHED_${idx}`)?.value)           || 0;
+        const henHoras      = parseFloat(document.getElementById(`nominaHEN_${idx}`)?.value)           || 0;
+        const heddHoras     = parseFloat(document.getElementById(`nominaHEDD_${idx}`)?.value)          || 0;
+        const hednHoras     = parseFloat(document.getElementById(`nominaHEDN_${idx}`)?.value)          || 0;
+        const valorTotal    = window[`nominaValorCalculado_${idx}`] || 0;
+
+        if (valorTotal <= 0) {
+            // Cargo marcado pero sin días/horas — se omite silenciosamente
+            return;
+        }
+
+        // Usar resultado del motor si está disponible; si no, fallback a cálculo simple
+        const liquidacion  = window._nominaResultados?.[idx];
+        const costoEmpresaMes = liquidacion ? liquidacion.costo_empresa_mes : (personas > 0 ? valorTotal / personas : valorTotal);
+        const tipoCostoFinal  = modo === 'dia' ? 'dia' : 'hora';
+
+        const productoNomina = {
+            id: cargo.id,
+            nombre: cargo.nombre || cargo.cargo?.nombre || 'Cargo',
+            codigo: cargo.codigo || `NOM-${cargo.id}`,
+            descripcion: `Nómina: ${cargo.nombre || cargo.cargo?.nombre}`,
+            categoria_id: cargo.categoria_id || null,
+            categoria: cargo.categoria || { id: null, nombre: 'NOMINA' },
+            cargo_id: cargo.cargo_id || cargo.cargo?.id || null,
+            tabla_precios_id: cargo.tabla_precios_id || cargo.tabla_id || null,
+            tipo: 'cargo_tabla',
+            flujo_tipo: 'nomina',
+            unidad: 'PERSONA',
+            cantidad: personas,
+            precio: costoEmpresaMes,
+            bono: bono,
+            liquidacion_detalle: liquidacion || null,
+            configuracionCosto: {
+                tipoCosto: tipoCostoFinal,
+                costoUnitario: costoEmpresaMes,
+                bono: bono,
+                turnoId: modo === 'dia' ? (document.getElementById(`nominaTurno_${idx}`)?.value || null) : null,
+                diasTurno: modo === 'dia' ? (parseInt(document.getElementById(`nominaDiasTurno_${idx}`)?.value) || 0) : null,
+                diasDiurnos: diasDiurnos,
+                diasNocturnos: diasNocturnos,
+                dominicalesDiurnos: dominicales,
+                dominicalesNocturnos: domNoct,
+                horasExtraDiurnas: hedHoras,
+                horasExtraNocturnas: henHoras,
+                horasExtraDomDiurnas: heddHoras,
+                horasExtraDomNocturnas: hednHoras,
+                diasRemuneradosDiurnos: diasDiurnos,
+                diasRemuneradosNocturnos: diasNocturnos,
+                incluirDominicales: dominicales > 0 || domNoct > 0,
+                novedades: []
+            },
+            cotizacion_item_id: window.subitemTemporal?.item?.id || null,
+            cotizacion_subitem_id: window.subitemTemporal?.subitem?.id || null,
+            item_propio_id: null,
+            parametrizacion_id: null
+        };
+
+        productosSeleccionados.push(productoNomina);
+        itemsAgregados.push(productoNomina);
+    });
+
+    if (errores.length > 0) {
+        Swal.fire({ type: 'warning', title: 'Atención', html: errores.join('<br>'), confirmButtonText: 'Entendido' });
+        return;
+    }
+
+    if (itemsAgregados.length === 0) {
+        toastr.warning('Marque al menos un cargo y configure sus días u horas trabajados para poder agregarlo.');
+        return;
+    }
+
+    itemsAgregados.forEach(prod => agregarProductoATablaSeleccionados(prod));
+
+    window.nominaCargosTemporal = null;
+    window.subitemTemporal = null;
+
+    $('#modalNominaConfig').modal('hide');
+
+    actualizarTotalGeneral();
+    toastr.success(`${itemsAgregados.length} cargo(s) de nómina agregado(s). Haga clic en "Confirmar y Agregar" para guardar.`);
+}
+
+/**
+ * Agrega un producto al tbody de productos seleccionados en el modal principal
+ */
+function agregarProductoATablaSeleccionados(producto) {
+    const tbody = document.getElementById('tbodyProductosSeleccionados');
+    if (!tbody) return;
+
+    const emptyRow = tbody.querySelector('#noProductosSeleccionados');
+    if (emptyRow) emptyRow.remove();
+
+    const esNomina = producto.flujo_tipo === 'nomina' || producto.tipo === 'cargo_tabla';
+    const badgeNomina = esNomina ? ' <span class="badge badge-warning">Nómina</span>' : '';
+    const bono = parseFloat(producto.bono || 0);
+    const valorBase = parseFloat(producto.precio) * parseFloat(producto.cantidad);
+    const valorTotal = (valorBase + bono).toFixed(2);
+    const bonoStr = bono > 0 ? ` &bull; <i class="fas fa-gift text-info"></i> Bono: $${bono.toLocaleString('es-CO')}` : '';
+
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-item-id', producto.id || `nomina_${Date.now()}`);
+    tr.innerHTML = `
+        <td>
+            <strong>${producto.nombre}</strong>${badgeNomina}
+            <br><small class="text-muted">${producto.codigo || ''} &bull; ${producto.cantidad} persona(s) &bull; $${parseFloat(valorTotal).toLocaleString('es-CO')}${bonoStr}</small>
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-danger"
+                    onclick="this.closest('tr').remove(); actualizarTotalGeneral();">
+                <i class="fas fa-times"></i>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+}
+
+// ============================================================
+// HELPERS DE COSTO DÍA (TURNO)
+// ============================================================
+
+/**
+ * Alterna entre modo "Costo Hora" y "Costo Día (Turno)" para un cargo de nómina.
+ * NO toca ninguna lógica de Costo Hora.
+ */
+function onNominaModoChange(idx, modo) {
+    const secHora = document.getElementById(`seccionCostoHora_${idx}`);
+    const secDia  = document.getElementById(`seccionCostoDia_${idx}`);
+    const hiddenModo = document.getElementById(`nominaModo_${idx}`);
+    const btnHora = document.getElementById(`btnModoHora_${idx}`);
+    const btnDia  = document.getElementById(`btnModoDia_${idx}`);
+
+    if (!secHora || !secDia) return;
+
+    if (modo === 'dia') {
+        secHora.classList.add('d-none');
+        secDia.classList.remove('d-none');
+        btnHora.classList.remove('btn-primary', 'active');
+        btnHora.classList.add('btn-outline-primary');
+        btnDia.classList.remove('btn-outline-success');
+        btnDia.classList.add('btn-success', 'active');
+
+        // Poblar select de turnos si está vacío
+        const sel = document.getElementById(`nominaTurno_${idx}`);
+        if (sel && sel.options.length <= 1) {
+            const turnos = window.nominaTurnos || [];
+            if (turnos.length === 0) {
+                sel.insertAdjacentHTML('beforeend',
+                    '<option disabled>Sin turnos activos — configure en Nómina → Turnos</option>');
+            } else {
+                turnos.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.dataset.turno = JSON.stringify(t);
+                    opt.textContent = t.nombre + (t.descripcion ? ` — ${t.descripcion}` : '');
+                    sel.appendChild(opt);
+                });
+            }
+        }
+    } else {
+        secDia.classList.add('d-none');
+        secHora.classList.remove('d-none');
+        btnDia.classList.remove('btn-success', 'active');
+        btnDia.classList.add('btn-outline-success');
+        btnHora.classList.remove('btn-outline-primary');
+        btnHora.classList.add('btn-primary', 'active');
+    }
+
+    if (hiddenModo) hiddenModo.value = modo;
+
+    // Resetear resultado al cambiar modo
+    const valorEl = document.getElementById(`nominaValor_${idx}`);
+    if (valorEl) valorEl.textContent = '$0';
+    window[`nominaValorCalculado_${idx}`] = 0;
+    if (window._nominaResultados) window._nominaResultados[idx] = null;
+    actualizarSubtotalNomina();
+}
+
+/**
+ * Actualiza la visibilidad de los inputs de HE al cambiar de turno.
+ */
+function onNominaTurnoChange(idx) {
+    const sel = document.getElementById(`nominaTurno_${idx}`);
+    if (!sel) return;
+
+    const selOpt = sel.options[sel.selectedIndex];
+    const turno = selOpt?.dataset?.turno ? JSON.parse(selOpt.dataset.turno) : null;
+
+    const divHED = document.getElementById(`divHEDxDia_${idx}`);
+    const divHEN = document.getElementById(`divHENxDia_${idx}`);
+    const inpHED = document.getElementById(`nominaHEDxDia_${idx}`);
+    const inpHEN = document.getElementById(`nominaHENxDia_${idx}`);
+
+    if (!turno) {
+        if (divHED) divHED.classList.add('d-none');
+        if (divHEN) divHEN.classList.add('d-none');
+        return;
+    }
+
+    const maxHE = parseInt(turno.max_horas_extras) || 2;
+
+    if (divHED) divHED.classList.toggle('d-none', !turno.tiene_extras_diurnas);
+    if (divHEN) divHEN.classList.toggle('d-none', !turno.tiene_extras_nocturnas);
+    if (inpHED) { inpHED.max = maxHE; inpHED.value = 0; }
+    if (inpHEN) { inpHEN.max = maxHE; inpHEN.value = 0; }
+
+    // Limpiar error
+    const errEl = document.getElementById(`errorTurno_${idx}`);
+    if (errEl) errEl.textContent = '';
+
+    calcularLiquidacionNomina(idx);
+}
+
+/**
+ * Construye los 8 parámetros del Motor de Liquidación a partir de la config de turno.
+ * Devuelve null si no hay turno seleccionado.
+ */
+function construirParamsDesdreTurno(idx) {
+    const sel = document.getElementById(`nominaTurno_${idx}`);
+    if (!sel || !sel.value) return null;
+
+    const selOpt = sel.options[sel.selectedIndex];
+    const turno = selOpt?.dataset?.turno ? JSON.parse(selOpt.dataset.turno) : null;
+    if (!turno) return null;
+
+    const dias   = parseInt(document.getElementById(`nominaDiasTurno_${idx}`)?.value) || 0;
+    const heDxDia = turno.tiene_extras_diurnas
+        ? (parseInt(document.getElementById(`nominaHEDxDia_${idx}`)?.value) || 0) : 0;
+    const heNxDia = turno.tiene_extras_nocturnas
+        ? (parseInt(document.getElementById(`nominaHENxDia_${idx}`)?.value) || 0) : 0;
+
+    const esDom = !!turno.es_dominical_festivo;
+    const esDiurna = turno.tipo_ordinaria === 'diurna';
+
+    return {
+        dias_diurnos:              (!esDom && esDiurna)  ? dias : 0,
+        dias_nocturnos:            (!esDom && !esDiurna) ? dias : 0,
+        dominicales_diurnos:       (esDom  && esDiurna)  ? dias : 0,
+        dominicales_nocturnos:     (esDom  && !esDiurna) ? dias : 0,
+        horas_extra_diurnas:       (!esDom) ? heDxDia * dias : 0,
+        horas_extra_nocturnas:     (!esDom) ? heNxDia * dias : 0,
+        horas_extra_dom_diurnas:   (esDom)  ? heDxDia * dias : 0,
+        horas_extra_dom_nocturnas: (esDom)  ? heNxDia * dias : 0,
+    };
 }

@@ -7,10 +7,19 @@ use App\Http\Requests\CostCenters\StoreCostCenterRequest;
 use App\Http\Requests\CostCenters\UpdateCostCenterRequest;
 use App\Services\Organizacion\CostCenterService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\Facades\DataTables;
 
 class CostCenterController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('can:cost_centers.index')->only('index');
+        $this->middleware('can:cost_centers.create')->only('store');
+        $this->middleware('can:cost_centers.edit')->only('edit','update');
+    }
+
     public function index(Request $request)
     {
         if (!$request->ajax()) return view('organizacion.cost_centers.index');
@@ -30,7 +39,9 @@ class CostCenterController extends Controller
                 : "<span class='badge badge-secondary'>Inactivo</span>"
             )
             ->addColumn('acciones', fn($r)=>
-                '<button class="btn btn-sm btn-primary" onclick="upCostCenter('.$r->id.')"><i class="fas fa-edit"></i></button>'
+                    Auth::user()->can('cost_centers.edit')
+                        ? '<button class="btn btn-sm btn-primary" onclick="upCostCenter('.$r->id.')"><i class="fas fa-edit"></i></button>'
+                        : ''
             )
             ->rawColumns(['is_active','acciones'])
             ->make(true);

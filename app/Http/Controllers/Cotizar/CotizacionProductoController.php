@@ -9,6 +9,7 @@ use App\Models\Cotizacion;
 use App\Services\CotizacionProductoService;
 use App\Models\CotizacionProducto;
 use App\Models\ItemPropio;
+use App\Models\Novedad;
 use App\Models\Parametrizacion;
 use App\Models\ParametrizacionCosto;
 use App\Models\Producto;
@@ -512,6 +513,24 @@ class CotizacionProductoController extends Controller
             ]);
             $cotizacionProducto = $this->cotizacionProductoService->agregarProducto($validated);
 
+            // Guardar novedades operativas si existen (sólo categoría NOMINA)
+            $novedades = $request->input('novedades', []);
+            if (!empty($novedades) && is_array($novedades)) {
+                foreach ($novedades as $nov) {
+                    $cantidad = (float) ($nov['cantidad'] ?? 0);
+                    if ($cantidad > 0) {
+                        \App\Models\CotizacionLista::create([
+                            'cotizacion_id'           => $cotizacionProducto->cotizacion_id,
+                            'cotizacion_producto_id'  => $cotizacionProducto->id,
+                            'novedad_detalle_id'      => (int) $nov['novedad_detalle_id'],
+                            'valor'                   => (float) ($nov['valor'] ?? 0),
+                            'cantidad'                => $cantidad,
+                            'subtotal'                => $cantidad * (float) ($nov['valor'] ?? 0),
+                        ]);
+                    }
+                }
+            }
+
             Log::info('agregarProductosCotizacion - Producto agregado exitosamente', [
                 'producto_id' => $cotizacionProducto->id,
                 'cotizacion_id' => $request->cotizacion_id,
@@ -656,7 +675,11 @@ class CotizacionProductoController extends Controller
             $categorias = Categoria::where('active', 1)
                 ->select('id', 'nombre')
                 ->orderBy('nombre')
-                ->get();
+                ->get()
+                ->map(function ($categoria) {
+                    $categoria->tipo = mb_strtoupper($categoria->nombre) === 'NOMINA' ? 'nomina' : 'estandar';
+                    return $categoria;
+                });
 
             return response()->json([
                 'success' => true,
@@ -1462,6 +1485,35 @@ class CotizacionProductoController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener valores por defecto: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener novedades con grupo_cotiza = true para cotizaciones NOMINA
+     */
+    public function obtenerNovedadesGrupoCotiza(): JsonResponse
+    {
+        try {
+            $novedades = Novedad::where('grupo_cotiza', true)
+                ->where('active', true)
+                ->with(['detalles' => function ($q) {
+                    $q->select('id', 'novedad_id', 'nombre', 'valor_operativo')
+                      ->where('valor_operativo', '>', 0)
+                      ->orderBy('nombre');
+                }])
+                ->orderBy('nombre')
+                ->get(['id', 'nombre']);
+
+            return response()->json([
+                'success' => true,
+                'data'    => $novedades,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('obtenerNovedadesGrupoCotiza error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener novedades: ' . $e->getMessage(),
             ], 500);
         }
     }

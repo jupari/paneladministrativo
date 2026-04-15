@@ -134,9 +134,22 @@ function actualizarTabla() {
 }
 
 function eliminarDetalle(index) {
-    detalles.splice(index, 1);
-    actualizarTabla();
-    saveData();
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: 'Esta acción eliminará el detalle de la novedad.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.value) {
+            detalles.splice(index, 1);
+            actualizarTabla();
+            saveData();
+            toastr.success('Detalle eliminado correctamente.');
+        }
+    });
 }
 
 function formatMoney(value) {
@@ -162,9 +175,11 @@ function saveData() {
         }
     })
 
+    const grupoCotiza = $('#grupo_cotiza').is(':checked') ? 1 : 0;
     const formData = new FormData();
     formData.append('nombre', $('#nombre').val());
     formData.append('active', activo);
+    formData.append('grupo_cotiza', grupoCotiza);
     formData.append("detalles", JSON.stringify(detalles));
     formData.append('total_admon', $('#total_valor_admon').val());
     formData.append('total_operativo', $('#total_valor_operativo').val());

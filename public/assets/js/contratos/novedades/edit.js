@@ -72,9 +72,22 @@ function Cargar() {
 }
 
 function eliminarDetalle(index) {
-    detalles.splice(index, 1);
-    actualizarTabla();
-    updateData();
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: 'Esta acción eliminará el detalle de la novedad.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.value) {
+            detalles.splice(index, 1);
+            actualizarTabla();
+            updateData();
+            toastr.success('Detalle eliminado correctamente.');
+        }
+    });
 }
 
 function updateData() {
@@ -88,10 +101,12 @@ function updateData() {
         }
     })
 
+    const grupoCotiza = $('#grupo_cotiza').is(':checked') ? 1 : 0;
     const novedadId =  $('#id').val();
     const formData = new FormData();
     formData.append('nombre', $('#nombre').val());
     formData.append('active', activo);
+    formData.append('grupo_cotiza', grupoCotiza);
     formData.append("detalles", JSON.stringify(detalles));
     formData.append('total_admon', $('#total_valor_admon').val());
     formData.append('total_operativo', $('#total_valor_operativo').val());
@@ -148,9 +163,15 @@ function openDetalleModal(index = null) {
         $('#detalle_valor_admon').val(item.valor_admon ?? '');
         $('#detalle_valor_operativo').val(item.valor_operativo ?? '');
         $('#detalle_index').val(index);
+        // Guardar el id del detalle si existe
+        $('#detalle_id').remove();
+        if (item.id) {
+            $('<input>').attr({type:'hidden',id:'detalle_id',name:'detalle_id'}).val(item.id).appendTo('#formDetalle');
+        }
     } else {
         $('#formDetalle')[0].reset();
         $('#detalle_index').val('');
+        $('#detalle_id').remove();
     }
 
     $('#modalDetalle').modal('show');
@@ -166,14 +187,19 @@ function saveDetalleFromModal() {
         return;
     }
 
+
+    // Si hay id, mantenerlo en el payload
+    const id = $('#detalle_id').val();
     const payload = {
         nombre,
         valor_admon: valorAdmon,
         valor_operativo: valorOperativo
     };
+    if (id) payload.id = parseInt(id);
 
     if (detalleEditIndex !== null) {
-        detalles[detalleEditIndex] = payload;
+        // Mantener el id si ya existía
+        detalles[detalleEditIndex] = Object.assign({}, detalles[detalleEditIndex], payload);
     } else {
         detalles.push(payload);
     }

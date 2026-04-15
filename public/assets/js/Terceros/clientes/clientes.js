@@ -1,4 +1,127 @@
 $(function () {
+    // Capitalizar automáticamente los campos string en el formulario de sucursal
+    function capitalizeWords(str) {
+        return str.replace(/\b\w+/g, function(txt){
+            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+        });
+    }
+
+    // Capitalizar nombre de sucursal y persona de contacto
+    $('#sucursal_nombre_sucursal, #sucursal_persona_contacto').on('input', function() {
+        let val = $(this).val();
+        $(this).val(capitalizeWords(val));
+    });
+
+    // Capitalizar dirección de sucursal solo la primera letra de cada oración
+    $('#sucursal_direccion').on('input', function() {
+        let val = $(this).val();
+        if(val.length > 0) {
+            $(this).val(val.charAt(0).toUpperCase() + val.slice(1));
+        }
+    });
+
+    // Validación en tiempo real de identificación única
+    // Variable global para controlar si la identificación es válida
+    let identificacionValida = true;
+
+    $('#identificacion').on('blur', function() {
+        var identificacion = $(this).val();
+        var tipoidentificacion_id = $('#tipoidentificacion_id').val();
+        if(identificacion && tipoidentificacion_id) {
+            $.ajax({
+                url: '/admin/validar-identificacion',
+                type: 'POST',
+                data: {
+                    identificacion: identificacion,
+                    tipoidentificacion_id: tipoidentificacion_id,
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(resp) {
+                    if(resp.exists) {
+                        identificacionValida = false;
+                        $('#identificacion').addClass('is-invalid');
+                        $('#error_identificacion_b').text('La identificación ya está registrada.').show();
+                        toastr.error('La identificación ya está registrada.');
+                    } else {
+                        identificacionValida = true;
+                        $('#identificacion').removeClass('is-invalid');
+                        $('#error_identificacion_b').text('').hide();
+                    }
+                }
+            });
+        } else {
+            identificacionValida = true;
+            $('#identificacion').removeClass('is-invalid');
+            $('#error_identificacion_b').text('').hide();
+        }
+    });
+
+    // Cálculo automático del DV para NIT
+    function calcularDV(nit) {
+        // Secuencia de pesos DIAN
+        var pesos = [71, 67, 59, 53, 47, 43, 41, 37, 29, 23, 19, 17, 13, 7, 3];
+        var nitStr = nit.toString().replace(/[^0-9]/g, '');
+        nitStr = nitStr.padStart(15, '0');
+        var suma = 0;
+        for (var i = 0; i < 15; i++) {
+            suma += parseInt(nitStr[i], 10) * pesos[i];
+        }
+        var residuo = suma % 11;
+        if (residuo === 0 || residuo === 1) {
+            return residuo;
+        } else {
+            return 11 - residuo;
+        }
+    }
+
+    function actualizarDV() {
+        var selectedText = $('#tipoidentificacion_id option:selected').text().toLowerCase();
+        var nit = $('#identificacion').val();
+        if(selectedText.includes('nit') && nit.match(/^\d+$/) && nit.length > 0) {
+            var dv = calcularDV(nit);
+            $('#dv').val(dv);
+        } else {
+            $('#dv').val('');
+        }
+    }
+
+    $('#tipoidentificacion_id').on('change', function() {
+        actualizarDV();
+    });
+    $('#identificacion').on('input', function() {
+        actualizarDV();
+    });
+
+    // Limitar a 9 dígitos si el tipo de identificación es NIT
+    $('#tipoidentificacion_id').on('change', function() {
+        var selectedText = $('#tipoidentificacion_id option:selected').text().toLowerCase();
+        if(selectedText.includes('nit')) {
+            $('#identificacion').attr('maxlength', 9);
+        } else {
+            $('#identificacion').removeAttr('maxlength');
+        }
+    });
+
+    // También limitar en tiempo real si ya está seleccionado NIT al cargar
+    var selectedTextInit = $('#tipoidentificacion_id option:selected').text().toLowerCase();
+    if(selectedTextInit.includes('nit')) {
+        $('#identificacion').attr('maxlength', 9);
+    } else {
+        $('#identificacion').removeAttr('maxlength');
+    }
+
+    // Refuerza el límite en el input
+    $('#identificacion').on('input', function() {
+        var max = $(this).attr('maxlength');
+        if(max) {
+            this.value = this.value.slice(0, max);
+        }
+    });
+
+    // Solo permitir números en el campo de identificación
+    $('#identificacion').on('input', function() {
+        this.value = this.value.replace(/[^0-9]/g, '');
+    });
 
     // Toast
     toastr.options = {
@@ -36,7 +159,15 @@ $(function () {
      //carga de la datatable
     Cargar();
 
-    $('#addContactoBtn').click(() => { registerContacto(); });
+    $('#addContactoBtn').click(() => {
+        if (!identificacionValida) {
+            $('#identificacion').addClass('is-invalid');
+            $('#error_identificacion_b').text('La identificación ya está registrada.').show();
+            toastr.error('La identificación ya está registrada.');
+            return;
+        }
+        registerContacto();
+    });
     $('#addSucursalBtn').click(() => { registerSucursal(); });
 
 
@@ -169,16 +300,15 @@ function CargarSucursales(id) {
             ajax: '/admin/admin.sucursales.index/'+id,
                 columns: [
                 { data: 'DT_RowIndex', name: 'DT_RowIndex', className: 'exclude', orderable: false,searchable: false},
-                { data: 'comercial', name: 'comercial'},
-                { data: 'nombre_sucursal', name: 'nombre_sucursal'},
-                { data: 'correo', name: 'correo'},
-                { data: 'telefono', name: 'telefono'},
-                { data: 'celular', name: 'celular'},
-                { data: 'ciudad', name: 'ciudad'},
-                { data: 'direccion', name: 'direccion'},
-                { data: 'persona_contacto', name: 'persona_contacto'},
+                { data: 'nombre_sucursal', name: 'Nombre Sucursal'},
+                { data: 'persona_contacto', name: 'Persona de Contacto'},
+                { data: 'correo', name: 'Correo'},
+                { data: 'telefono', name: 'Teléfono'},
+                { data: 'celular', name: 'Celular'},
+                { data: 'ciudad', name: 'Ciudad'},
+                { data: 'direccion', name: 'Dirección'},
                 //{ data: 'active', name: 'active',className:'text-center'},
-                { data: 'acciones', name: 'acciones', className: 'exclude'},
+                { data: 'acciones', name: 'Acciones', className: 'exclude'},
             ],
             order: [[1, "asc"]],
             pageLength: 10,
@@ -593,22 +723,19 @@ function registerCli() {
         // Manejo de errores
         console.error('❌ Error en registerCli():', e);
         limpiarValidaciones(); // Reemplaza con tu función de limpieza de validaciones
-        
+
         // Verificar si existe la respuesta JSON
         if (!e.responseJSON) {
             console.error('❌ No hay responseJSON en la respuesta');
             toastr.error('Error de conexión o servidor');
             return;
         }
-        
+
         const arr = e.responseJSON;
-        console.log('🔍 Respuesta del servidor:', arr);
 
         if (e.status == 422) {
             // Errores de validación
             if (arr.errors) {
-                console.log('🔍 Errores de validación encontrados:', arr.errors);
-                
                 // Verificar qué elementos de error existen en el DOM
                 const errorElements = [];
                 $.each(arr.errors, function (key, value) {
@@ -620,14 +747,7 @@ function registerCli() {
                         elementVisible: errorElement.is(':visible'),
                         currentText: errorElement.text()
                     });
-                    
-                    console.log(`🔍 Campo '${key}':`, {
-                        error: value[0],
-                        element: errorElement,
-                        exists: errorElement.length > 0,
-                        visible: errorElement.is(':visible')
-                    });
-                    
+
                     if (errorElement.length > 0) {
                         errorElement.text(value[0]);
                         errorElement.show(); // Asegurar que sea visible
@@ -639,7 +759,7 @@ function registerCli() {
                         console.warn(`⚠️ Elemento #error_${key} no encontrado en el DOM`);
                     }
                 });
-                
+
                 console.table(errorElements);
                 toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.');
             } else {
@@ -660,12 +780,8 @@ function registerCli() {
 
 // Actualizar usuario
 function upCli(btn) {
-    console.log('✏️ upCli() - Abriendo modal para editar cliente:', btn);
-
     // Marcar que está en modo edición
     $('#ModalCliente').data('edit-mode', true);
-    console.log('📝 Modo de edición MARCADO para cliente ID:', btn);
-
     // Usar la nueva función compatible para editar
     if (window.openEditClientModal) {
         window.openEditClientModal(btn);
@@ -835,14 +951,11 @@ function limpiarValidacionesContacto() {
 
 function registerSucursal(){
 
-    $('#spinnerRegisterSucursal').addClass('d-none');
-    $('#spinnerRegisterSucursal').removeClass('d-block');
-
     tercero_id=$('#id').val();
     sucursal_id=$('#sucursal_id').val();
     if(tercero_id==''){
         registerCli();
-        saveSucursal();
+        //saveSucursal();
     }else if(tercero_id!='' && sucursal_id==''){
         saveSucursal();
     }else if(tercero_id!='' && sucursal_id!=''){
@@ -851,10 +964,6 @@ function registerSucursal(){
 }
 
 function registerContacto(){
-
-    $('#spinnerRegisterContacto').removeClass('d-none');
-    $('#spinnerRegisterContacto').addClass('d-block');
-
     tercero_id=$('#id').val();
     contacto_id=$('#contacto_id').val();
 
@@ -909,7 +1018,7 @@ function registerCliForContacto() {
     }).then(response => {
         $('#id').val(response.data.id);
         // Una vez creado el cliente, crear el contacto
-        saveContacto();
+        //saveContacto();
         toastr.success('Cliente creado exitosamente');
 
     }).catch(e => {
@@ -1029,7 +1138,6 @@ function saveContacto(){
         CargarContactos(tercero_id);
         limpiarValidacionesContacto();
         toastr.success('Contacto guardado exitosamente');
-        toastr.success('Contacto guardado exitosamente');
 
     }).catch(e => {
         // Manejo de errores
@@ -1042,17 +1150,23 @@ function saveContacto(){
 
         if (e.status == 422) {
             // Errores de validación
+            let allErrors = [];
             $.each(toast, function (key, value) {
-                $('#error_contacto_' + key).text(value[0]);
+                $('#error_contacto_' + key).text(value.join(' '));
+                allErrors = allErrors.concat(value);
             });
-            toastr.warning('No fue posible guardar el contacto, revisar los errores en los campos.');
+            toastr.warning('No fue posible guardar el contacto.\n' + allErrors.join('\n'));
+        } else if (e.status == 409 && arr && arr.message) {
+            // Error de identificación duplicada
+            toastr.error(arr.message);
         } else if (e.status == 403) {
             // Errores de permisos
             $('#ModalCliente').modal('toggle');
             toastr.warning(arr.error);
+        } else if (arr && arr.message) {
+            toastr.error(arr.message);
         } else {
-            toastr.error('Error al guardar el contacto');
-            console.log(e.responseJSON);
+            toastr.error('Error desconocido al guardar el contacto.');
         }
     });
 }
@@ -1423,15 +1537,15 @@ function obtenerVendedor() {
 // Función temporal de debug para probar validaciones
 function testValidaciones() {
     console.log('🧪 Iniciando test de validaciones...');
-    
+
     // Limpiar formulario
     $('#ModalCliente form')[0].reset();
     limpiarValidaciones();
-    
+
     // Enviar formulario vacío para provocar errores de validación
     const route = "/admin/admin.clientes.store";
     let ajax_data = new FormData();
-    
+
     // Enviar solo algunos datos para provocar errores específicos
     ajax_data.append('tercerotipo_id', '1');
     ajax_data.append('tipoidentificacion_id', ''); // Error: requerido
@@ -1439,7 +1553,7 @@ function testValidaciones() {
     ajax_data.append('tipopersona_id', ''); // Error: requerido
     ajax_data.append('correo', 'email-invalido'); // Error: formato
     ajax_data.append('user_id', ''); // Error: requerido
-    
+
     $.ajax({
         url: route,
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
@@ -1452,19 +1566,19 @@ function testValidaciones() {
         console.log('✅ Respuesta exitosa (no esperado en test):', response);
     }).catch(e => {
         console.log('🧪 Test de validación - Error capturado (esperado):', e);
-        
+
         if (!e.responseJSON) {
             console.error('❌ Test falló: No hay responseJSON');
             return;
         }
-        
+
         const arr = e.responseJSON;
         console.log('🔍 Estructura de respuesta:', arr);
-        
+
         if (e.status === 422 && arr.errors) {
             console.log('✅ Test exitoso: Se recibieron errores de validación');
             console.log('🔍 Errores recibidos:', arr.errors);
-            
+
             // Verificar que se muestren en la UI
             $.each(arr.errors, function (key, value) {
                 const errorElement = $('#error_' + key);
@@ -1473,7 +1587,7 @@ function testValidaciones() {
                     elementExists: errorElement.length > 0,
                     elementWillShow: errorElement.length > 0 ? 'Sí' : 'No'
                 });
-                
+
                 if (errorElement.length > 0) {
                     errorElement.text(value[0]);
                     errorElement.show();

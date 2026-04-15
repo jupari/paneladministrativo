@@ -1,285 +1,214 @@
 $(function () {
-
-    // Toast
     toastr.options = {
-        "closeButton": true,
-        "debug": false,
-        "newestOnTop": false,
-        "progressBar": false,
-        "positionClass": "toast-bottom-right",
-        "preventDuplicates": false,
-        "onclick": null,
-        "showDuration": "300",
-        "hideDuration": "1000",
-        "timeOut": "5000",
-        "extendedTimeOut": "1000",
-        "showEasing": "swing",
-        "hideEasing": "linear",
-        "showMethod": "fadeIn",
-        "hideMethod": "fadeOut"
-    }
+        closeButton: true,
+        progressBar: true,
+        positionClass: 'toast-bottom-right',
+        timeOut: '5000',
+    };
 
-    // Obtener la fecha actual
-    let fechaActual = new Date();
-
-    // Formatear la fecha al formato "2009-04-19"
-    let fechaFormateada = '2009-' + ('0' + (fechaActual.getMonth() + 1)).slice(-2) + '-' + ('0' + fechaActual.getDate()).slice(-2);
-
-
-    // // Escucha el evento de cierre de la ventana modal
-    // $('#myModal').on('hidden.bs.modal', function () {
-    //     // Activa la primera pestaña al cerrar la ventana modal
-    //     $('#custom-content-below-home-tab').tab('show');
-    // });
-
-
-     //carga de la datatable
     Cargar();
 });
 
-
+/* ─────────────────────────────────────────────
+   DATATABLE
+───────────────────────────────────────────── */
 function Cargar() {
     if ($.fn.DataTable.isDataTable('#cargos-table')) {
         $('#cargos-table').DataTable().destroy();
     }
-    let table = $('#cargos-table').DataTable(
-        {
-            language: {
-                "url": "/assets/js/spanish.json"
-            },
-            responsive: true,
-            dom: "<'row'<'col-sm-6'B><'col-sm-6'f>>" +
-                "<'row'<'col-sm-12'ltr>>" +
-                "<'row'<'col-sm-5'i><'col-sm-7'p>>",
-            buttons: [
-                {
-                    extend: 'excel',
-                    className: 'btn btn-success',
-                    exportOptions: {
-                        columns: ':not(.exclude)'
-                    },
-                    text: '<i class="far fa-file-excel"></i>',
-                    titleAttr: 'Exportar a Excel',
-                    filename: 'reporte_excel'
-                }],
-            ajax: '/admin/admin.cargos.index',
-                columns: [
-                { data: 'DT_RowIndex', name: 'DT_RowIndex', className: 'exclude', orderable: false,searchable: false},
-                { data: 'id', name: 'id'},
-                { data: 'nombre', name: 'nombre'},
-                { data: 'active', name: 'active',className:'text-center'},
-                { data: 'created_at', name: 'created_at'},
-                { data: 'acciones', name: 'acciones', className:'text-center',className: 'exclude'},
-            ],
-            order: [[1, "asc"]],
-            pageLength: 10,
-            lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "Todo(s)"]],
-        }
-    );
-    // table.ajax.reload();
-}
 
-// Limpiar inputs
-function cleanInput(btn) {
-
-    const bool = (btn == null) ? false : true;
-
-    // Campos del formulario actual
-    const fields = [
-        'nombre',
-        'active'
-    ];
-
-    // Limpiar cada campo
-    fields.forEach(field => {
-        $('#' + field).val(''); // Limpiar el valor
-    });
-
-    // Opcional: desmarcar todos los checkboxes si es necesario
-    $('input[type="checkbox"]').prop('checked', false);
-}
-
-function showCustomCargo(btn) {
-    $.get("/admin/admin.cargos.edit/" + btn, (response) => {
-        const usr = response.data;
-
-        // Mapear los campos del formulario
-        const usuarioFields = [
-            'id',
-            'nombre',
-            'active'
-        ];
-
-        usuarioFields.forEach(field => {
-            if (field === 'active') {
-                // Configurar el checkbox
-                $('#' + field).prop('checked', usr[field] == 1 ? true : false);
-            } else if (field.endsWith('_id')) {
-                // Configurar el valor de los selects
-                $('#' + field).val(usr[field]).change();
-            } else {
-                // Configurar el valor de los campos de texto
-                $('#' + field).val(usr[field]);
-            }
-        });
+    $('#cargos-table').DataTable({
+        language: { url: '/assets/js/spanish.json' },
+        responsive: true,
+        dom: "<'row'<'col-sm-6'B><'col-sm-6'f>>" +
+             "<'row'<'col-sm-12'ltr>>" +
+             "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+        buttons: [{
+            extend: 'excel',
+            className: 'btn btn-success btn-sm',
+            exportOptions: { columns: ':not(.exclude)' },
+            text: '<i class="far fa-file-excel"></i> Excel',
+            titleAttr: 'Exportar a Excel',
+            filename: 'cargos',
+        }],
+        ajax: '/admin/admin.cargos.index',
+        columns: [
+            { data: 'DT_RowIndex',              name: 'DT_RowIndex',              className: 'exclude text-center', orderable: false, searchable: false },
+            { data: 'nombre',                   name: 'nombre' },
+            { data: 'salario_base_fmt',         name: 'salario_base',             className: 'text-center' },
+            { data: 'arl_badge',                name: 'arl_nivel',                className: 'text-center', orderable: false },
+            { data: 'exoneracion_badge',        name: 'aplica_exoneracion',       className: 'text-center', orderable: false },
+            { data: 'active',                   name: 'active',                   className: 'text-center' },
+            { data: 'acciones',                 name: 'acciones',                 className: 'text-center exclude', orderable: false },
+        ],
+        order: [[1, 'asc']],
+        pageLength: 15,
+        lengthMenu: [[10, 15, 25, 50, -1], [10, 15, 25, 50, 'Todos']],
     });
 }
 
-//Registrar usuario
-function regCargo() {
-    $('#ModalCargo').modal('show');
-    $('#exampleModalLabel').html('Registrar Cargo');
-
-    // LIMPIAR CAMPOS
-    cleanInput();
-     // FIN LIMPIAR CAMPOS
-    limpiarValidaciones();
-     let r = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
-        '<button type="button" class="btn btn-primary" onclick="registerCargo()"><span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="spinnerRegister"></span>Agregar</button>';
-
-    $(".modal-footer").html(r);
-
-}
-
-function registerCargo() {
-
-    $('#spinnerRegister').addClass('d-none');
-    $('#spinnerRegister').removeClass('d-block');
-
-    const route = "/admin/admin.cargos.store";
-
-    let activo=$('#active').is(':checked')?1:0;
-    $('#active').change(function(){
-        if($(this).is(':checked')){
-            activo=1;
-        }else{
-            activo=0;
-        }
-    })
-
-    // Crear un objeto FormData directamente desde el formulario
-    let ajax_data = new FormData();
-
-    // Agregar los nuevos campos del formulario
-    ajax_data.append('nombre', $('#nombre').val());
-    ajax_data.append('active', activo);
-
-
-    // Realizar la solicitud AJAX
-    $.ajax({
-        url: route,
-        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
-        type: 'POST',
-        dataType: 'json',
-        data: ajax_data,
-        contentType: false, // IMPORTANTE PARA SUBIR IMÁGENES O ARCHIVOS POR AJAX
-        processData: false,
-    }).then(response => {
-        $('#spinnerRegister').addClass('d-none');
-        $('#spinnerRegister').removeClass('d-block');
-        Cargar();
-        $('#ModalCargo').modal('hide'); // Reemplaza con tu lógica de modal
-        toastr.success(response.message); // Muestra el mensaje de éxito
-
-    }).catch(e => {
-        // Manejo de errores
-        limpiarValidaciones(); // Reemplaza con tu función de limpieza de validaciones
-        const arr = e.responseJSON;
-        const toast = arr.errors;
-
-        if (e.status == 422) {
-            // Errores de validación
-            $.each(toast, function (key, value) {
-                $('#error_' + key).text(value[0]);
-            });
-            toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.'); // Muestra el mensaje de error
-        } else if (e.status == 403) {
-            // Errores de permisos
-            $('#ModalCargo').modal('hide');
-            toastr.warning(arr.error);
-        }
-    });
-}
-
-// Actualizar usuario
-function upCargo(btn) {
-   $('#ModalCargo').modal('show');
-    $('#exampleModalLabel').html('Editar Cargo');
-    // LIMPIAR CAMPOS
-    cleanInput();
-    showCustomCargo(btn);
-    // FIN LIMPIAR CAMPOS
-    let u = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
-        '<button id="editar" class="btn btn-primary" onclick="updateCargo(' + btn + ')">Guardar</button>';
-    $(".modal-footer").html(u);
-}
-
-function updateCargo(btn) {
-    const route = `/admin/admin.cargos.update/${btn}`;
-
-    // Crear un objeto FormData para enviar los datos
-    let ajax_data = new FormData();
-
-    // Lista de campos del formulario
-    const fields = [
-        'nombre',
-        'active'
-    ];
-
-    // Recorrer los campos y agregarlos al FormData
-    fields.forEach(field => {
-        if (field === 'active') {
-            // Manejar checkbox (true o false)
-            ajax_data.append(field, $('#' + field).is(':checked') ? 1 : 0);
-        } else {
-            ajax_data.append(field, $('#' + field).val());
-        }
-    });
-
-    // Enviar la solicitud AJAX
-    $.ajax({
-        url: route,
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-            'X-HTTP-Method-Override': 'POST'
-        },
-        type: 'POST',
-        dataType: 'json',
-        data: ajax_data,
-        contentType: false,
-        processData: false,
-    })
-    .then(response => {
-        Cargar();
-        $('#ModalCargo').modal('hide');
-        toastr.success(response.message);
-    })
-    .catch(e => {
-        limpiarValidaciones();
-        const arr = e.responseJSON;
-        const toast = arr.errors;
-
-        if (e.status === 422) {
-            // Errores de validación
-            $('#myModal').data('bs.modal')._config.backdrop = 'static';
-            $.each(toast, function(key, value) {
-                $('#error_' + key).text(value[0]);
-            });
-        toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.');
-        } else if (e.status === 403) {
-            $('#ModalCargo').modal('hide');
-            toastr.warning(arr.message);
-        }
-    });
+/* ─────────────────────────────────────────────
+   HELPERS
+───────────────────────────────────────────── */
+function cleanInput() {
+    $('#id').val('');
+    $('#nombre').val('');
+    $('#active').prop('checked', true);
+    $('#salario_base').val('');
+    $('#arl_nivel').val('1');
+    $('#aplica_exoneracion_ley1607').prop('checked', true);
 }
 
 function limpiarValidaciones() {
-    const fields = [
-        'nombre',
-        'active'
-    ];
+    ['nombre', 'active', 'salario_base', 'arl_nivel', 'aplica_exoneracion_ley1607']
+        .forEach(f => $('#error_' + f).text(''));
+}
 
-    fields.forEach(field => {
-        $('#error_' + field).text('');
+function getDatosFormulario() {
+    return {
+        nombre:                     $('#nombre').val(),
+        active:                     $('#active').is(':checked') ? 1 : 0,
+        salario_base:               $('#salario_base').val() || null,
+        arl_nivel:                  $('#arl_nivel').val(),
+        aplica_exoneracion_ley1607: $('#aplica_exoneracion_ley1607').is(':checked') ? 1 : 0,
+    };
+}
+
+/* ─────────────────────────────────────────────
+   REGISTRAR
+───────────────────────────────────────────── */
+function regCargo() {
+    cleanInput();
+    limpiarValidaciones();
+    $('#exampleModalLabel').text('Nuevo Cargo');
+    $('.modal-footer').html(`
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">
+            <i class="fas fa-times mr-1"></i>Cancelar
+        </button>
+        <button type="button" class="btn btn-primary" onclick="registerCargo()">
+            <span class="spinner-border spinner-border-sm d-none" id="spinnerRegister"></span>
+            <i class="fas fa-save mr-1"></i>Guardar
+        </button>
+    `);
+    $('#ModalCargo').modal('show');
+}
+
+function registerCargo() {
+    limpiarValidaciones();
+    $('#spinnerRegister').removeClass('d-none');
+
+    $.ajax({
+        url: '/admin/admin.cargos.store',
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        type: 'POST',
+        dataType: 'json',
+        data: getDatosFormulario(),
+    }).then(response => {
+        $('#spinnerRegister').addClass('d-none');
+        $('#ModalCargo').modal('hide');
+        Cargar();
+        toastr.success(response.message);
+    }).catch(e => {
+        $('#spinnerRegister').addClass('d-none');
+        limpiarValidaciones();
+        if (e.status === 422) {
+            $.each(e.responseJSON.errors, (key, val) => $('#error_' + key).text(val[0]));
+            toastr.warning('Revise los errores en el formulario.');
+        } else if (e.status === 403) {
+            $('#ModalCargo').modal('hide');
+            toastr.error(e.responseJSON.error || 'Sin permiso.');
+        } else {
+            toastr.error('Error inesperado. Intente nuevamente.');
+        }
+    });
+}
+
+/* ─────────────────────────────────────────────
+   EDITAR
+───────────────────────────────────────────── */
+function upCargo(id) {
+    cleanInput();
+    limpiarValidaciones();
+    $('#exampleModalLabel').text('Editar Cargo');
+    $('.modal-footer').html(`
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="modal">
+            <i class="fas fa-times mr-1"></i>Cancelar
+        </button>
+        <button type="button" class="btn btn-primary" onclick="updateCargo(${id})">
+            <i class="fas fa-save mr-1"></i>Guardar cambios
+        </button>
+    `);
+
+    $.get('/admin/admin.cargos.edit/' + id, response => {
+        const c = response.data;
+        $('#id').val(c.id);
+        $('#nombre').val(c.nombre);
+        $('#active').prop('checked', c.active == 1);
+        $('#salario_base').val(c.salario_base || '');
+        $('#arl_nivel').val(c.arl_nivel || 1);
+        $('#aplica_exoneracion_ley1607').prop('checked', c.aplica_exoneracion_ley1607 != 0);
+        // Disparar actualización del resumen visual
+        $('#arl_nivel').trigger('change');
+    }).fail(() => toastr.error('No se pudo cargar el cargo.'));
+
+    $('#ModalCargo').modal('show');
+}
+
+function updateCargo(id) {
+    limpiarValidaciones();
+
+    $.ajax({
+        url: '/admin/admin.cargos.update/' + id,
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+            'X-HTTP-Method-Override': 'POST',
+        },
+        type: 'POST',
+        dataType: 'json',
+        data: getDatosFormulario(),
+    }).then(response => {
+        $('#ModalCargo').modal('hide');
+        Cargar();
+        toastr.success(response.message);
+    }).catch(e => {
+        limpiarValidaciones();
+        if (e.status === 422) {
+            $.each(e.responseJSON.errors, (key, val) => $('#error_' + key).text(val[0]));
+            toastr.warning('Revise los errores en el formulario.');
+        } else if (e.status === 403) {
+            $('#ModalCargo').modal('hide');
+            toastr.error(e.responseJSON.message || 'Sin permiso.');
+        } else {
+            toastr.error('Error inesperado. Intente nuevamente.');
+        }
+    });
+}
+
+/* ─────────────────────────────────────────────
+   ELIMINAR
+───────────────────────────────────────────── */
+function deleteCargo(id) {
+    Swal.fire({
+        title: '¿Eliminar cargo?',
+        text: 'Esta acción no se puede deshacer.',
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar',
+    }).then(result => {
+        if (!result.value) return;
+        $.ajax({
+            url: '/admin/admin.cargos.destroy/' + id,
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            type: 'DELETE',
+            dataType: 'json',
+        }).then(response => {
+            Cargar();
+            toastr.success(response.message);
+        }).catch(e => {
+            toastr.error(e.responseJSON?.message || 'Error al eliminar.');
+        });
     });
 }

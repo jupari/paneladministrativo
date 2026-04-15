@@ -14,6 +14,14 @@ use Spatie\Permission\Models\Permission;
 
 class VendedorController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:vendedores.index')->only('index');
+        $this->middleware('can:vendedores.create')->only('store');
+        $this->middleware('can:vendedores.edit')->only('update');
+        $this->middleware('can:vendedores.destroy')->only('destroy');
+    }
+
     public function index(Request $request)
     {
         try {
@@ -21,52 +29,36 @@ class VendedorController extends Controller
             $permissions =  Permission::All();
             if($request->ajax()) {
                 return Datatables::of($vendedores)
-                                ->addIndexColumn()
-                                ->addColumn('id', function ($td) {
-
-                                    $href = $td->id;
-                                    return $href;
-
-                                })
-                                ->addColumn('identificacion', function ($td) {
-
-                                    $href = $td->identificacion;
-                                    return $href;
-
-                                })
-                                ->addColumn('nombre_completo', function ($td) {
-
-                                    $href = $td->nombre_completo;
-                                    return $href;
-
-                                })
-                                ->addColumn('active', function ($td) {
-
-                                    if($td->active==1){
-                                        $href = '<span class="badge bg-success">Activo</span>';
-                                    }else{
-                                        $href = '<span class="badge bg-danger">Inactivo</span>';
-                                    }
-                                    return $href;
-                                })
-                                ->addColumn('created_at', function ($td) {
-
-                                    $href = $td->created_at;
-                                    return $href;
-
-                                })
-                                ->addColumn('acciones', function ($td) {
-                                    if(Auth::user()->can('roles.edit')){
-                                        $href = '<button type="button" onclick="upVend('.$td->id.')" class="btn btn-warning btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Editar Cliente"><i class="fas fa-pencil-alt"></i></button>&nbsp';
-                                        $href .= '<button type="button" onclick="deleteVend('.$td->id.')" class="btn btn-danger btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Quitar Usuario"><i class="fas fa-trash"></i></button>';
-                                    }else{
-                                        $href='';
-                                    }
-                                    return $href;
-                                })
-                                ->rawColumns(['id', 'identificacion', 'nombre_completo','active','created_at','acciones'])
-                                ->make(true);
-
+                    ->addIndexColumn()
+                    ->addColumn('id', function ($td) {
+                        return $td->id;
+                    })
+                    ->addColumn('identificacion', function ($td) {
+                        return $td->identificacion;
+                    })
+                    ->addColumn('nombre_completo', function ($td) {
+                        return $td->nombre_completo;
+                    })
+                    ->addColumn('active', function ($td) {
+                        return $td->active == 1
+                            ? '<span class="badge bg-success">Activo</span>'
+                            : '<span class="badge bg-danger">Inactivo</span>';
+                    })
+                    ->addColumn('created_at', function ($td) {
+                        return $td->created_at;
+                    })
+                    ->addColumn('acciones', function ($td) {
+                        $href = '';
+                        if (Auth::user()->can('vendedores.edit')) {
+                            $href .= '<button type="button" onclick="upVend('.$td->id.')" class="btn btn-warning btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Editar Vendedor"><i class="fas fa-pencil-alt"></i></button>&nbsp';
+                        }
+                        if (Auth::user()->can('vendedores.destroy')) {
+                            $href .= '<button type="button" onclick="deleteVend('.$td->id.')" class="btn btn-danger btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Quitar Vendedor"><i class="fas fa-trash"></i></button>';
+                        }
+                        return $href;
+                    })
+                    ->rawColumns(['id', 'identificacion', 'nombre_completo','active','created_at','acciones'])
+                    ->make(true);
             }
 
             return view('terceros.vendedores.index');

@@ -28,8 +28,13 @@ class ProveedorController extends Controller
 
     public function __construct(ProveedorService $proveedorService)
     {
+        $this->middleware('can:proveedores.index')->only('index');
+        $this->middleware('can:proveedores.create')->only('store');
+        $this->middleware('can:proveedores.edit')->only('update');
+        $this->middleware('can:proveedores.destroy')->only('destroy');
         $this->proveedorService = $proveedorService;
     }
+
 
     public function index(Request $request)
     {
@@ -50,15 +55,19 @@ class ProveedorController extends Controller
                     ->addColumn('celular', fn ($td) => $td->celular)
                     ->addColumn('created_at', fn ($td) => $td->created_at)
                     ->addColumn('acciones', function ($td) {
-                        return auth()->user()->can('terceros.edit') ?
-                            '<button type="button" onclick="upProv(' . $td->id . ')" class="btn btn-warning btn-circle btn-sm">
-                                <i class="fas fa-pencil-alt"></i>
-                            </button>' : '';
+                        $href = '';
+                        if (auth()->user()->can('proveedores.edit')) {
+                            $href .= '<button type="button" onclick="upProv(' . $td->id . ')" class="btn btn-warning btn-circle btn-sm" title="Editar Proveedor"><i class="fas fa-pencil-alt"></i></button>&nbsp;';
+                        }
+                        if (auth()->user()->can('proveedores.destroy')) {
+                            $href .= '<button type="button" onclick="deleteProv(' . $td->id . ')" class="btn btn-danger btn-circle btn-sm" title="Eliminar Proveedor"><i class="fas fa-trash"></i></button>';
+                        }
+                        return $href;
                     })
                     ->rawColumns(['tipoid','identificacion','tipopersona','nombres','apellidos','nombre_estableciemiento','correo','telefono','telefono','celular','created_at','acciones'])
                     ->make(true);
             }
-            
+
             $permissions =  Permission::All();
             $tiposIdentificacion = TipoIdentificacion::where('active',1)->orderBy('nombre')->get();
             $tiposPersona=TipoPersona::where('active',1)->orderBy('nombre')->get();
@@ -66,7 +75,7 @@ class ProveedorController extends Controller
             $vendedores=Vendedor::where('active',1)->orderBy('nombre_completo')->get();
             $paises = Pais::with('departamentos.ciudades')->get();
             $authUser= auth()->user();
-            
+
             return view('terceros.proveedores.index', [
                 'permisos'=>$permissions?$permissions:[],
                 'user'=>auth()->user()->roles->pluck('name'),

@@ -7,10 +7,18 @@ use App\Http\Requests\Branches\StoreBranchRequest;
 use App\Http\Requests\Branches\UpdateBranchRequest;
 use App\Services\Organizacion\BranchService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\Facades\DataTables;
 
 class BranchController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:branches.index')->only('index');
+        $this->middleware('can:branches.create')->only('store');
+        $this->middleware('can:branches.edit')->only('edit','update');
+    }
+
     public function index(Request $request)
     {
         if (!$request->ajax()) return view('organizacion.branches.index');
@@ -28,7 +36,9 @@ class BranchController extends Controller
                 : "<span class='badge badge-secondary'>Inactivo</span>"
             )
             ->addColumn('acciones', fn($r)=>
-                '<button class="btn btn-sm btn-primary" onclick="upBranch('.$r->id.')"><i class="fas fa-edit"></i></button>'
+                Auth::user()->can('branches.edit')
+                    ? '<button class="btn btn-sm btn-primary" onclick="upBranch('.$r->id.')"><i class="fas fa-edit"></i></button>'
+                    : ''
             )
             ->rawColumns(['is_active','acciones'])
             ->make(true);

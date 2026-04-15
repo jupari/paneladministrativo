@@ -86,16 +86,29 @@ class ContactoClienteController extends Controller
 
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $tipoIdentificacion = null;
+        if ($request->has('tipoidentificacion_id')) {
+            $tipoIdentificacion = TipoIdentificacion::find($request->input('tipoidentificacion_id'));
+        }
+        $isNIT = $tipoIdentificacion && stripos($tipoIdentificacion->nombre, 'NIT') !== false;
+
+        $rules = [
             'tercero_id' => 'required|exists:terceros,id',
-            'nombres' => 'required|string|max:255',
-            'apellidos' => 'nullable|string|max:255',
             'correo' => 'required|email|max:255|unique:terceros_sucursales,correo',
             'celular' => 'nullable|regex:/^[0-9]{10}$/',
             'telefono' => 'nullable|regex:/^[0-9]{10}$/',
             'ext' => 'nullable|string|max:10',
             'cargo' => 'required|string|max:255',
-        ],[
+        ];
+        if ($isNIT) {
+            $rules['nombres'] = 'nullable|string|max:250';
+            $rules['apellidos'] = 'nullable|string|max:250';
+        } else {
+            $rules['nombres'] = 'required|string|max:250';
+            $rules['apellidos'] = 'nullable|string|max:250';
+        }
+
+        $validator = Validator::make($request->all(), $rules, [
             'celular.regex' => 'El número de celular debe tener exactamente 10 dígitos y solo contener números.',
             'telefono.regex' => 'El número de teléfono debe tener exactamente 10 dígitos y solo contener números.',
         ]);
@@ -105,11 +118,15 @@ class ContactoClienteController extends Controller
         }
 
         try {
-            $sucursal = TerceroContacto::create($request->all());
+            $data = $request->all();
+            if(isset($data['nombres'])) {
+                $data['nombres'] = ucwords(mb_strtolower($data['nombres'], 'UTF-8'));
+            }
+            if(isset($data['apellidos'])) {
+                $data['apellidos'] = ucwords(mb_strtolower($data['apellidos'], 'UTF-8'));
+            }
+            $sucursal = TerceroContacto::create($data);
             return response()->json(['success' => true, 'message' => 'Sucursal creada exitosamente.', 'data' => $sucursal]);
-        // } catch (\Illuminate\Validation\ValidationException $e) {
-        //     // Devolver errores de validación como JSON
-        //     return response()->json(['success' => false, 'errorssuc' => $e->errors()], 422);
         }catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }

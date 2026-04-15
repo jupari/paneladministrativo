@@ -11,6 +11,13 @@ use Exception;
 
 class ProductoController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('can:productos.index')->only('index');
+        $this->middleware('can:productos.create')->only('store');
+        $this->middleware('can:productos.edit')->only('update');
+        $this->middleware('can:productos.destroy')->only('destroy');
+    }
     public function index(Request $request)
     {
 
@@ -39,19 +46,14 @@ class ProductoController extends Controller
                         }
                     })
                 ->addColumn('acciones', function ($td) {
-                        return '<button type="button"
-                                    class="btn btn-primary btn-circle btn-sm editar"
-                                    data-toggle="tooltip" data-placement="top"
-                                    title="Editar Proceso"
-                                    data-id="' . $td->id . '">
-                                    <i class="fas fa-pencil-alt"></i>
-                                </button> <button type="button"
-                                    class="btn btn-danger btn-circle btn-sm eliminar"
-                                    data-toggle="tooltip" data-placement="top"
-                                    title="Cambiar estado proceso"
-                                    data-id="' . $td->id . '">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>';
+                        $href = '';
+                        if (auth()->user()->can('productos.edit')) {
+                            $href .= '<button type="button" class="btn btn-primary btn-circle btn-sm editar" data-toggle="tooltip" data-placement="top" title="Editar Producto" data-id="' . $td->id . '"><i class="fas fa-pencil-alt"></i></button>&nbsp;';
+                        }
+                        if (auth()->user()->can('productos.destroy')) {
+                            $href .= '<button type="button" class="btn btn-danger btn-circle btn-sm eliminar" data-toggle="tooltip" data-placement="top" title="Eliminar Producto" data-id="' . $td->id . '"><i class="fas fa-trash-alt"></i></button>';
+                        }
+                        return $href;
                     })
                 ->rawColumns(['id','tipo_prenda','codigo','nombre','unidad','marca','categoria','subcategoria','estado','acciones'])
                 ->make(true);
