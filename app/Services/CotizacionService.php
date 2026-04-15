@@ -8,6 +8,10 @@ use App\Models\CotizacionCondicionComercial;
 use App\Models\ObservacionCotizacion;
 use App\Models\CotizacionConcepto;
 use App\Models\CotizacionItem;
+use App\Models\CotizacionProducto;
+use App\Models\CotizacionSubImtes;
+use App\Models\CotizacionUtilidad;
+use App\Models\CotizacionViatico;
 use App\Models\Tercero;
 use App\Models\TerceroSucursal;
 use App\Models\TerceroContacto;
@@ -209,9 +213,8 @@ class CotizacionService
 
             $datos = $cotizacionOriginal->toArray();
 
-
             // Remover ID y timestamps
-            unset($datos['id']);
+            unset($datos['id'], $datos['created_at'], $datos['updated_at']);
 
             // Mantener el mismo número de documento
             // Calcular la nueva versión: buscar la máxima versión para ese num_documento y sumarle 1
@@ -253,15 +256,67 @@ class CotizacionService
                 CotizacionCondicionComercial::create($datosCondiciones);
             }
 
-            // Duplicar items relacionados
+            // Duplicar items y subitems manteniendo el mapeo de IDs
+            $itemIdMap    = [];  // old_item_id    => new_item_id
+            $subitemIdMap = [];  // old_subitem_id => new_subitem_id
+
             $itemsOriginales = CotizacionItem::where('cotizacion_id', $id)
                 ->where('active', 1)
                 ->get();
             foreach ($itemsOriginales as $item) {
                 $datosItem = $item->toArray();
+                $oldItemId = $datosItem['id'];
                 unset($datosItem['id'], $datosItem['created_at'], $datosItem['updated_at']);
                 $datosItem['cotizacion_id'] = $nuevaCotizacion->id;
-                CotizacionItem::create($datosItem);
+                $nuevoItem = CotizacionItem::create($datosItem);
+                $itemIdMap[$oldItemId] = $nuevoItem->id;
+
+                // Duplicar subitems de este item
+                $subitemsOriginales = CotizacionSubImtes::where('cotizacion_item_id', $oldItemId)->get();
+                foreach ($subitemsOriginales as $subitem) {
+                    $datosSubitem = $subitem->toArray();
+                    $oldSubitemId = $datosSubitem['id'];
+                    unset($datosSubitem['id'], $datosSubitem['created_at'], $datosSubitem['updated_at']);
+                    $datosSubitem['cotizacion_item_id'] = $nuevoItem->id;
+                    $nuevoSubitem = CotizacionSubImtes::create($datosSubitem);
+                    $subitemIdMap[$oldSubitemId] = $nuevoSubitem->id;
+                }
+            }
+
+            // Duplicar productos reasignando item_id y subitem_id al nuevo mapeo
+            $productosOriginales = CotizacionProducto::where('cotizacion_id', $id)->get();
+            foreach ($productosOriginales as $producto) {
+                $datosProducto = $producto->toArray();
+                unset($datosProducto['id'], $datosProducto['created_at'], $datosProducto['updated_at']);
+                $datosProducto['cotizacion_id'] = $nuevaCotizacion->id;
+
+                if (!empty($datosProducto['cotizacion_item_id']) && isset($itemIdMap[$datosProducto['cotizacion_item_id']])) {
+                    $datosProducto['cotizacion_item_id'] = $itemIdMap[$datosProducto['cotizacion_item_id']];
+                }
+
+                if (!empty($datosProducto['cotizacion_subitem_id']) && isset($subitemIdMap[$datosProducto['cotizacion_subitem_id']])) {
+                    $datosProducto['cotizacion_subitem_id'] = $subitemIdMap[$datosProducto['cotizacion_subitem_id']];
+                }
+
+                CotizacionProducto::create($datosProducto);
+            }
+
+            // Duplicar viáticos
+            $viaticosOriginales = CotizacionViatico::where('cotizacion_id', $id)->get();
+            foreach ($viaticosOriginales as $viatico) {
+                $datosViatico = $viatico->toArray();
+                unset($datosViatico['id'], $datosViatico['created_at'], $datosViatico['updated_at']);
+                $datosViatico['cotizacion_id'] = $nuevaCotizacion->id;
+                CotizacionViatico::create($datosViatico);
+            }
+
+            // Duplicar utilidades
+            $utilidadesOriginales = CotizacionUtilidad::where('cotizacion_id', $id)->get();
+            foreach ($utilidadesOriginales as $utilidad) {
+                $datosUtilidad = $utilidad->toArray();
+                unset($datosUtilidad['id']);
+                $datosUtilidad['cotizacion_id'] = $nuevaCotizacion->id;
+                CotizacionUtilidad::create($datosUtilidad);
             }
 
             DB::commit();
