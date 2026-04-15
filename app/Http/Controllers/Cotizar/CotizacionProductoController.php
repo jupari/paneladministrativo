@@ -1406,18 +1406,27 @@ class CotizacionProductoController extends Controller
                         $valores['encontrado'] = true;
                         $valores['unidad_medida'] = $parametrizacionCosto->unidad_medida ?? $itemPropio->unidad_medida ?? '';
 
-                        // Asignar costo según tipo
+                        $costoDia      = (float) ($parametrizacionCosto->costo_dia ?? 0);
+                        $costoUnitario = (float) ($parametrizacionCosto->costo_unitario ?? 0);
+                        $costoHora     = $costoDia > 0 ? round($costoDia / 8, 2) : 0;
+
+                        // Todos los costos disponibles (para cache en el frontend)
+                        $valores['costos_disponibles'] = [
+                            'unitario' => $costoUnitario,
+                            'dia'      => $costoDia,
+                            'hora'     => $costoHora,
+                        ];
+
+                        // Costo para el tipo solicitado
                         switch ($tipoCosto) {
                             case 'unitario':
-                                $valores['costo'] = $parametrizacionCosto->costo_unitario ?? 0;
+                                $valores['costo'] = $costoUnitario;
                                 break;
                             case 'hora':
-                                // Calcular costo por hora desde costo día
-                                $costoDia = $parametrizacionCosto->costo_dia ?? 0;
-                                $valores['costo'] = $costoDia > 0 ? round($costoDia / 8, 2) : 0; // 8 horas por día
+                                $valores['costo'] = $costoHora;
                                 break;
                             case 'dia':
-                                $valores['costo'] = $parametrizacionCosto->costo_dia ?? 0;
+                                $valores['costo'] = $costoDia;
                                 break;
                         }
                     } else {

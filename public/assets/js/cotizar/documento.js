@@ -3449,7 +3449,7 @@ function generarTarjetasItemsCostos(itemsPropios) {
 
                     <!-- írea de configuración de campos (inicialmente oculta) -->
                     <div id="camposCosto_${itemId}" class="d-none">
-                        ${generarCamposConfiguracion(itemId)}
+                        ${esNomina ? generarCamposConfiguracion(itemId) : generarCamposConfiguracionSimple(itemId)}
                     </div>
 
                     ${esNomina ? `
@@ -3500,6 +3500,103 @@ function generarTarjetasItemsCostos(itemsPropios) {
     });
 
     return html;
+}
+
+/**
+ * Generar campos SIMPLIFICADOS para items NO-NOMINA (maquinaria, insumos, servicios, etc.)
+ * Solo muestra: unidad de medida, cantidad, valor del costo, precio total.
+ */
+function generarCamposConfiguracionSimple(itemId) {
+    return `
+        <div class="cost-field-group mb-3">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label font-weight-bold">
+                            <i class="fas fa-ruler mr-1 text-secondary"></i>Unidad de Medida
+                        </label>
+                        <input type="text" class="form-control" id="unidadMedida_${itemId}"
+                               placeholder="Ej: UND, DIA, HRS, KG"
+                               onchange="actualizarPrecioVisual('${itemId}')">
+                        <small class="form-text text-muted">Se precarga automáticamente desde la parametrización</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label font-weight-bold">
+                            <i class="fas fa-sort-numeric-up mr-1 text-secondary"></i><span id="labelCantidad_${itemId}">Cantidad</span>
+                        </label>
+                        <input type="number" class="form-control" id="cantidadOperarios_${itemId}"
+                               placeholder="0" step="0.5" min="0"
+                               onchange="actualizarPrecioVisual('${itemId}')">
+                        <small class="form-text text-muted" id="helpCantidad_${itemId}">Ingrese la cantidad requerida</small>
+                    </div>
+                </div>
+            </div>
+            <div id="camposEspecificos_${itemId}">
+                <!-- Costo Unitario -->
+                <div class="d-none" id="camposCostoUnitario_${itemId}">
+                    <div class="form-group">
+                        <label class="form-label font-weight-bold text-info">
+                            <i class="fas fa-calculator mr-1"></i>Valor Unitario
+                            <span id="badgeSugerido_unitario_${itemId}" class="badge badge-secondary border ml-1 d-none" style="font-size:.75rem;">
+                                <i class="fas fa-magic mr-1"></i>Valor sugerido
+                            </span>
+                        </label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-info text-white">$</span>
+                            </div>
+                            <input type="number" class="form-control" id="costoUnitario_${itemId}"
+                                   placeholder="0.00" step="0.01" min="0"
+                                   onchange="actualizarPrecioVisual('${itemId}')">
+                        </div>
+                        <small class="form-text text-muted">Costo por unidad — puede editarlo si difiere del estándar</small>
+                    </div>
+                </div>
+                <!-- Costo Hora -->
+                <div class="d-none" id="camposCostoHora_${itemId}">
+                    <div class="form-group">
+                        <label class="form-label font-weight-bold text-warning">
+                            <i class="fas fa-clock mr-1"></i>Valor por Hora
+                            <span id="badgeSugerido_hora_${itemId}" class="badge badge-secondary border ml-1 d-none" style="font-size:.75rem;">
+                                <i class="fas fa-magic mr-1"></i>Valor sugerido
+                            </span>
+                        </label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-warning text-dark">$</span>
+                            </div>
+                            <input type="number" class="form-control" id="costoHora_${itemId}"
+                                   placeholder="0.00" step="0.01" min="0"
+                                   onchange="actualizarPrecioVisual('${itemId}')">
+                        </div>
+                        <small class="form-text text-muted">Calculado como costo/día ÷ 8 horas — puede editarlo</small>
+                    </div>
+                </div>
+                <!-- Costo Día -->
+                <div class="d-none" id="camposCostoDia_${itemId}">
+                    <div class="form-group">
+                        <label class="form-label font-weight-bold text-success">
+                            <i class="fas fa-calendar-day mr-1"></i>Valor por Día
+                            <span id="badgeSugerido_dia_${itemId}" class="badge badge-secondary border ml-1 d-none" style="font-size:.75rem;">
+                                <i class="fas fa-magic mr-1"></i>Valor sugerido
+                            </span>
+                        </label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text bg-success text-white">$</span>
+                            </div>
+                            <input type="number" class="form-control" id="costoDia_${itemId}"
+                                   placeholder="0.00" step="0.01" min="0"
+                                   onchange="actualizarPrecioVisual('${itemId}')">
+                        </div>
+                        <small class="form-text text-muted">Costo por día de trabajo — puede editarlo</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
 /**
@@ -3812,28 +3909,29 @@ function cambiarTipoCostoVisual(itemId, tipoCosto) {
     camposCostoDia.classList.add('d-none');
 
     // Mostrar campos según tipo seleccionado
+    const _esNominaSwitch = cardItem?.dataset?.esNomina === 'true';
     switch (tipoCosto) {
         case 'unitario':
             camposCostoUnitario.classList.remove('d-none');
-            labelCantidad.textContent = 'Cantidad de Unidades';
-            helpCantidad.textContent = 'Ingrese el número de unidades';
+            labelCantidad.textContent = _esNominaSwitch ? 'Número de Operarios' : 'Cantidad de Unidades';
+            helpCantidad.textContent  = _esNominaSwitch ? 'Ingrese la cantidad de operarios' : 'Ingrese la cantidad de unidades';
             statusBadge.innerHTML = '<i class="fas fa-calculator mr-1"></i>Configurando Unitario';
             statusBadge.className = 'badge badge-info';
             cardItem.style.borderColor = '#17a2b8';
             break;
         case 'hora':
             camposCostoHora.classList.remove('d-none');
-            labelCantidad.textContent = 'Número de Operarios';
-            helpCantidad.textContent = 'Ingrese la cantidad de operarios';
+            labelCantidad.textContent = _esNominaSwitch ? 'Número de Operarios' : 'Cantidad de Horas';
+            helpCantidad.textContent  = _esNominaSwitch ? 'Ingrese la cantidad de operarios' : 'Ingrese la cantidad de horas';
             statusBadge.innerHTML = '<i class="fas fa-clock mr-1"></i>Configurando por Hora';
             statusBadge.className = 'badge badge-warning';
             cardItem.style.borderColor = '#ffc107';
             break;
         case 'dia':
             camposCostoDia.classList.remove('d-none');
-            labelCantidad.textContent = 'Número de Operarios';
-            helpCantidad.textContent = 'Ingrese la cantidad de operarios';
-            statusBadge.innerHTML = '<i class="fas fa-calendar-day mr-1"></i>Configurando por Dí­a';
+            labelCantidad.textContent = _esNominaSwitch ? 'Número de Operarios' : 'Cantidad de Días';
+            helpCantidad.textContent  = _esNominaSwitch ? 'Ingrese la cantidad de operarios' : 'Ingrese la cantidad de días';
+            statusBadge.innerHTML = '<i class="fas fa-calendar-day mr-1"></i>Configurando por Día';
             statusBadge.className = 'badge badge-success';
             cardItem.style.borderColor = '#28a745';
             break;
@@ -4119,48 +4217,68 @@ function actualizarPrecioVisual(itemId) {
 
     const tipoCosto = tipoRadios[0].value;
     const cantidadOperarios = parseFloat(document.getElementById(`cantidadOperarios_${itemId}`).value) || 0;
+    const cardItem = document.getElementById(`cardItem_${itemId}`);
+    const esNomina = cardItem?.dataset?.esNomina === 'true';
     let precio = 0;
 
-    // Calcular precio según tipo
-    switch (tipoCosto) {
-        case 'unitario': {
-            const costoUnitarioInput = document.getElementById(`costoUnitario_${itemId}`);
-            const costoUnitario = costoUnitarioInput ? parseFloat(costoUnitarioInput.value) || 0 : 0;
-            precio = costoUnitario * cantidadOperarios;
-            break;
+    if (!esNomina) {
+        // ── Cálculo simplificado para items NO-NÓMINA ──
+        // Fórmula: costo × cantidad (sin días remunerados, dominicales, horas extras)
+        switch (tipoCosto) {
+            case 'unitario': {
+                const costo = parseFloat(document.getElementById(`costoUnitario_${itemId}`)?.value) || 0;
+                precio = costo * cantidadOperarios;
+                break;
+            }
+            case 'hora': {
+                const costo = parseFloat(document.getElementById(`costoHora_${itemId}`)?.value) || 0;
+                precio = costo * cantidadOperarios;
+                break;
+            }
+            case 'dia': {
+                const costo = parseFloat(document.getElementById(`costoDia_${itemId}`)?.value) || 0;
+                precio = costo * cantidadOperarios;
+                break;
+            }
         }
-        case 'hora': {
-            const costoHoraInput = document.getElementById(`costoHora_${itemId}`);
-            const horasNormalesInput = document.getElementById(`horasNormales_${itemId}`);
-            const horasExtrasInput = document.getElementById(`horasExtras_${itemId}`);
-            const costoHora = costoHoraInput ? parseFloat(costoHoraInput.value) || 0 : 0;
-            const horasNormales = horasNormalesInput ? parseFloat(horasNormalesInput.value) || 0 : 0;
-            const horasExtras = horasExtrasInput ? parseFloat(horasExtrasInput.value) || 0 : 0;
-            // Si se requiere, puedes aplicar un factor diferente para horas extras
-            const factorExtra = 1.5; // Por ejemplo, 50% más
-            precio = (costoHora * horasNormales + costoHora * factorExtra * horasExtras) * cantidadOperarios;
-            break;
+    } else {
+        // ── Cálculo completo para items NÓMINA ──
+        switch (tipoCosto) {
+            case 'unitario': {
+                const costoUnitarioInput = document.getElementById(`costoUnitario_${itemId}`);
+                const costoUnitario = costoUnitarioInput ? parseFloat(costoUnitarioInput.value) || 0 : 0;
+                precio = costoUnitario * cantidadOperarios;
+                break;
+            }
+            case 'hora': {
+                const costoHoraInput = document.getElementById(`costoHora_${itemId}`);
+                const horasNormalesInput = document.getElementById(`horasNormales_${itemId}`);
+                const horasExtrasInput = document.getElementById(`horasExtras_${itemId}`);
+                const costoHora = costoHoraInput ? parseFloat(costoHoraInput.value) || 0 : 0;
+                const horasNormales = horasNormalesInput ? parseFloat(horasNormalesInput.value) || 0 : 0;
+                const horasExtras = horasExtrasInput ? parseFloat(horasExtrasInput.value) || 0 : 0;
+                const factorExtra = 1.5;
+                precio = (costoHora * horasNormales + costoHora * factorExtra * horasExtras) * cantidadOperarios;
+                break;
+            }
+            case 'dia': {
+                const costoDiaInput = document.getElementById(`costoDia_${itemId}`);
+                const diasRemuneradosDiurnosInput = document.getElementById(`diasRemuneradosDiurnos_${itemId}`);
+                const diasRemuneradosNocturnosInput = document.getElementById(`diasRemuneradosNocturnos_${itemId}`);
+                const dominicalesDiurnosInput = document.getElementById(`dominicalesDiurnos_${itemId}`);
+                const dominicalesNocturnosInput = document.getElementById(`dominicalesNocturnos_${itemId}`);
+                const costoDia = costoDiaInput ? parseFloat(costoDiaInput.value) || 0 : 0;
+                const diasRemuneradosDiurnos = diasRemuneradosDiurnosInput ? parseFloat(diasRemuneradosDiurnosInput.value) || 0 : 0;
+                const diasRemuneradosNocturnos = diasRemuneradosNocturnosInput ? parseFloat(diasRemuneradosNocturnosInput.value) || 0 : 0;
+                const dominicalesDiurnos = dominicalesDiurnosInput ? parseFloat(dominicalesDiurnosInput.value) || 0 : 0;
+                const dominicalesNocturnos = dominicalesNocturnosInput ? parseFloat(dominicalesNocturnosInput.value) || 0 : 0;
+                const totalDias = diasRemuneradosDiurnos + diasRemuneradosNocturnos + dominicalesDiurnos + dominicalesNocturnos;
+                precio = costoDia * totalDias * cantidadOperarios;
+                break;
+            }
         }
-        case 'dia': {
-            const costoDiaInput = document.getElementById(`costoDia_${itemId}`);
-            const diasRemuneradosDiurnosInput = document.getElementById(`diasRemuneradosDiurnos_${itemId}`);
-            const diasRemuneradosNocturnosInput = document.getElementById(`diasRemuneradosNocturnos_${itemId}`);
-            const dominicalesDiurnosInput = document.getElementById(`dominicalesDiurnos_${itemId}`);
-            const dominicalesNocturnosInput = document.getElementById(`dominicalesNocturnos_${itemId}`);
-            const costoDia = costoDiaInput ? parseFloat(costoDiaInput.value) || 0 : 0;
-            const diasRemuneradosDiurnos = diasRemuneradosDiurnosInput ? parseFloat(diasRemuneradosDiurnosInput.value) || 0 : 0;
-            const diasRemuneradosNocturnos = diasRemuneradosNocturnosInput ? parseFloat(diasRemuneradosNocturnosInput.value) || 0 : 0;
-            const dominicalesDiurnos = dominicalesDiurnosInput ? parseFloat(dominicalesDiurnosInput.value) || 0 : 0;
-            const dominicalesNocturnos = dominicalesNocturnosInput ? parseFloat(dominicalesNocturnosInput.value) || 0 : 0;
-            const totalDias = diasRemuneradosDiurnos + diasRemuneradosNocturnos + dominicalesDiurnos + dominicalesNocturnos;
-            precio = costoDia * totalDias * cantidadOperarios;
-            break;
-        }
-    }
 
-    // Sumar Total Novedades × Operarios para items NOMINA
-    const cardItem = document.getElementById(`cardItem_${itemId}`);
-    if (cardItem?.dataset?.esNomina === 'true') {
+        // Sumar Total Novedades × Operarios para items NOMINA
         const _novInputs = document.querySelectorAll(`[id^="novCant_${itemId}_"]`);
         let _totalNov = 0;
         _novInputs.forEach(inp => {
@@ -4866,12 +4984,17 @@ async function finalizarConfiguracionCostos() {
             continue;
         }
 
-        // Validaciones especí­ficas por tipo de costo
+        // Validaciones específicas por tipo de costo
+        const _esNominaItem2 = item.categoria && (
+            item.categoria.nombre === 'NOMINA' ||
+            item.categoria.nombre === 'Nomina' ||
+            item.categoria.nombre === 'nómina'
+        );
         let costoEspecifico = 0;
         switch (tipoCosto) {
             case 'unitario': {
                 const costoUnitarioInput = document.getElementById(`costoUnitario_${itemId}`);
-                costoEspecifico = costoUnitarioInput ? costoUnitarioInput.value : '';
+                costoEspecifico = costoUnitarioInput ? parseFloat(costoUnitarioInput.value) : 0;
                 if (!costoEspecifico || costoEspecifico <= 0) {
                     errores.push(`Debe ingresar un costo unitario válido para "${item.nombre}"`);
                     continue;
@@ -4879,40 +5002,38 @@ async function finalizarConfiguracionCostos() {
                 break;
             }
             case 'hora': {
-                const horasnormales = document.getElementById(`horasNormales_${itemId}`)?.value || 0;
-                const horasExtras = document.getElementById(`horasExtras_${itemId}`)?.value || 0;
-
-                if (parseFloat(horasnormales) + parseFloat(horasExtras) <= 0) {
-                    errores.push(`Debe ingresar al menos una hora remunerada (normal o extra) para "${item.nombre}"`);
-                    continue;
-                }
                 const costoHoraInput = document.getElementById(`costoHora_${itemId}`);
-                costoEspecifico = costoHoraInput ? costoHoraInput.value : '';
-                const horasRemuneradas = parseFloat(horasnormales) + parseFloat(horasExtras);
+                costoEspecifico = costoHoraInput ? parseFloat(costoHoraInput.value) : 0;
                 if (!costoEspecifico || costoEspecifico <= 0) {
                     errores.push(`Debe ingresar un costo por hora válido para "${item.nombre}"`);
                     continue;
                 }
-                if (horasRemuneradas <= 0) {
-                    errores.push(`Debe ingresar las horas remuneradas para "${item.nombre}"...`);
-                    continue;
+                // Solo para Nómina exigir horas normales/extras
+                if (_esNominaItem2) {
+                    const horasNormales = parseFloat(document.getElementById(`horasNormales_${itemId}`)?.value || 0);
+                    const horasExtras   = parseFloat(document.getElementById(`horasExtras_${itemId}`)?.value || 0);
+                    if (horasNormales + horasExtras <= 0) {
+                        errores.push(`Debe ingresar al menos una hora remunerada para "${item.nombre}"`);
+                        continue;
+                    }
                 }
                 break;
             }
             case 'dia': {
                 const costoDiaInput = document.getElementById(`costoDia_${itemId}`);
-                const diasRemuneradosDiurnosInput = document.getElementById(`diasRemuneradosDiurnos_${itemId}`);
-                const diasRemuneradosNocturnosInput = document.getElementById(`diasRemuneradosNocturnos_${itemId}`);
-                costoEspecifico = costoDiaInput ? costoDiaInput.value : '';
-                const diasRemuneradosDiurnos = diasRemuneradosDiurnosInput ? diasRemuneradosDiurnosInput.value : 0;
-                const diasRemuneradosNocturnos = diasRemuneradosNocturnosInput ? diasRemuneradosNocturnosInput.value : 0;
+                costoEspecifico = costoDiaInput ? parseFloat(costoDiaInput.value) : 0;
                 if (!costoEspecifico || costoEspecifico <= 0) {
-                    errores.push(`Debe ingresar un costo por dí­a válido para "${item.nombre}"`);
+                    errores.push(`Debe ingresar un costo por día válido para "${item.nombre}"`);
                     continue;
                 }
-                if (parseFloat(diasRemuneradosDiurnos) + parseFloat(diasRemuneradosNocturnos) <= 0) {
-                    errores.push(`Debe ingresar al menos un dí­a remunerado para "${item.nombre}"`);
-                    continue;
+                // Solo para Nómina exigir días remunerados
+                if (_esNominaItem2) {
+                    const diasR = parseFloat(document.getElementById(`diasRemuneradosDiurnos_${itemId}`)?.value || 0)
+                                + parseFloat(document.getElementById(`diasRemuneradosNocturnos_${itemId}`)?.value || 0);
+                    if (diasR <= 0) {
+                        errores.push(`Debe ingresar al menos un día remunerado para "${item.nombre}"`);
+                        continue;
+                    }
                 }
                 break;
             }
@@ -4933,35 +5054,42 @@ async function finalizarConfiguracionCostos() {
         }
 
         // Recolectar novedades si el item es NOMINA
-        const _esNominaItem = item.categoria && (
-            item.categoria.nombre === 'NOMINA' ||
-            item.categoria.nombre === 'Nomina' ||
-            item.categoria.nombre === 'nómina'
-        );
+        const _esNominaItem = _esNominaItem2;
         const _novedadesItem = _esNominaItem ? recolectarNovedadesDeItem(itemId) : [];
+
+        // Para no-Nómina: los campos de nómina (días, horas) quedan en null
+        const configuracionCosto = {
+            tipoCosto,
+            unidadMedida,
+            cantidadOperarios: parseFloat(cantidadOperarios),
+            precio: parseFloat(precio),
+            costoUnitario: tipoCosto === 'unitario' ? costoEspecifico : null,
+            costoHora: tipoCosto === 'hora' ? costoEspecifico : null,
+            costoDia: tipoCosto === 'dia' ? costoEspecifico : null,
+            novedades: _novedadesItem,
+        };
+
+        // Agregar campos de días/horas solo para nómina
+        if (_esNominaItem) {
+            if (tipoCosto === 'hora') {
+                configuracionCosto.horasDiurnas   = parseFloat(document.getElementById(`horasDiurnas_${itemId}`)?.value || 0);
+                configuracionCosto.horasRemuneradas = parseFloat(document.getElementById(`horasRemuneradas_${itemId}`)?.value || 0);
+            }
+            if (tipoCosto === 'dia') {
+                configuracionCosto.diasDiurnos             = parseFloat(document.getElementById(`diasDiurnos_${itemId}`)?.value || 0);
+                configuracionCosto.diasNocturnos            = parseFloat(document.getElementById(`diasNocturnos_${itemId}`)?.value || 0);
+                configuracionCosto.diasRemuneradosDiurnos  = parseFloat(document.getElementById(`diasRemuneradosDiurnos_${itemId}`)?.value || 0);
+                configuracionCosto.diasRemuneradosNocturnos= parseFloat(document.getElementById(`diasRemuneradosNocturnos_${itemId}`)?.value || 0);
+                configuracionCosto.dominicalesDiurnos      = parseFloat(document.getElementById(`dominicalesDiurnos_${itemId}`)?.value || 0);
+                configuracionCosto.dominicalesNocturnos    = parseFloat(document.getElementById(`dominicalesNocturnos_${itemId}`)?.value || 0);
+                configuracionCosto.incluirDominicales      = document.getElementById(`incluirDominicales_${itemId}`)?.checked || false;
+            }
+        }
 
         // Recopilar toda la configuración del item
         const itemConCosto = {
             ...item,
-            configuracionCosto: {
-                tipoCosto,
-                unidadMedida,
-                cantidadOperarios: parseFloat(cantidadOperarios),
-                precio: parseFloat(precio),
-                costoUnitario: tipoCosto === 'unitario' ? (document.getElementById(`costoUnitario_${itemId}`)?.value ? parseFloat(document.getElementById(`costoUnitario_${itemId}`).value) : null) : null,
-                costoHora: tipoCosto === 'hora' ? (document.getElementById(`costoHora_${itemId}`)?.value ? parseFloat(document.getElementById(`costoHora_${itemId}`).value) : null) : null,
-                costoDia: tipoCosto === 'dia' ? (document.getElementById(`costoDia_${itemId}`)?.value ? parseFloat(document.getElementById(`costoDia_${itemId}`).value) : null) : null,
-                horasDiurnas: tipoCosto === 'hora' ? (document.getElementById(`horasDiurnas_${itemId}`)?.value ? parseFloat(document.getElementById(`horasDiurnas_${itemId}`).value) : 0) : null,
-                horasRemuneradas: tipoCosto === 'hora' ? (document.getElementById(`horasRemuneradas_${itemId}`)?.value ? parseFloat(document.getElementById(`horasRemuneradas_${itemId}`).value) : 0) : null,
-                diasDiurnos: tipoCosto === 'dia' ? (document.getElementById(`diasDiurnos_${itemId}`)?.value ? parseFloat(document.getElementById(`diasDiurnos_${itemId}`).value) : 0) : null,
-                diasNocturnos: tipoCosto === 'dia' ? (document.getElementById(`diasNocturnos_${itemId}`)?.value ? parseFloat(document.getElementById(`diasNocturnos_${itemId}`).value) : 0) : null,
-                diasRemuneradosDiurnos: tipoCosto === 'dia' ? (document.getElementById(`diasRemuneradosDiurnos_${itemId}`)?.value ? parseFloat(document.getElementById(`diasRemuneradosDiurnos_${itemId}`).value) : 0) : null,
-                diasRemuneradosNocturnos: tipoCosto === 'dia' ? (document.getElementById(`diasRemuneradosNocturnos_${itemId}`)?.value ? parseFloat(document.getElementById(`diasRemuneradosNocturnos_${itemId}`).value) : 0) : null,
-                dominicalesDiurnos: tipoCosto === 'dia' ? (document.getElementById(`dominicalesDiurnos_${itemId}`)?.value ? parseFloat(document.getElementById(`dominicalesDiurnos_${itemId}`).value) : 0) : null,
-                dominicalesNocturnos: tipoCosto === 'dia' ? (document.getElementById(`dominicalesNocturnos_${itemId}`)?.value ? parseFloat(document.getElementById(`dominicalesNocturnos_${itemId}`).value) : 0) : null,
-                incluirDominicales: tipoCosto === 'dia' ? (document.getElementById(`incluirDominicales_${itemId}`)?.checked || false) : false,
-                novedades: _novedadesItem
-            }
+            configuracionCosto,
         };
 
         itemsConCostos.push(itemConCosto);
@@ -10319,34 +10447,48 @@ async function cargarValoresPorDefecto(itemId, tipoItem, tipoCosto) {
     }
 
     try {
+        // Cachear todos los costos disponibles en el elemento del item para evitar peticiones repetidas
+        if (valores.costos_disponibles) {
+            const cardEl = document.getElementById(`cardItem_${itemId}`);
+            if (cardEl) cardEl.dataset.costosDisponibles = JSON.stringify(valores.costos_disponibles);
+        }
+
         // Cargar unidad de medida
         const unidadMedidaInput = document.getElementById(`unidadMedida_${itemId}`);
         if (unidadMedidaInput && valores.unidad_medida) {
             unidadMedidaInput.value = valores.unidad_medida;
         }
 
-        // Cargar costo según el tipo
+        // Cargar costo según el tipo y mostrar badge "Valor sugerido"
         let costoInput = null;
+        let badgeId = null;
         switch (tipoCosto) {
             case 'unitario':
                 costoInput = document.getElementById(`costoUnitario_${itemId}`);
+                badgeId = `badgeSugerido_unitario_${itemId}`;
                 break;
             case 'hora':
                 costoInput = document.getElementById(`costoHora_${itemId}`);
+                badgeId = `badgeSugerido_hora_${itemId}`;
                 break;
             case 'dia':
                 costoInput = document.getElementById(`costoDia_${itemId}`);
+                badgeId = `badgeSugerido_dia_${itemId}`;
                 break;
         }
 
         if (costoInput && valores.costo > 0) {
             costoInput.value = valores.costo;
 
-            // Mostrar notificación suave
-            mostrarNotificacionValoresCargados(tipoCosto, valores.costo, valores.unidad_medida);
+            // Mostrar badge de valor sugerido (solo existe en la forma simple, no en la de nómina)
+            const badge = badgeId ? document.getElementById(badgeId) : null;
+            if (badge) badge.classList.remove('d-none');
 
-            // Calcular precio después de cargar valores
-            calcularPrecioItem(itemId);
+            // Calcular precio en ambas formas (simple y nomina)
+            actualizarPrecioVisual(itemId);
+            if (typeof calcularPrecioItem === 'function') calcularPrecioItem(itemId);
+
+            mostrarNotificacionValoresCargados(tipoCosto, valores.costo, valores.unidad_medida);
         }
 
         return true;
@@ -10361,10 +10503,33 @@ async function cargarValoresPorDefecto(itemId, tipoItem, tipoCosto) {
  */
 async function cargarValoresDefectoPorTipo(itemId, tipoCosto) {
     try {
-        // Buscar los datos del item en la variable global de items seleccionados
-        let itemData = null;
+        // Verificar si ya tenemos los costos cacheados en el card element
+        const cardEl = document.getElementById(`cardItem_${itemId}`);
+        if (cardEl && cardEl.dataset.costosDisponibles) {
+            const costosDisponibles = JSON.parse(cardEl.dataset.costosDisponibles);
+            const costoSugerido = costosDisponibles[tipoCosto] ?? 0;
+            const unidadMedida = document.getElementById(`unidadMedida_${itemId}`)?.value || '';
 
-        // Buscar en los items propios disponibles
+            let costoInput = null;
+            let badgeId = null;
+            switch (tipoCosto) {
+                case 'unitario': costoInput = document.getElementById(`costoUnitario_${itemId}`); badgeId = `badgeSugerido_unitario_${itemId}`; break;
+                case 'hora':     costoInput = document.getElementById(`costoHora_${itemId}`);     badgeId = `badgeSugerido_hora_${itemId}`; break;
+                case 'dia':      costoInput = document.getElementById(`costoDia_${itemId}`);      badgeId = `badgeSugerido_dia_${itemId}`; break;
+            }
+
+            if (costoInput && costoSugerido > 0) {
+                costoInput.value = costoSugerido;
+                const badge = badgeId ? document.getElementById(badgeId) : null;
+                if (badge) badge.classList.remove('d-none');
+                actualizarPrecioVisual(itemId);
+                mostrarNotificacionValoresCargados(tipoCosto, costoSugerido, unidadMedida);
+            }
+            return;
+        }
+
+        // Sin cache: hacer petición al backend
+        let itemData = null;
         if (window.itemsPropiosDisponibles) {
             itemData = window.itemsPropiosDisponibles.find(item => String(item.id) === String(itemId));
         }
@@ -10375,13 +10540,11 @@ async function cargarValoresDefectoPorTipo(itemId, tipoCosto) {
         }
 
         // Determinar el tipo de item y el ID real
-        let tipoItem = 'propio'; // por defecto
+        let tipoItem = 'propio';
         let idReal = itemId;
 
         if (itemData.tipo === 'parametrizacion') {
             tipoItem = 'cargo';
-            // Para items de parametrización, el ID puede tener prefijo 'param_'
-            // que necesitamos remover para la consulta al backend
             if (String(itemId).startsWith('param_')) {
                 idReal = itemId.replace('param_', '');
             }
@@ -10392,7 +10555,6 @@ async function cargarValoresDefectoPorTipo(itemId, tipoCosto) {
             idReal = itemData.cargo_id || itemId;
         }
 
-        // Cargar valores por defecto
         const cargaExitosa = await cargarValoresPorDefecto(idReal, tipoItem, tipoCosto);
 
         if (!cargaExitosa) {

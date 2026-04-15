@@ -349,7 +349,7 @@ class CotizacionProductoService
             // VALIDACIÓN ESPECIAL: Si no hay productos, todos los totales deben ser cero
             if ($productos->count() === 0) {
                 Log::info('🚫 No hay productos - Estableciendo totales en cero', ['cotizacion_id' => $cotizacionId]);
-                
+
                 // Actualizar inmediatamente la cotización con totales en cero
                 $cotizacion->update([
                     'subtotal' => 0,
@@ -393,7 +393,7 @@ class CotizacionProductoService
 
             foreach ($productos as $producto) {
                 $subtotalProducto = $producto->cantidad * $producto->valor_unitario;
-                $descuentoProducto = $producto->descuento_valor ?? 
+                $descuentoProducto = $producto->descuento_valor ??
                     ($subtotalProducto * ($producto->descuento_porcentaje / 100));
 
                 $subtotalProductos += $subtotalProducto;
@@ -414,7 +414,7 @@ class CotizacionProductoService
             if ($cotizacion->utilidades->isNotEmpty()) {
                 foreach ($cotizacion->utilidades as $utilidad) {
                     $valorUtilidad = 0;
-                    
+
                     if ($utilidad->tipo === 'porcentaje') {
                         $valorUtilidad = $subtotalProductos * ($utilidad->valor / 100);
                     } else {
@@ -501,13 +501,13 @@ class CotizacionProductoService
                 if (!$concepto) continue;
 
                 $tipoConcepto = strtoupper(trim($concepto->tipo));
-                
+
                 // Solo recalcular si es porcentaje y no es descuento
-                if ($cotizacionConcepto->porcentaje && $cotizacionConcepto->porcentaje > 0 && 
+                if ($cotizacionConcepto->porcentaje && $cotizacionConcepto->porcentaje > 0 &&
                     !in_array($tipoConcepto, ['DESCUENTO', 'DISCOUNT', 'DES', 'DESC'])) {
-                    
+
                     $valorCalculado = $baseGravable * ($cotizacionConcepto->porcentaje / 100);
-                    
+
                     if (in_array($tipoConcepto, ['RETENCION', 'RETENTION', 'RET', 'RETE'])) {
                         $totalRetencionesCalculadas += $valorCalculado;
                     } else {
