@@ -56,6 +56,7 @@ class Cotizacion extends Model
         'descuento',
         'total',
         'total_impuesto',
+        'viaticos',
         'estado_id',
         'user_id',
         'vendedor_id',
@@ -74,6 +75,7 @@ class Cotizacion extends Model
         'descuento' => 'decimal:2',
         'total' => 'decimal:2',
         'total_impuesto' => 'decimal:2',
+        'viaticos' => 'decimal:2',
         'fecha' => 'date',
         'fecha_vencimiento' => 'date',
         'fecha_envio' => 'datetime',
@@ -110,6 +112,11 @@ class Cotizacion extends Model
     public function estado()
     {
         return $this->belongsTo(EstadoCotizacion::class, 'estado_id');
+    }
+
+    public function viaticos()
+    {
+        return $this->hasMany(CotizacionViatico::class, 'cotizacion_id')->orderBy('orden');
     }
 
     public function conceptos()

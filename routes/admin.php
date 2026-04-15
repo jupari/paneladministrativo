@@ -28,6 +28,7 @@ use App\Http\Controllers\Cotizar\ObservacionController;
 use App\Http\Controllers\Cotizar\CondicionComercialController;
 use App\Http\Controllers\Cotizar\CotizacionSolicitudController;
 use App\Http\Controllers\Cotizar\CotizacionProductoController;
+use App\Http\Controllers\Cotizar\CotizacionViaticoController;
 use App\Http\Controllers\Cotizar\CotizacionUtilidadController;
 use App\Http\Controllers\Cotizar\NominaLiquidacionController;
 use App\Http\Controllers\elementos\ElementoController;
@@ -357,6 +358,14 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::put('admin.cotizaciones.conceptos.update/{cotizacionId}', 'update')->name('admin.cotizaciones.conceptos.update');
         Route::delete('admin.cotizaciones.conceptos.destroy/{id}', 'destroy')->name('admin.cotizaciones.conceptos.destroy');
         Route::post('admin.cotizaciones.conceptos.calcularTotales', 'calcularTotales')->name('admin.cotizaciones.conceptos.calcularTotales');
+    });
+
+    // Rutas para Viáticos de Cotizaciones
+    Route::controller(CotizacionViaticoController::class)->group(function () {
+        Route::get('admin.cotizaciones.viaticos.index/{cotizacionId}', 'index')->name('admin.cotizaciones.viaticos.index');
+        Route::post('admin.cotizaciones.viaticos.store', 'store')->name('admin.cotizaciones.viaticos.store');
+        Route::put('admin.cotizaciones.viaticos.update/{id}', 'update')->name('admin.cotizaciones.viaticos.update');
+        Route::delete('admin.cotizaciones.viaticos.destroy/{id}', 'destroy')->name('admin.cotizaciones.viaticos.destroy');
     });
 
     // Rutas para Observaciones de Cotizaciones

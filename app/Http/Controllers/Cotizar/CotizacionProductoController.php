@@ -1232,6 +1232,7 @@ class CotizacionProductoController extends Controller
                     'subtotal'          => (float) $cotizacionActualizada->subtotal,
                     'descuento_total'   => (float) $cotizacionActualizada->descuento,
                     'impuestos'         => (float) $cotizacionActualizada->total_impuesto,
+                    'viaticos'          => (float) $cotizacionActualizada->viaticos,
                     'total'             => (float) $cotizacionActualizada->total,
                     'cantidad_productos' => $cotizacion->productos->where('active', true)->count(),
                 ]
@@ -1334,6 +1335,7 @@ class CotizacionProductoController extends Controller
                 'subtotal'    => (float) $cotizacionActualizada->subtotal,
                 'descuento'   => (float) $cotizacionActualizada->descuento,
                 'impuestos'   => (float) $cotizacionActualizada->total_impuesto,
+                'viaticos'    => (float) $cotizacionActualizada->viaticos,
                 'total'       => (float) $cotizacionActualizada->total,
                 // Aliases para compatibilidad con el frontend
                 'descuento_total' => (float) $cotizacionActualizada->descuento,

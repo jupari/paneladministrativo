@@ -6,6 +6,7 @@ use App\Models\Cotizacion;
 use App\Models\CotizacionProducto;
 use App\Models\CotizacionConcepto;
 use App\Models\CotizacionLista;
+use App\Models\CotizacionViatico;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -67,6 +68,9 @@ class CotizacionTotalesService
             + $totalImpuestosRecalculados
             - $totalRetencionesRecalculadas;
 
+        // Viáticos: se suman al total FINAL pero NO son afectados por descuentos ni margen de utilidad
+        $totalViaticos = CotizacionViatico::where('cotizacion_id', $cotizacion->id)->sum('valor');
+
         Log::info('Actualizando totales de cotización con conceptos recalculados', [
             'cotizacion_id' => $cotizacion->id,
             'subtotal_base' => $subtotalBase,
@@ -75,14 +79,16 @@ class CotizacionTotalesService
             'descuentos_recalculados' => $totalDescuentosRecalculados,
             'impuestos_recalculados' => $totalImpuestosRecalculados,
             'retenciones_recalculadas' => $totalRetencionesRecalculadas,
-            'total_final' => $total
+            'viaticos' => $totalViaticos,
+            'total_final' => $total + $totalViaticos
         ]);
 
         $cotizacion->update([
-            'subtotal'      => round($subtotalConUtilidad, 2),
-            'descuento'     => round($totalDescuentosRecalculados, 2),
+            'subtotal'       => round($subtotalConUtilidad, 2),
+            'descuento'      => round($totalDescuentosRecalculados, 2),
             'total_impuesto' => round($totalImpuestosRecalculados, 2),
-            'total'         => round($total, 2),
+            'viaticos'       => round($totalViaticos, 2),
+            'total'          => round($total + $totalViaticos, 2),
         ]);
 
         return $cotizacion->fresh();

@@ -116,22 +116,26 @@ function actualizarStickyAhora() {
     const subtotalElement = document.getElementById('subtotal');
     const descuentoElement = document.getElementById('descuento');
     const impuestoElement = document.getElementById('total_impuesto');
+    const viaticosElement = document.getElementById('viaticos');
     const totalElement = document.getElementById('total');
 
     const subtotal = subtotalElement ? parseFloat(subtotalElement.value) || 0 : 0;
     const descuento = descuentoElement ? parseFloat(descuentoElement.value) || 0 : 0;
     const impuesto = impuestoElement ? parseFloat(impuestoElement.value) || 0 : 0;
+    const viaticos = viaticosElement ? parseFloat(viaticosElement.value) || 0 : 0;
     const total = totalElement ? parseFloat(totalElement.value) || 0 : 0;
 
     // También intentar leer desde los elementos display
     const displaySubtotal = document.getElementById('display-subtotal-valor');
     const displayDescuento = document.getElementById('display-descuento-valor');
     const displayImpuesto = document.getElementById('display-impuesto-valor');
+    const displayViaticos = document.getElementById('display-viaticos-valor');
     const displayTotal = document.getElementById('display-total-valor');
 
     let finalSubtotal = subtotal;
     let finalDescuento = descuento;
     let finalImpuesto = impuesto;
+    let finalViaticos = viaticos;
     let finalTotal = total;
 
     if (displaySubtotal && displaySubtotal.textContent !== '$0.00') {
@@ -146,6 +150,10 @@ function actualizarStickyAhora() {
         const cleanText = displayImpuesto.textContent.replace(/[$\s]/g, '').trim();
         finalImpuesto = parseColombianCurrency(cleanText) || impuesto;
     }
+    if (displayViaticos && displayViaticos.textContent !== '$0.00') {
+        const cleanText = displayViaticos.textContent.replace(/[$\s]/g, '').trim();
+        finalViaticos = parseColombianCurrency(cleanText) || viaticos;
+    }
     if (displayTotal && displayTotal.textContent !== '$0.00') {
         const cleanText = displayTotal.textContent.replace(/[$\s]/g, '').trim();
         finalTotal = parseColombianCurrency(cleanText) || total;
@@ -155,11 +163,13 @@ function actualizarStickyAhora() {
     const stickySubtotal = document.getElementById('sticky-subtotal');
     const stickyDescuentos = document.getElementById('sticky-descuentos');
     const stickyImpuestos = document.getElementById('sticky-impuestos');
+    const stickyViaticos = document.getElementById('sticky-viaticos');
     const stickyTotal = document.getElementById('sticky-total');
 
     if (stickySubtotal) stickySubtotal.textContent = formatCurrency(finalSubtotal);
     if (stickyDescuentos) stickyDescuentos.textContent = formatCurrency(finalDescuento);
     if (stickyImpuestos) stickyImpuestos.textContent = formatCurrency(finalImpuesto);
+    if (stickyViaticos) stickyViaticos.textContent = formatCurrency(finalViaticos);
     if (stickyTotal) stickyTotal.textContent = formatCurrency(finalTotal);
 
 }

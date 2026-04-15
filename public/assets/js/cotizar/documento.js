@@ -62,6 +62,7 @@ async function initializeCoreFeatures() {
         await cargarObservacionesExistentes(cotizacion.id);
         await cargarCondicionesExistentes(cotizacion.id);
         await cargarItemsExistentes(cotizacion.id);
+        await cargarViaticosExistentes(cotizacion.id);
         document.getElementById('accordionCotizacionDetails').style.display = 'block';
         botonesAgregarProductos.classList.add('d-none');
     }
@@ -78,6 +79,7 @@ async function initializeCoreFeatures() {
         await cargarObservacionesExistentes(cotizacion.id);
         await cargarCondicionesExistentes(cotizacion.id);
         await cargarItemsExistentes(cotizacion.id);
+        await cargarViaticosExistentes(cotizacion.id);
         document.getElementById('accordionCotizacionDetails').style.display = 'block';
         botonesAgregarProductos.classList.remove('d-none');
     } else {
@@ -10072,11 +10074,18 @@ function actualizarTotalesEnVista(totales) {
             hiddenTotal.value = formatearParaInput(totales.total);
         }
 
+        // Actualizar campo oculto de viáticos (si viene del servidor)
+        const hiddenViaticos = document.getElementById('viaticos');
+        if (hiddenViaticos && totales.viaticos !== undefined) {
+            hiddenViaticos.value = formatearParaInput(totales.viaticos);
+        }
+
         // 2. ACTUALIZAR ELEMENTOS INFORMATIVOS
         const displaySubtotal = document.getElementById('display-subtotal-valor');
         const displayDescuento = document.getElementById('display-descuento-valor');
         const displayImpuesto = document.getElementById('display-impuesto-valor');
         const displayTotal = document.getElementById('display-total-valor');
+        const displayViaticos = document.getElementById('display-viaticos-valor');
 
         if (displaySubtotal) {
             displaySubtotal.textContent = formatearParaTexto(totales.subtotal);
@@ -10088,6 +10097,10 @@ function actualizarTotalesEnVista(totales) {
 
         if (displayImpuesto) {
             displayImpuesto.textContent = formatearParaTexto(totales.impuestos);
+        }
+
+        if (displayViaticos && totales.viaticos !== undefined) {
+            displayViaticos.textContent = formatearParaTexto(totales.viaticos);
         }
 
         if (displayTotal) {
@@ -11838,3 +11851,345 @@ function construirParamsDesdreTurno(idx) {
         horas_extra_dom_nocturnas: (esDom)  ? heNxDia * dias : 0,
     };
 }
+
+// ============================================================
+// VIÁTICOS — Gestión de viáticos en la cotización
+// ============================================================
+
+/** Almacena los viáticos cargados en memoria para operaciones cliente */
+let _viaticosData = [];
+
+/**
+ * Obtener el ID de la cotización actual (mismo método que actualizarTotalesCompletos)
+ */
+function _getCotizacionId() {
+    const inputId = document.getElementById('id');
+    if (inputId && inputId.value) return inputId.value;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromParam = urlParams.get('id');
+    if (fromParam) return fromParam;
+
+    const pathMatch = window.location.pathname.match(/\/(\d+)$/);
+    if (pathMatch) return pathMatch[1];
+
+    if (typeof cotizacionGuardadaId !== 'undefined') return cotizacionGuardadaId;
+    return null;
+}
+
+/**
+ * Formatear valor como moneda colombiana
+ */
+function _formatMoneda(valor) {
+    const numero = parseFloat(valor || 0);
+    return '$ ' + numero.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/**
+ * Cargar viáticos existentes desde el servidor (llamado en init)
+ */
+async function cargarViaticosExistentes(cotizacionId) {
+    if (!cotizacionId) return;
+    try {
+        const response = await fetch(`/admin/admin.cotizaciones.viaticos.index/${cotizacionId}`);
+        const data = await response.json();
+        if (data.success) {
+            _viaticosData = data.data || [];
+            _renderViaticosTabla();
+            _actualizarDisplayViaticos(data.total || 0);
+        }
+    } catch (error) {
+        console.error('Error al cargar viáticos:', error);
+    }
+}
+
+/**
+ * Renderizar las filas de viáticos en la tabla
+ */
+function _renderViaticosTabla() {
+    const tbody = document.getElementById('tbody-viaticos');
+    const tabla = document.getElementById('tabla-viaticos');
+    const empty = document.getElementById('lista-viaticos-empty');
+    const badge = document.getElementById('badge-viaticos-count');
+
+    if (!tbody) return;
+
+    if (_viaticosData.length === 0) {
+        tabla && tabla.classList.add('d-none');
+        empty && empty.classList.remove('d-none');
+        if (badge) badge.textContent = '0';
+        return;
+    }
+
+    tabla && tabla.classList.remove('d-none');
+    empty && empty.classList.add('d-none');
+    if (badge) badge.textContent = _viaticosData.length;
+
+    tbody.innerHTML = _viaticosData.map(v => `
+        <tr data-viatico-id="${v.id}">
+            <td>
+                <span id="viatico-concepto-display-${v.id}">${_escapeHtml(v.concepto)}</span>
+                <div id="viatico-edit-${v.id}" class="d-none input-group input-group-sm">
+                    <input type="text" class="form-control form-control-sm" id="viatico-edit-concepto-${v.id}" value="${_escapeAttr(v.concepto)}">
+                    <div class="input-group-prepend"><span class="input-group-text">$</span></div>
+                    <input type="number" class="form-control form-control-sm" id="viatico-edit-valor-${v.id}" value="${parseFloat(v.valor)}" min="0" step="1">
+                    <div class="input-group-append">
+                        <button class="btn btn-sm btn-success" onclick="guardarEdicionViatico(${v.id})"><i class="fas fa-check"></i></button>
+                        <button class="btn btn-sm btn-light border" onclick="cancelarEdicionViatico(${v.id})"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+            </td>
+            <td id="viatico-valor-display-${v.id}">${_formatMoneda(v.valor)}</td>
+            <td class="text-right">
+                <button class="btn btn-xs btn-outline-secondary mr-1" title="Editar" onclick="editarViatico(${v.id})">
+                    <i class="fas fa-pencil-alt"></i>
+                </button>
+                <button class="btn btn-xs btn-outline-danger" title="Eliminar" onclick="eliminarViatico(${v.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+/**
+ * Actualizar los displays de viáticos en el resumen financiero
+ */
+function _actualizarDisplayViaticos(total) {
+    const displaySubtotalViaticos = document.getElementById('display-viaticos-subtotal');
+    const displayViaticos = document.getElementById('display-viaticos-valor');
+    const hiddenViaticos = document.getElementById('viaticos');
+
+    if (displaySubtotalViaticos) displaySubtotalViaticos.textContent = _formatMoneda(total);
+    if (displayViaticos) displayViaticos.textContent = _formatMoneda(total);
+    if (hiddenViaticos) hiddenViaticos.value = parseFloat(total || 0).toFixed(2);
+}
+
+/**
+ * Mostrar formulario para agregar nuevo viático
+ */
+function mostrarFormViatico() {
+    const form = document.getElementById('form-nuevo-viatico');
+    const btnAgregar = document.getElementById('btn-agregar-viatico');
+    if (form) {
+        form.classList.remove('d-none');
+        if (btnAgregar) btnAgregar.classList.add('d-none');
+        document.getElementById('nuevo-viatico-concepto').value = '';
+        document.getElementById('nuevo-viatico-valor').value = '';
+        document.getElementById('nuevo-viatico-concepto').focus();
+    }
+}
+
+/**
+ * Cancela y oculta el formulario de nuevo viático
+ */
+function cancelarFormViatico() {
+    const form = document.getElementById('form-nuevo-viatico');
+    const btnAgregar = document.getElementById('btn-agregar-viatico');
+    if (form) form.classList.add('d-none');
+    if (btnAgregar) btnAgregar.classList.remove('d-none');
+}
+
+/**
+ * Guardar un nuevo viático
+ */
+async function guardarNuevoViatico() {
+    const concepto = document.getElementById('nuevo-viatico-concepto')?.value?.trim();
+    const valor    = parseFloat(document.getElementById('nuevo-viatico-valor')?.value || 0);
+    const cotizacionId = _getCotizacionId();
+
+    if (!concepto) {
+        alert('Debe ingresar un concepto para el viático.');
+        document.getElementById('nuevo-viatico-concepto').focus();
+        return;
+    }
+    if (isNaN(valor) || valor < 0) {
+        alert('El valor del viático debe ser un número mayor o igual a 0.');
+        document.getElementById('nuevo-viatico-valor').focus();
+        return;
+    }
+    if (!cotizacionId) {
+        alert('Primero debe guardar la cotización antes de agregar viáticos.');
+        return;
+    }
+
+    try {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const response = await fetch('/admin/admin.cotizaciones.viaticos.store', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ cotizacion_id: cotizacionId, concepto, valor })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            _viaticosData.push(data.data);
+            _renderViaticosTabla();
+            cancelarFormViatico();
+
+            // Actualizar totales con la respuesta del servidor
+            if (data.totales) {
+                actualizarTotalesEnVista({
+                    subtotal:  data.totales.subtotal,
+                    descuento: data.totales.descuento,
+                    impuestos: data.totales.total_impuesto,
+                    viaticos:  data.totales.viaticos,
+                    total:     data.totales.total,
+                });
+                _actualizarDisplayViaticos(data.totales.viaticos);
+            }
+        } else {
+            alert(data.message || 'Error al guardar el viático.');
+        }
+    } catch (error) {
+        console.error('Error al guardar viático:', error);
+        alert('Error de conexión al guardar el viático.');
+    }
+}
+
+/**
+ * Mostrar formulario inline de edición de un viático
+ */
+function editarViatico(id) {
+    const display = document.getElementById(`viatico-concepto-display-${id}`);
+    const editDiv = document.getElementById(`viatico-edit-${id}`);
+    const valorDisplay = document.getElementById(`viatico-valor-display-${id}`);
+    if (display) display.classList.add('d-none');
+    if (editDiv) editDiv.classList.remove('d-none');
+    if (valorDisplay) valorDisplay.classList.add('d-none');
+}
+
+/**
+ * Cancelar edición inline
+ */
+function cancelarEdicionViatico(id) {
+    const display = document.getElementById(`viatico-concepto-display-${id}`);
+    const editDiv = document.getElementById(`viatico-edit-${id}`);
+    const valorDisplay = document.getElementById(`viatico-valor-display-${id}`);
+    if (display) display.classList.remove('d-none');
+    if (editDiv) editDiv.classList.add('d-none');
+    if (valorDisplay) valorDisplay.classList.remove('d-none');
+}
+
+/**
+ * Guardar los cambios de edición de un viático
+ */
+async function guardarEdicionViatico(id) {
+    const concepto = document.getElementById(`viatico-edit-concepto-${id}`)?.value?.trim();
+    const valor = parseFloat(document.getElementById(`viatico-edit-valor-${id}`)?.value || 0);
+
+    if (!concepto) {
+        alert('Debe ingresar un concepto.');
+        return;
+    }
+
+    try {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const response = await fetch(`/admin/admin.cotizaciones.viaticos.update/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ concepto, valor })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            // Actualizar en memoria
+            const idx = _viaticosData.findIndex(v => v.id === id);
+            if (idx !== -1) {
+                _viaticosData[idx].concepto = data.data.concepto;
+                _viaticosData[idx].valor    = data.data.valor;
+            }
+            _renderViaticosTabla();
+
+            if (data.totales) {
+                actualizarTotalesEnVista({
+                    subtotal:  data.totales.subtotal,
+                    descuento: data.totales.descuento,
+                    impuestos: data.totales.total_impuesto,
+                    viaticos:  data.totales.viaticos,
+                    total:     data.totales.total,
+                });
+                _actualizarDisplayViaticos(data.totales.viaticos);
+            }
+        } else {
+            alert(data.message || 'Error al actualizar el viático.');
+        }
+    } catch (error) {
+        console.error('Error al actualizar viático:', error);
+        alert('Error de conexión al actualizar el viático.');
+    }
+}
+
+/**
+ * Eliminar un viático
+ */
+async function eliminarViatico(id) {
+    if (!confirm('¿Está seguro de eliminar este viático?')) return;
+
+    try {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const response = await fetch(`/admin/admin.cotizaciones.viaticos.destroy/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            _viaticosData = _viaticosData.filter(v => v.id !== id);
+            _renderViaticosTabla();
+
+            if (data.totales) {
+                actualizarTotalesEnVista({
+                    subtotal:  data.totales.subtotal,
+                    descuento: data.totales.descuento,
+                    impuestos: data.totales.total_impuesto,
+                    viaticos:  data.totales.viaticos,
+                    total:     data.totales.total,
+                });
+                _actualizarDisplayViaticos(data.totales.viaticos);
+            }
+        } else {
+            alert(data.message || 'Error al eliminar el viático.');
+        }
+    } catch (error) {
+        console.error('Error al eliminar viático:', error);
+        alert('Error de conexión al eliminar el viático.');
+    }
+}
+
+/**
+ * Escapar HTML para prevenir XSS
+ */
+function _escapeHtml(text) {
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(String(text || '')));
+    return div.innerHTML;
+}
+
+/**
+ * Escapar para atributos HTML
+ */
+function _escapeAttr(text) {
+    return String(text || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// Exponer funciones de viáticos globalmente
+window.mostrarFormViatico    = mostrarFormViatico;
+window.cancelarFormViatico   = cancelarFormViatico;
+window.guardarNuevoViatico   = guardarNuevoViatico;
+window.editarViatico         = editarViatico;
+window.cancelarEdicionViatico = cancelarEdicionViatico;
+window.guardarEdicionViatico = guardarEdicionViatico;
+window.eliminarViatico       = eliminarViatico;
+window.cargarViaticosExistentes = cargarViaticosExistentes;

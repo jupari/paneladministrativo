@@ -84,6 +84,10 @@
                             <small class="opacity-75">Impuestos</small>
                             <div class="fw-bold text-info" id="sticky-impuestos">$0.00</div>
                         </div>
+                        <div class="text-center">
+                            <small class="opacity-75">Viáticos</small>
+                            <div class="fw-bold text-secondary" id="sticky-viaticos">$0.00</div>
+                        </div>
                         <div class="text-center border-start border-light ps-3">
                             <small class="opacity-75">Total Final</small>
                             <div class="h5 mb-0 fw-bold text-success" id="sticky-total">$0.00</div>
@@ -887,6 +891,91 @@
                                         </div>
                                     </div>
 
+                                    <!-- =====================================================
+                                         SECCIÓN DE VIÁTICOS
+                                    ====================================================== -->
+                                    <div class="card border-left-warning shadow-sm my-3" id="seccion-viaticos" style="border-left: 4px solid #ffc107 !important;">
+                                        <div class="card-body p-3">
+                                            <!-- Encabezado con título y botón -->
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <div>
+                                                    <h6 class="mb-0 text-dark font-weight-bold">
+                                                        <i class="fas fa-route text-warning mr-1"></i> Viáticos
+                                                        <span class="badge badge-warning ml-1" id="badge-viaticos-count">0</span>
+                                                    </h6>
+                                                    <small class="text-muted">Se suman al total sin ser afectados por descuentos ni margen de utilidad</small>
+                                                </div>
+                                                <button type="button" class="btn btn-warning btn-sm" id="btn-agregar-viatico" onclick="mostrarFormViatico()">
+                                                    <i class="fas fa-plus mr-1"></i> Agregar Viático
+                                                </button>
+                                            </div>
+
+                                            <!-- Formulario inline para agregar viático (oculto por defecto) -->
+                                            <div id="form-nuevo-viatico" class="d-none">
+                                                <div class="card bg-light border-0 mb-3">
+                                                    <div class="card-body p-3">
+                                                        <h6 class="mb-3 text-muted small font-weight-bold text-uppercase">Nuevo Viático</h6>
+                                                        <div class="row align-items-end">
+                                                            <div class="col-md-6">
+                                                                <label class="small mb-1">Concepto <span class="text-danger">*</span></label>
+                                                                <input type="text" class="form-control form-control-sm" id="nuevo-viatico-concepto"
+                                                                    placeholder="Ej: Alimentación, Transporte, Hospedaje...">
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <label class="small mb-1">Valor <span class="text-danger">*</span></label>
+                                                                <div class="input-group input-group-sm">
+                                                                    <div class="input-group-prepend"><span class="input-group-text">$</span></div>
+                                                                    <input type="number" class="form-control form-control-sm" id="nuevo-viatico-valor" min="0" step="1" placeholder="0">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-2">
+                                                                <div class="btn-group btn-group-sm w-100">
+                                                                    <button type="button" class="btn btn-success" onclick="guardarNuevoViatico()" title="Guardar">
+                                                                        <i class="fas fa-check mr-1"></i> Guardar
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-secondary" onclick="cancelarFormViatico()" title="Cancelar">
+                                                                        <i class="fas fa-times"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Estado vacío -->
+                                            <div id="lista-viaticos-empty" class="text-center text-muted py-3 small">
+                                                <i class="fas fa-route fa-2x text-warning mb-2 d-block" style="opacity:0.4;"></i>
+                                                No hay viáticos agregados.<br>
+                                                <button type="button" class="btn btn-warning btn-sm mt-2" onclick="mostrarFormViatico()">
+                                                    <i class="fas fa-plus mr-1"></i> Agregar primer viático
+                                                </button>
+                                            </div>
+
+                                            <!-- Tabla de viáticos -->
+                                            <table class="table table-sm table-hover mb-0 d-none" id="tabla-viaticos">
+                                                <thead class="thead-light">
+                                                    <tr>
+                                                        <th>Concepto</th>
+                                                        <th width="180">Valor</th>
+                                                        <th width="90" class="text-center">Acciones</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="tbody-viaticos">
+                                                    <!-- Filas generadas por JS -->
+                                                </tbody>
+                                                <tfoot>
+                                                    <tr class="font-weight-bold bg-warning" style="background-color: rgba(255,193,7,0.15) !important;">
+                                                        <td class="text-right">Total Viáticos:</td>
+                                                        <td class="text-dark" id="display-viaticos-subtotal">$0.00</td>
+                                                        <td></td>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <!-- FIN SECCIÓN VIÁTICOS -->
+
                                     <!-- Totales de la Cotización -->
                                     <div class="card shadow-lg border-0 my-3" id="resumen-totales-cotizacion" style="position: sticky; top: 20px; z-index: 100;">
                                         <div class="card-header bg-gradient-primary text-white border-0">
@@ -909,11 +998,12 @@
                                             <input type="hidden" id="subtotal" name="subtotal" value="0.00">
                                             <input type="hidden" id="descuento" name="descuento" value="0.00">
                                             <input type="hidden" id="total_impuesto" name="total_impuesto" value="0.00">
+                                            <input type="hidden" id="viaticos" name="viaticos" value="0.00">
                                             <input type="hidden" id="total" name="total" value="0.00">
 
                                             <!-- Totales informativos con diseño mejorado -->
                                             <div class="row g-3 mb-4">
-                                                <div class="col-md-3">
+                                                <div class="col-md-2">
                                                     <div class="card border-0 shadow-sm h-100">
                                                         <div class="card-body text-center p-3">
                                                             <div class="d-flex align-items-center justify-content-center mb-2">
@@ -928,7 +1018,7 @@
                                                     </div>
                                                 </div>
 
-                                                <div class="col-md-3">
+                                                <div class="col-md-2">
                                                     <div class="card border-0 shadow-sm h-100">
                                                         <div class="card-body text-center p-3">
                                                             <div class="d-flex align-items-center justify-content-center mb-2">
@@ -943,7 +1033,7 @@
                                                     </div>
                                                 </div>
 
-                                                <div class="col-md-3">
+                                                <div class="col-md-2">
                                                     <div class="card border-0 shadow-sm h-100">
                                                         <div class="card-body text-center p-3">
                                                             <div class="d-flex align-items-center justify-content-center mb-2">
@@ -958,7 +1048,22 @@
                                                     </div>
                                                 </div>
 
-                                                <div class="col-md-3">
+                                                <div class="col-md-2">
+                                                    <div class="card border-0 shadow-sm h-100">
+                                                        <div class="card-body text-center p-3">
+                                                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                                                <div class="bg-secondary bg-opacity-10 rounded-circle p-2 me-2">
+                                                                    <i class="fas fa-route text-secondary"></i>
+                                                                </div>
+                                                                <h6 class="card-title text-secondary mb-0">Viáticos</h6>
+                                                            </div>
+                                                            <div class="h4 fw-bold text-secondary mb-1" id="display-viaticos-valor">$0.00</div>
+                                                            <small class="text-muted">Sin descuento/utilidad</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-4">
                                                     <div class="card border-0 shadow-lg bg-gradient-primary text-white h-100">
                                                         <div class="card-body text-center p-3">
                                                             <div class="d-flex align-items-center justify-content-center mb-2">
@@ -989,6 +1094,10 @@
                                                             <i class="fas fa-plus text-muted"></i>
                                                             <div class="d-flex align-items-center">
                                                                 <span class="badge bg-info">Impuestos</span>
+                                                            </div>
+                                                            <i class="fas fa-plus text-muted"></i>
+                                                            <div class="d-flex align-items-center">
+                                                                <span class="badge bg-secondary">Viáticos</span>
                                                             </div>
                                                             <i class="fas fa-equals text-muted"></i>
                                                             <div class="d-flex align-items-center">
