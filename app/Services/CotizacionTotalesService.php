@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Cotizacion;
 use App\Models\CotizacionProducto;
 use App\Models\CotizacionConcepto;
+use App\Models\CotizacionLista;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -25,10 +26,28 @@ class CotizacionTotalesService
 
         $subtotalBase = $productos->sum('valor_total');
 
+        // Sumar novedades operativas vinculadas a productos activos (ord_cotizaciones_listas con cotizacion_producto_id)
+        $activeProductoIds = $productos->pluck('id');
+        $novedadesSubtotal = $activeProductoIds->isNotEmpty()
+            ? CotizacionLista::where('cotizacion_id', $cotizacion->id)
+                ->whereIn('cotizacion_producto_id', $activeProductoIds)
+                ->sum('subtotal')
+            : 0;
+
+        // Sumar items de lista no vinculados a ningún producto (líneas independientes)
+        $listasSueltasSubtotal = CotizacionLista::where('cotizacion_id', $cotizacion->id)
+            ->whereNull('cotizacion_producto_id')
+            ->sum('subtotal');
+
+        $subtotalBase += $novedadesSubtotal + $listasSueltasSubtotal;
+
         Log::info('Recalculando totales', [
-            'cotizacion_id' => $cotizacion->id,
-            'subtotal_base' => $subtotalBase,
-            'utilidades_count' => $cotizacion->utilidades->count()
+            'cotizacion_id'           => $cotizacion->id,
+            'subtotal_productos'      => $productos->sum('valor_total'),
+            'novedades_operativas'    => $novedadesSubtotal,
+            'listas_sueltas'          => $listasSueltasSubtotal,
+            'subtotal_base'           => $subtotalBase,
+            'utilidades_count'        => $cotizacion->utilidades->count()
         ]);
 
         // Calcular utilidades por categoría e item propio
@@ -40,17 +59,13 @@ class CotizacionTotalesService
         $conceptosRecalculados = $this->recalcularConceptos($cotizacion->id, $subtotalConUtilidad);
 
         $totalDescuentosRecalculados = $conceptosRecalculados['descuentos'];
-        $totalImpuestosRecalculados = $conceptosRecalculados['impuestos'];
-
-        // Actualizar la cotización con los nuevos valores de conceptos
-        $cotizacion->update([
-            'descuento' => $totalDescuentosRecalculados,
-            'total_impuesto' => $totalImpuestosRecalculados,
-        ]);
+        $totalImpuestosRecalculados  = $conceptosRecalculados['impuestos'];
+        $totalRetencionesRecalculadas = $conceptosRecalculados['retenciones'];
 
         $total = $subtotalConUtilidad
             - $totalDescuentosRecalculados
-            + $totalImpuestosRecalculados;
+            + $totalImpuestosRecalculados
+            - $totalRetencionesRecalculadas;
 
         Log::info('Actualizando totales de cotización con conceptos recalculados', [
             'cotizacion_id' => $cotizacion->id,
@@ -59,12 +74,15 @@ class CotizacionTotalesService
             'subtotal_con_utilidad' => $subtotalConUtilidad,
             'descuentos_recalculados' => $totalDescuentosRecalculados,
             'impuestos_recalculados' => $totalImpuestosRecalculados,
+            'retenciones_recalculadas' => $totalRetencionesRecalculadas,
             'total_final' => $total
         ]);
 
         $cotizacion->update([
-            'subtotal' => $subtotalConUtilidad,
-            'total'    => $total,
+            'subtotal'      => round($subtotalConUtilidad, 2),
+            'descuento'     => round($totalDescuentosRecalculados, 2),
+            'total_impuesto' => round($totalImpuestosRecalculados, 2),
+            'total'         => round($total, 2),
         ]);
 
         return $cotizacion->fresh();
@@ -229,10 +247,10 @@ class CotizacionTotalesService
             }
         }
 
-        // Base para impuestos (subtotal con utilidades - descuentos)
-        $baseParaImpuestos = $subtotalConUtilidad - $totalDescuentos;
+        // Base para impuestos y retenciones (subtotal con utilidades - descuentos)
+        $baseGravable = $subtotalConUtilidad - $totalDescuentos;
 
-        // SEGUNDA PASADA: Calcular impuestos sobre base después de descuentos
+        // SEGUNDA PASADA: Calcular impuestos sobre base gravable
         foreach ($conceptos as $cotizacionConcepto) {
             $concepto = $cotizacionConcepto->concepto;
             if (!$concepto) continue;
@@ -243,17 +261,45 @@ class CotizacionTotalesService
                 $valorConcepto = 0;
 
                 if ($cotizacionConcepto->porcentaje && $cotizacionConcepto->porcentaje > 0) {
-                    $valorConcepto = $baseParaImpuestos * ($cotizacionConcepto->porcentaje / 100);
+                    $valorConcepto = $baseGravable * ($cotizacionConcepto->porcentaje / 100);
                 } elseif ($cotizacionConcepto->valor && $cotizacionConcepto->valor > 0) {
                     $valorConcepto = $cotizacionConcepto->valor;
                 }
 
                 $totalImpuestos += $valorConcepto;
 
-                Log::info('Impuesto recalculado sobre nueva base', [
+                Log::info('Impuesto recalculado sobre base gravable', [
                     'concepto' => $concepto->nombre,
                     'porcentaje' => $cotizacionConcepto->porcentaje,
-                    'base_con_descuentos' => $baseParaImpuestos,
+                    'base_gravable' => $baseGravable,
+                    'valor_recalculado' => $valorConcepto
+                ]);
+            }
+        }
+
+        // TERCERA PASADA: Calcular retenciones sobre base gravable
+        $totalRetenciones = 0;
+        foreach ($conceptos as $cotizacionConcepto) {
+            $concepto = $cotizacionConcepto->concepto;
+            if (!$concepto) continue;
+
+            $tipoConcepto = strtoupper($concepto->tipo);
+
+            if (in_array($tipoConcepto, ['RETENCION', 'RETENTION', 'RET', 'RETE'])) {
+                $valorConcepto = 0;
+
+                if ($cotizacionConcepto->porcentaje && $cotizacionConcepto->porcentaje > 0) {
+                    $valorConcepto = $baseGravable * ($cotizacionConcepto->porcentaje / 100);
+                } elseif ($cotizacionConcepto->valor && $cotizacionConcepto->valor > 0) {
+                    $valorConcepto = $cotizacionConcepto->valor;
+                }
+
+                $totalRetenciones += $valorConcepto;
+
+                Log::info('Retención recalculada sobre base gravable', [
+                    'concepto' => $concepto->nombre,
+                    'porcentaje' => $cotizacionConcepto->porcentaje,
+                    'base_gravable' => $baseGravable,
                     'valor_recalculado' => $valorConcepto
                 ]);
             }
@@ -261,12 +307,14 @@ class CotizacionTotalesService
 
         Log::info('Conceptos recalculados finales', [
             'total_descuentos' => $totalDescuentos,
-            'total_impuestos' => $totalImpuestos
+            'total_impuestos' => $totalImpuestos,
+            'total_retenciones' => $totalRetenciones
         ]);
 
         return [
-            'descuentos' => $totalDescuentos,
-            'impuestos' => $totalImpuestos
+            'descuentos'  => $totalDescuentos,
+            'impuestos'   => $totalImpuestos,
+            'retenciones' => $totalRetenciones,
         ];
     }
 }

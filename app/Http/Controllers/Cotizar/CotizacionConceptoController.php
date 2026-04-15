@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Cotizar;
 use App\Http\Controllers\Controller;
 use App\Models\CotizacionConcepto;
 use App\Models\Concepto;
+use App\Models\Cotizacion;
+use App\Services\CotizacionTotalesService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -93,6 +95,13 @@ class CotizacionConceptoController extends Controller
 
             DB::commit();
 
+            // Recalcular totales de la cotización con los nuevos conceptos
+            $cotizacion = Cotizacion::with(['utilidades', 'conceptos.concepto', 'productos'])
+                ->find($request->cotizacion_id);
+            if ($cotizacion) {
+                app(CotizacionTotalesService::class)->recalcular($cotizacion);
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => empty($request->conceptos) ?
@@ -166,6 +175,13 @@ class CotizacionConceptoController extends Controller
 
             DB::commit();
 
+            // Recalcular totales de la cotización con los conceptos actualizados
+            $cotizacion = Cotizacion::with(['utilidades', 'conceptos.concepto', 'productos'])
+                ->find($cotizacionId);
+            if ($cotizacion) {
+                app(CotizacionTotalesService::class)->recalcular($cotizacion);
+            }
+
             return response()->json([
                 'success' => true,
                 'message' => 'Conceptos actualizados exitosamente'
@@ -188,8 +204,15 @@ class CotizacionConceptoController extends Controller
     public function destroy($id)
     {
         try {
-            $concepto = CotizacionConcepto::findOrFail($id);
+            $cotizacionId = $concepto->cotizacion_id;
             $concepto->delete();
+
+            // Recalcular totales tras eliminar concepto
+            $cotizacion = Cotizacion::with(['utilidades', 'conceptos.concepto', 'productos'])
+                ->find($cotizacionId);
+            if ($cotizacion) {
+                app(CotizacionTotalesService::class)->recalcular($cotizacion);
+            }
 
             return response()->json([
                 'success' => true,
