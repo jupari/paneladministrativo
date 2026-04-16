@@ -9317,9 +9317,6 @@ function mostrarProductosGuardados(productos) {
             </td>
             <td>
                 <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" onclick="editarProducto(${producto.id})" title="Editar">
-                        <i class="fas fa-edit"></i>
-                    </button>
                     <button class="btn btn-outline-danger" onclick="eliminarProducto(${producto.id})" title="Eliminar">
                         <i class="fas fa-trash"></i>
                     </button>

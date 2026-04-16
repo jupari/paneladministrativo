@@ -13,10 +13,8 @@ class UserPolicy
     // Policy para user Admin
     public function before($user)
     {
-        if($user->hasRole('Administrator')){
-
+        if ($user->hasRole(['Administrator', 'sysadmin'])) {
             return true;
-
         }
     }
 

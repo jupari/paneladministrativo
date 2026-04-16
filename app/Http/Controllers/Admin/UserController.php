@@ -30,7 +30,7 @@ class UserController extends Controller
 
         $this->userRepository = $userRepository;
 
-        $this->middleware('can:users.index')->only('indexDataTable');
+        // $this->middleware('can:users.index')->only('indexDataTable');
         // $this->middleware('can:permisos.create')->only('create','store');
         // $this->middleware('can:permisos.edit')->only('edit','update');
     }
@@ -65,17 +65,17 @@ class UserController extends Controller
         try {
 
             // Politica y permiso incluido: ver usuario
-
-            $usuarios = User::with(['roles', 'company'])->get();
+            $authUser = auth()->user();
+            $roles =  Role::all();
             $companies = Company::where('is_active', 1)->get();
 
-            $roles =  Role::all();
-            $authUser = auth()->user();
-            if($authUser->hasRole('Administrator')){
-                //$usuarios = User::all();
-                // $usuarios = $usuarios->reject(function ($user) {
-                //     return $user->hasRole('Administrator');
-                // });
+            // sysadmin ve todos los usuarios; otros roles solo ven los de su empresa
+            if ($authUser->hasRole('sysadmin')) {
+                $usuarios = User::with(['roles', 'company'])->get();
+            } else {
+                $usuarios = User::with(['roles', 'company'])
+                    ->where('company_id', $authUser->company_id)
+                    ->get();
             }
             if ($request->ajax()) {
                 return DataTables::of($usuarios)
@@ -241,7 +241,10 @@ class UserController extends Controller
             $validation =  Validator::make($request->all(),[
                 'name'=>'required|min:3',
                 'email'=>'required|unique:App\Models\User,email|regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/',
-                // 'password'=>'required|regex:/^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/',
+                'password'=>'required|regex:/^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/',
+            ],[
+                'password.required' => 'La contraseña es obligatoria.',
+                'password.regex' => 'La contraseña debe tener mínimo 8 caracteres, una letra mayúscula y un número.',
             ]);
 
             if($validation->fails()){

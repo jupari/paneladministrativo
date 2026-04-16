@@ -79,14 +79,21 @@
                                         </select>
                                     </div>
                                 {{-- @endif --}}
-                                <div class="form-group">
+                                <div class="form-group" id="company_group">
                                     <label for="company_id">Empresa</label>
-                                    <select class="form-control" id="company_id" style="width: 100%;">
-                                        <option value="">Seleccione una empresa</option>
-                                        @foreach($companies as $company)
-                                            <option value="{{ $company->id }}">{{ $company->name }}</option>
-                                        @endforeach
-                                    </select>
+                                    @if(auth()->user()->hasRole('sysadmin'))
+                                        <select class="form-control" id="company_id" style="width: 100%;">
+                                            <option value="">Seleccione una empresa</option>
+                                            @foreach($companies as $company)
+                                                <option value="{{ $company->id }}">{{ $company->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    @else
+                                        @php $userCompany = auth()->user()->company; @endphp
+                                        <input type="hidden" id="company_id" value="{{ auth()->user()->company_id }}">
+                                        <input type="text" class="form-control" disabled
+                                            value="{{ $userCompany ? $userCompany->name : 'Sin empresa asignada' }}">
+                                    @endif
                                     <span class="text-danger" id="error_company_id"></span>
                                 </div>
                                 <div class="form-group">

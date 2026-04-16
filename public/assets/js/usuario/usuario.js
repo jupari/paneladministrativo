@@ -55,16 +55,6 @@ $(function () {
     });
 });
 
-//se declara la variable del modal
-var myModal = new bootstrap.Modal(document.getElementById('myModal'), {
-    keyboard: false
-})
-
-const myModalpss = new bootstrap.Modal(document.getElementById('myModalPss'), {
-    keyboard: false
-})
-
-
 let oldFiles = [];
 
 function Cargar() {
@@ -117,7 +107,7 @@ function cleanInput(btn) {
     const bool = (btn == null) ? false : true;
 
     // Campos usuario
-    const usuarioFields = ['name','email', 'role','company_id','identificacion','password','password-confirm','reset-password'];
+    const usuarioFields = ['name','email', 'role','company_id','identificacion','password','rpassword','password-confirm','reset-password'];
     usuarioFields.forEach(field => {
         $('#' + field).val('');
     });
@@ -139,7 +129,7 @@ function showCustomUser(btn) {
 
 
         // Mapear los campos del usuario
-        const usuarioFields = ['id','name','email','active','identificacion','company_id'];
+        const usuarioFields = ['id','name','email','active','identificacion'];
         usuarioFields.forEach(field => {
             if(field!='active'){
                 $('#' + field).val(usr[field]);
@@ -147,6 +137,11 @@ function showCustomUser(btn) {
                 $('#' + field).prop('checked',usr[field]==1?true:false);
             }
         });
+
+        // Solo sysadmin puede cambiar empresa; para otros el campo es hidden con valor fijo
+        if (isSysAdmin) {
+            $('#company_id').val(usr['company_id']);
+        }
 
         // Limpiar oldFiles
         oldFiles = [];
@@ -211,11 +206,11 @@ function showCompanyRestrictionMessage() {
 function regUsr() {
     $('#myModal').modal('show');
     $('#exampleModalLabel').html('Registrar usuario');
-    //$('#myModalPss').modal('show');
 
     // LIMPIAR CAMPOS
     cleanInput();
-     // FIN LIMPIAR CAMPOS
+    $('#panelpassword').show();
+    // FIN LIMPIAR CAMPOS
     limpiarValidaciones();
 
     // Aplicar filtros de empresa y mensajes
@@ -254,8 +249,14 @@ function registerUsr() {
     ajax_data.append('password', $('#password').val());
     ajax_data.append('identificacion', $('#identificacion').val());
 
-    const verificarContraseña =  validacionPassword();
-    if(!verificarContraseña){
+    const passPolicy = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    if (!passPolicy.test($('#password').val())) {
+        $('#error_password').text('Mínimo 8 caracteres, una letra mayúscula y un número.');
+        return;
+    }
+
+    const verificarContraseña = validacionPassword();
+    if (!verificarContraseña) {
         $('#repetir-password').text('La contraseña no coincide, por favor verifique');
         return;
     }
@@ -321,9 +322,9 @@ function registerUsr() {
 function upUsr(btn) {
     $('#myModal').modal('show')
     $('#exampleModalLabel').html('Editar usuario');
-    $('#panelpassword').modal('hide');
     // LIMPIAR CAMPOS
     cleanInput();
+    $('#panelpassword').hide();
     limpiarValidaciones();
     showCustomUser(btn);
     // FIN LIMPIAR CAMPOS
@@ -357,12 +358,6 @@ function updateUsr(btn) {
     })
 
 
-    const verificarContraseña =  validacionPassword();
-    if(!verificarContraseña){
-        $('#repetir-password').text('La contraseña no coincide, por favor verifique');
-        return;
-    }
-
     // Validar restricción de empresa para usuarios no-sysadmin
     if (typeof isSysAdmin !== 'undefined' && !isSysAdmin && currentUserCompany) {
         const selectedCompanyId = $('#company_id').val();
@@ -377,7 +372,6 @@ function updateUsr(btn) {
     ajax_data.append('role', $('#role').val());
     ajax_data.append('company_id', $('#company_id').val());
     ajax_data.append('active', activo.toString());
-    ajax_data.append('password', $('#password').val());
     ajax_data.append('identificacion', $('#identificacion').val());
 
 
@@ -432,7 +426,7 @@ function updateUsr(btn) {
 
 // // Cambiar password
 function changep(btn) {
-    $('#myModalpss').modal('show')
+    $('#myModalPss').modal('show')
 
     $('#exampleModalLabelPss').html('<b>Cambiar contraseña</b>');
 
@@ -451,10 +445,18 @@ function changep(btn) {
 function usrChange(btn) {
     const route = "/admin/admin.users.changepass/" + btn;
 
-    if($('#reset-password').val()!==$('#password-confirm').val()){
+    const passPolicy = /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    if (!passPolicy.test($('#reset-password').val())) {
+        $('#error_reset_password').text('Mínimo 8 caracteres, una letra mayúscula y un número.');
+        return;
+    } else {
+        $('#error_reset_password').text('');
+    }
+
+    if ($('#reset-password').val() !== $('#password-confirm').val()) {
         $('#error_cpassword').text('Las contraseñas son diferentes');
         return;
-    }else{
+    } else {
         $('#error_cpassword').text('');
     }
     let ajax_data = {
@@ -474,9 +476,8 @@ function usrChange(btn) {
         data: ajax_data,
     }).then(response => {
 
+        $('#myModalPss').modal('toggle');
         Cargar();
-
-        $('#myModalpss').modal('toggle');
         toastr.success(response.message);
 
     })
@@ -499,7 +500,7 @@ function usrChange(btn) {
 
             else if (e.status == 403) {
 
-                myModalpss.modal('toggle');
+                $('#myModalPss').modal('toggle');
                 toastr.warning(arr.message);
 
             }

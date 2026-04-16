@@ -138,18 +138,18 @@
                         <div class="d-flex align-items-center mb-3">
                             <i class="fas fa-plus-circle text-danger mr-2"></i>
                             <span class="font-weight-bold text-uppercase text-secondary"
-                                  style="font-size:.75rem; letter-spacing:.08em;">Horas Extra Permitidas</span>
+                                  style="font-size:.75rem; letter-spacing:.08em;">Recargos</span>
                             <hr class="flex-grow-1 ml-2 mt-0 mb-0">
                         </div>
 
-                        <div class="alert py-2 px-3 mb-3 d-flex align-items-start"
+                        {{-- <div class="alert py-2 px-3 mb-3 d-flex align-items-start"
                              style="background:#fff3cd; border:1px solid #ffc107; border-radius:6px; font-size:.8rem;">
                             <i class="fas fa-exclamation-triangle text-warning mt-1 mr-2" style="flex-shrink:0;"></i>
                             <span class="text-dark">
                                 Máximo legal: <strong>2 horas extra por día</strong> (Art. 167 CST colombiano).
-                                Configure qué tipos de HE aplican a este turno.
+                                Configure qué tipos de recargos aplican a este turno.
                             </span>
-                        </div>
+                        </div> --}}
 
                         <div class="row">
                             <div class="col-md-4">
@@ -159,19 +159,19 @@
                                     </label>
                                     <div class="input-group">
                                         <input type="number" id="turno_max_extras" class="form-control"
-                                               value="2" min="0" max="2" step="1">
+                                               value="2" min="0" max="7" step="1">
                                         <div class="input-group-append">
                                             <span class="input-group-text bg-light text-muted" style="font-size:.85rem;">h/día</span>
                                         </div>
                                     </div>
-                                    <small class="text-muted">0 = sin horas extra en este turno</small>
+                                    <small class="text-muted">0 = sin recargo extra en este turno</small>
                                     <small class="text-danger d-block" id="error_max_horas_extras"></small>
                                 </div>
                             </div>
                             <div class="col-md-4 d-flex align-items-center pt-1">
                                 <div>
                                     <label class="font-weight-bold mb-1 d-flex align-items-center">
-                                        <i class="fas fa-sun text-warning mr-1"></i> HE Diurnas
+                                        <i class="fas fa-sun text-warning mr-1"></i> Recargo Diurno
                                         <i class="fas fa-question-circle text-muted ml-1"
                                            data-toggle="tooltip" data-placement="top"
                                            title="Horas extra entre 6am y 10pm. Factor ×1.25 (o ×2.00 si es dominical)."></i>
@@ -179,7 +179,7 @@
                                     <div class="custom-control custom-switch">
                                         <input type="checkbox" class="custom-control-input" id="turno_he_diurnas" checked>
                                         <label class="custom-control-label" for="turno_he_diurnas">
-                                            Permite HE diurnas
+                                            Permite Recargo Diurno
                                         </label>
                                     </div>
                                     <small class="text-danger d-block" id="error_tiene_extras_diurnas"></small>
@@ -188,7 +188,7 @@
                             <div class="col-md-4 d-flex align-items-center pt-1">
                                 <div>
                                     <label class="font-weight-bold mb-1 d-flex align-items-center">
-                                        <i class="fas fa-moon text-dark mr-1"></i> HE Nocturnas
+                                        <i class="fas fa-moon text-dark mr-1"></i> Recargo Nocturno
                                         <i class="fas fa-question-circle text-muted ml-1"
                                            data-toggle="tooltip" data-placement="top"
                                            title="Horas extra entre 10pm y 6am. Factor ×1.75 (o ×2.50 si es dominical)."></i>
@@ -196,7 +196,7 @@
                                     <div class="custom-control custom-switch">
                                         <input type="checkbox" class="custom-control-input" id="turno_he_nocturnas">
                                         <label class="custom-control-label" for="turno_he_nocturnas">
-                                            Permite HE nocturnas
+                                            Permite Recargo Nocturno
                                         </label>
                                     </div>
                                     <small class="text-danger d-block" id="error_tiene_extras_nocturnas"></small>
@@ -208,7 +208,7 @@
                         <div id="resumenFactores" class="mt-3 p-3 rounded"
                              style="background:#f8f9fa; border:1px solid #dee2e6; font-size:.78rem;">
                             <div class="font-weight-bold text-secondary mb-2">
-                                <i class="fas fa-calculator mr-1"></i> Factores CST que aplican a este turno:
+                                <i class="fas fa-calculator mr-1"></i> Factores CST que aplican a este turno
                             </div>
                             <div class="row text-center" id="badgesFactores">
                                 <!-- Populated by JS -->
