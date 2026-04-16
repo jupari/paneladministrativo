@@ -317,6 +317,7 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::post('admin.cotizaciones.duplicate/{id}', 'duplicate')->name('admin.cotizaciones.duplicate');
         Route::post('admin.cotizaciones.search', 'search')->name('admin.cotizaciones.search');
         Route::delete('admin.cotizaciones.destroy/{id}', 'destroy')->name('admin.cotizaciones.destroy');
+        Route::post('admin.cotizaciones.enviar/{id}', 'enviarPorCorreo')->name('admin.cotizaciones.enviar');
     });
 
     // Rutas para Productos y Salarios de Cotizaciones

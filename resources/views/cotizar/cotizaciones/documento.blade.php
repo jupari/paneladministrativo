@@ -1130,6 +1130,10 @@
                                                     <i class="fas fa-file-pdf me-1"></i>
                                                     <span class="d-none d-md-inline">Descargar PDF</span>
                                                 </button>
+                                                <button type="button" class="btn btn-outline-primary" onclick="enviarCotizacion()" title="Enviar cotización por correo" id="btn-enviar-correo">
+                                                    <i class="fas fa-envelope me-1"></i>
+                                                    <span class="d-none d-md-inline">Enviar</span>
+                                                </button>
                                             </div>
 
                                             <button class="btn btn-primary" id="agregarCotizacion">

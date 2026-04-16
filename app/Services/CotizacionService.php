@@ -351,21 +351,31 @@ class CotizacionService
      */
     public function obtenerEstadisticas(): array
     {
-        $total = Cotizacion::count();
-        $totalValor = Cotizacion::sum('total');
-        $pendientes = Cotizacion::whereHas('estado', function($query) {
-            $query->where('estado', 'like', '%Borrador%');
-        })->count();
+        $estados = ['Borrador', 'Enviado', 'Aprobado', 'Rechazado', 'Terminado', 'Anulado'];
 
-        $aprobadas = Cotizacion::whereHas('estado', function($query) {
-            $query->where('estado', 'like', '%Terminado%');
-        })->count();
+        $conteos = [];
+        $totales = [];
+
+        foreach ($estados as $nombre) {
+            $query = Cotizacion::whereHas('estado', fn($q) => $q->where('estado', $nombre));
+            $conteos[$nombre] = $query->count();
+            $totales[$nombre] = $query->sum('total');
+        }
+
+        // Pendientes de respuesta: enviadas sin fecha_respuesta
+        $pendientesRespuesta = Cotizacion::whereHas('estado', fn($q) => $q->where('estado', 'Enviado'))
+            ->whereNull('fecha_respuesta')
+            ->count();
 
         return [
-            'total_cotizaciones' => $total,
-            'valor_total' => $totalValor,
-            'cotizaciones_pendientes' => $pendientes,
-            'cotizaciones_aprobadas' => $aprobadas
+            'total_cotizaciones'      => Cotizacion::count(),
+            'valor_total'             => Cotizacion::sum('total'),
+            'conteos'                 => $conteos,
+            'totales'                 => $totales,
+            'pendientes_respuesta'    => $pendientesRespuesta,
+            // compatibilidad con código anterior
+            'cotizaciones_pendientes' => $conteos['Borrador'] ?? 0,
+            'cotizaciones_aprobadas'  => $conteos['Aprobado'] ?? 0,
         ];
     }
 

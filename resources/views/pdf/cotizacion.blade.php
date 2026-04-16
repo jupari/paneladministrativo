@@ -60,8 +60,8 @@
         @foreach($productosSub as $producto)
 
             @php
-                $total = ($producto->cantidad ?? 1) * ($producto->valor_unitario ?? 0);
-                $subtotal += $total;
+                $lineaTotal = $producto->valor_total ?? (($producto->cantidad ?? 1) * ($producto->valor_unitario ?? 0));
+                $subtotal += $lineaTotal;
             @endphp
 
             <tr>
@@ -70,9 +70,9 @@
                     {{ $producto->nombre }}
                 </td>
                 <td class="center">{{ $producto->unidad_medida }}</td>
-                <td class="center">{{ number_format($producto->cantidad, 0) }}</td>
-                <td class="right">${{ number_format($producto->valor_unitario, 2) }}</td>
-                <td class="right">${{ number_format($total, 2) }}</td>
+                <td class="center">{{ number_format($producto->cantidad ?? 1, 0) }}</td>
+                <td class="right">${{ number_format($producto->valor_unitario ?? 0, 2) }}</td>
+                <td class="right">${{ number_format($lineaTotal, 2) }}</td>
             </tr>
 
         @endforeach
@@ -90,22 +90,80 @@
 </table>
 
 {{-- TOTALES --}}
+@php
+    $subtotalDB    = (float) ($cotizacion->subtotal ?? 0);
+    $descuentoDB   = (float) ($cotizacion->descuento ?? 0);
+    $impuestoDB    = (float) ($cotizacion->total_impuesto ?? 0);
+    $viaticosDB    = (float) ($cotizacion->viaticos ?? 0);
+    $totalDB       = (float) ($cotizacion->total ?? 0);
+
+    // Clasificar conceptos por tipo para visualización
+    $conceptosPorTipo = ['descuentos' => [], 'impuestos' => [], 'retenciones' => []];
+    foreach ($cotizacion->conceptos ?? [] as $cc) {
+        $tipo = strtoupper(optional($cc->concepto)->tipo ?? '');
+        if (in_array($tipo, ['DESCUENTO', 'DISCOUNT', 'DES', 'DESC'])) {
+            $conceptosPorTipo['descuentos'][] = $cc;
+        } elseif (in_array($tipo, ['IMPUESTO', 'IVA', 'TAX', 'IMP'])) {
+            $conceptosPorTipo['impuestos'][] = $cc;
+        } elseif (in_array($tipo, ['RETENCION', 'RETENTION', 'RET', 'RETE'])) {
+            $conceptosPorTipo['retenciones'][] = $cc;
+        }
+    }
+@endphp
 <table width="100%" class="mt-10">
     <tr>
-        <td width="60%"></td>
-        <td width="40%">
+        <td width="55%"></td>
+        <td width="45%">
             <table class="border">
                 <tr>
                     <td class="gray bold right">SUBTOTAL</td>
-                    <td class="right">${{ number_format($subtotal, 2) }}</td>
+                    <td class="right" style="white-space:nowrap;">${{ number_format($subtotalDB, 2) }}</td>
                 </tr>
+
+                {{-- Descuentos --}}
+                @foreach($conceptosPorTipo['descuentos'] as $cc)
                 <tr>
-                    <td class="gray bold right">IVA 19%</td>
-                    <td class="right">${{ number_format($subtotal * 0.19, 2) }}</td>
+                    <td class="bold right" style="color:#b71c1c;">
+                        {{ optional($cc->concepto)->nombre ?? 'Descuento' }}
+                        @if($cc->porcentaje > 0)({{ number_format($cc->porcentaje, 2) }}%)@endif
+                    </td>
+                    <td class="right" style="color:#b71c1c;white-space:nowrap;">-${{ number_format($cc->valor, 2) }}</td>
                 </tr>
+                @endforeach
+
+                {{-- Impuestos --}}
+                @foreach($conceptosPorTipo['impuestos'] as $cc)
+                <tr>
+                    <td class="bold right">
+                        {{ optional($cc->concepto)->nombre ?? 'Impuesto' }}
+                        @if($cc->porcentaje > 0)({{ number_format($cc->porcentaje, 2) }}%)@endif
+                    </td>
+                    <td class="right" style="white-space:nowrap;">${{ number_format($cc->valor, 2) }}</td>
+                </tr>
+                @endforeach
+
+                {{-- Retenciones --}}
+                @foreach($conceptosPorTipo['retenciones'] as $cc)
+                <tr>
+                    <td class="bold right" style="color:#4a148c;">
+                        {{ optional($cc->concepto)->nombre ?? 'Retención' }}
+                        @if($cc->porcentaje > 0)({{ number_format($cc->porcentaje, 2) }}%)@endif
+                    </td>
+                    <td class="right" style="color:#4a148c;white-space:nowrap;">-${{ number_format($cc->valor, 2) }}</td>
+                </tr>
+                @endforeach
+
+                {{-- Viáticos --}}
+                @if($viaticosDB > 0)
+                <tr>
+                    <td class="bold right">VIÁTICOS</td>
+                    <td class="right" style="white-space:nowrap;">${{ number_format($viaticosDB, 2) }}</td>
+                </tr>
+                @endif
+
                 <tr class="gray bold">
                     <td class="right">TOTAL</td>
-                    <td class="right">${{ number_format($subtotal * 1.19, 2) }}</td>
+                    <td class="right" style="white-space:nowrap;">${{ number_format($totalDB, 2) }}</td>
                 </tr>
             </table>
         </td>

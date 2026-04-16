@@ -5,21 +5,27 @@ namespace App\Http\Controllers\Cotizar;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreCotizacionRequest;
 use App\Http\Requests\UpdateCotizacionRequest;
+use App\Mail\CotizacionEnviada;
+use App\Models\Cotizacion;
+use App\Models\EstadoCotizacion;
+use App\Services\CotizacionPdfService;
 use App\Services\CotizacionService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Yajra\DataTables\DataTables;
-use Barryvdh\DomPDF\Facade\Pdf;
-use App\Models\Cotizacion;
 
 class CotizacionController extends Controller
 {
     protected $cotizacionService;
+    protected $pdfService;
 
-    public function __construct(CotizacionService $cotizacionService)
+    public function __construct(CotizacionService $cotizacionService, CotizacionPdfService $pdfService)
     {
         $this->cotizacionService = $cotizacionService;
+        $this->pdfService = $pdfService;
     }
 
     /**
@@ -67,10 +73,26 @@ class CotizacionController extends Controller
                         return 'N/A';
                     })
                     ->addColumn('estado', function ($row) {
+                        $colorMap = [
+                            'primary'   => '#0d6efd',
+                            'prymari'   => '#0d6efd',
+                            'secondary' => '#6c757d',
+                            'success'   => '#28a745',
+                            'danger'    => '#dc3545',
+                            'warning'   => '#e0a800',
+                            'info'      => '#17a2b8',
+                            'dark'      => '#343a40',
+                            'light'     => '#adb5bd',
+                        ];
                         if ($row->estado) {
-                            return '<span class="badge bg-' . $row->estado->color . '">' . $row->estado->estado . '</span>';
+                            $raw   = $row->estado->color ?? '';
+                            $color = str_starts_with($raw, '#')
+                                ? $raw
+                                : ($colorMap[strtolower($raw)] ?? '#6c757d');
+                            return '<span class="badge" style="background-color:' . $color . ';color:#fff;">'
+                                . e($row->estado->estado) . '</span>';
                         }
-                        return '<span class="badge badge-secondary">Sin estado</span>';
+                        return '<span class="badge" style="background-color:#6c757d;color:#fff;">Sin estado</span>';
                     })
                     ->addColumn('total', function ($row) {
                         return '$' . number_format($row->total, 2);
@@ -95,7 +117,8 @@ class CotizacionController extends Controller
                     ->make(true);
             }
             // $estadisticas = $this->cotizacionService->obtenerEstadisticas();
-            return view('cotizar.cotizaciones.index');
+            $estadisticas = $this->cotizacionService->obtenerEstadisticas();
+            return view('cotizar.cotizaciones.index', compact('estadisticas'));
         } catch (Exception $e) {
             Log::error('Error al obtener cotizaciones: ' . $e->getMessage());
             return response()->json([
@@ -477,83 +500,12 @@ class CotizacionController extends Controller
     public function generatePdf($id)
     {
         try {
-            $cotizacion = Cotizacion::with([
-                'tercero.company',
-                'terceroSucursal',
-                'terceroContacto',
-                'productos.producto',
-                'items',
-                'estado',
-                'usuario',
-            ])->findOrFail($id);
-
-            Log::info('Generando PDF de cotización', [
-                'cotizacion_id' => $id
-            ]);
-
-            // ================= LOGO =================
-            $logoBase64 = null;
-
-            // Logo por empresa
-            if ($cotizacion->tercero && $cotizacion->tercero->company) {
-                $slug = \Illuminate\Support\Str::slug(
-                    $cotizacion->tercero->company->nombre
-                );
-
-                $companyLogo = storage_path("app/public/companies/logos/logo-{$slug}.png");
-
-                if (is_file($companyLogo)) {
-                    $logoBase64 = 'data:image/png;base64,' . base64_encode(
-                        file_get_contents($companyLogo)
-                    );
-                }
-            }
-
-            // Logo por defecto
-            if (!$logoBase64) {
-                $defaultLogo = storage_path('app/public/companies/logos/logo-minduval.png');
-
-                if (is_file($defaultLogo)) {
-                    $logoBase64 = 'data:image/png;base64,' . base64_encode(
-                        file_get_contents($defaultLogo)
-                    );
-                }
-            }
-
-            Log::info('Logo cargado', [
-                'logo' => (bool) $logoBase64
-            ]);
-
-            // ================= PDF =================
-            $pdf = Pdf::loadView('pdf.cotizacion', [
-                'cotizacion' => $cotizacion,
-                'logoBase64' => $logoBase64,
-            ]);
-
-            $pdf->setPaper('A4', 'portrait');
-
-            $pdf->setOptions([
-                'isHtml5ParserEnabled' => true,
-                'defaultFont' => 'DejaVu Sans',
-            ]);
-
-            $filename = 'Cotizacion_' . ($cotizacion->num_documento ?? $id) . '.pdf';
-
-            return $pdf->download($filename);
-
+            $cotizacion = $this->pdfService->cargar($id);
+            Log::info('Generando PDF de cotización', ['cotizacion_id' => $id]);
+            return $this->pdfService->build($cotizacion)->download($this->pdfService->filename($cotizacion));
         } catch (\Throwable $e) {
-
-            Log::error('Error al generar PDF de cotización', [
-                'cotizacion_id' => $id,
-                'message'       => $e->getMessage(),
-                'file'          => $e->getFile(),
-                'line'          => $e->getLine(),
-            ]);
-
-            return back()->with(
-                'error',
-                'No fue posible generar el PDF de la cotización.'
-            );
+            Log::error('Error al generar PDF de cotización', ['cotizacion_id' => $id, 'message' => $e->getMessage()]);
+            return back()->with('error', 'No fue posible generar el PDF de la cotización.');
         }
     }
 
@@ -563,75 +515,76 @@ class CotizacionController extends Controller
     public function previewPdf($id)
     {
         try {
-            $cotizacion = Cotizacion::with([
-                'tercero.company',
-                'terceroSucursal',
-                'terceroContacto',
-                'productos.producto',
-                'items',
-                'estado',
-                'usuario',
-            ])->findOrFail($id);
+            $cotizacion = $this->pdfService->cargar($id);
+            Log::info('Generando preview PDF', ['cotizacion_id' => $id]);
+            return $this->pdfService->build($cotizacion)->stream($this->pdfService->filename($cotizacion));
+        } catch (\Throwable $e) {
+            Log::error('Error al previsualizar PDF de cotización', ['cotizacion_id' => $id, 'message' => $e->getMessage()]);
+            return back()->with('error', 'No fue posible generar la vista previa del PDF.');
+        }
+    }
 
-            Log::info("Generando preview PDF", ['cotizacion_id' => $id]);
+    /**
+     * Enviar cotización por correo al cliente y cambiar estado a "Enviado".
+     */
+    public function enviarPorCorreo($id)
+    {
+        try {
+            $cotizacion = $this->pdfService->cargar($id);
 
-            // ================= LOGO =================
-            $logoBase64 = null;
+            // Determinar destinatario
+            $destinatario = $cotizacion->terceroContacto->correo
+                ?? $cotizacion->tercero->correo
+                ?? null;
 
-            // 1. Logo por empresa (si existe)
-            if ($cotizacion->tercero && $cotizacion->tercero->company) {
-                $slug = \Illuminate\Support\Str::slug(
-                    $cotizacion->tercero->company->nombre
-                );
-
-                $companyLogo = storage_path("app/public/companies/logos/logo-{$slug}.png");
-
-                if (is_file($companyLogo)) {
-                    $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($companyLogo));
-                }
+            if (!$destinatario) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El cliente no tiene correo electrónico registrado.',
+                ], 422);
             }
 
-            // 2. Logo por defecto
-            if (!$logoBase64) {
-                $defaultLogo = storage_path('app/public/companies/logos/logo-minduval.png');
+            // Generar token único para aprobación
+            $token = Str::random(64);
 
-                if (is_file($defaultLogo)) {
-                    $logoBase64 = 'data:image/png;base64,' . base64_encode(file_get_contents($defaultLogo));
-                }
-            }
+            // Calcular expiración: fecha_vencimiento de la cotización o 30 días desde hoy
+            $expiracion = $cotizacion->fecha_vencimiento
+                ? $cotizacion->fecha_vencimiento->endOfDay()
+                : now()->addDays(30);
 
-            Log::info('Logo cargado', ['ok' => (bool) $logoBase64]);
+            // Obtener estado "Enviado"
+            $estadoEnviado = EstadoCotizacion::where('estado', 'Enviado')->first();
 
-            // ================= PDF =================
-            $pdf = Pdf::loadView('pdf.cotizacion', [
-                'cotizacion' => $cotizacion,
-                'logoBase64' => $logoBase64,
+            // Actualizar cotización
+            $cotizacion->update([
+                'token_aprobacion' => $token,
+                'token_expira_en'  => $expiracion,
+                'fecha_envio'      => now(),
+                'estado_id'        => $estadoEnviado?->id ?? $cotizacion->estado_id,
             ]);
 
-            $pdf->setPaper('A4', 'portrait');
+            // Enviar email con PDF adjunto
+            Mail::to($destinatario)->send(new CotizacionEnviada($cotizacion, $this->pdfService));
 
-            $pdf->setOptions([
-                'isHtml5ParserEnabled' => true,
-                'defaultFont' => 'DejaVu Sans',
+            Log::info('Cotización enviada por correo', [
+                'cotizacion_id' => $id,
+                'destinatario'  => $destinatario,
             ]);
 
-            return $pdf->stream(
-                'Cotizacion_' . ($cotizacion->num_documento ?? $id) . '.pdf'
-            );
+            return response()->json([
+                'success'      => true,
+                'message'      => 'Cotización enviada exitosamente a ' . $destinatario,
+                'destinatario' => $destinatario,
+                'estado'       => $estadoEnviado?->estado ?? 'Enviado',
+                'estado_color' => $estadoEnviado?->color ?? '#17a2b8',
+            ]);
 
         } catch (\Throwable $e) {
-
-            Log::error('Error al previsualizar PDF de cotización', [
-                'cotizacion_id' => $id,
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ]);
-
-            return back()->with(
-                'error',
-                'No fue posible generar la vista previa del PDF.'
-            );
+            Log::error('Error al enviar cotización por correo', ['cotizacion_id' => $id, 'message' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al enviar la cotización: ' . $e->getMessage(),
+            ], 500);
         }
     }
 }

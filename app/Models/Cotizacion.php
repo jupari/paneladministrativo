@@ -62,7 +62,11 @@ class Cotizacion extends Model
         'vendedor_id',
         'fecha_vencimiento',
         'fecha_envio',
-        'fecha_respuesta'
+        'fecha_respuesta',
+        'token_aprobacion',
+        'token_expira_en',
+        'motivo_rechazo',
+        'respondido_por',
     ];
 
     /**
@@ -80,6 +84,7 @@ class Cotizacion extends Model
         'fecha_vencimiento' => 'date',
         'fecha_envio' => 'datetime',
         'fecha_respuesta' => 'datetime',
+        'token_expira_en' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

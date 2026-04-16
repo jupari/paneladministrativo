@@ -701,6 +701,91 @@ console.log('💡 Funciones de debug disponibles: debugCotizacion(), reiniciarCo
 console.log('📄 Funciones de PDF disponibles: previewPdf(), downloadPdf(), mostrarBotonesPdf(), ocultarBotonesPdf()');
 
 // ========================================
+// ENVÍO DE COTIZACIÓN POR CORREO
+// ========================================
+
+window.enviarCotizacion = async function() {
+    const cotizacionId = cotizacionIdForPdf || document.getElementById('id')?.value;
+
+    if (!cotizacionId) {
+        Swal.fire({
+            title: 'Cotización no guardada',
+            text: 'Debe guardar la cotización antes de enviarla.',
+            icon: 'warning',
+            confirmButtonText: 'Entendido'
+        });
+        return;
+    }
+
+    const confirmacion = await Swal.fire({
+        title: '¿Enviar cotización por correo?',
+        text: 'Se enviará el PDF al correo del cliente y el estado cambiará a "Enviado".',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#1e3a5f',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, enviar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (!confirmacion.value) return;
+
+    const btn = document.getElementById('btn-enviar-correo');
+    if (btn) { btn.disabled = true; }
+
+    Swal.fire({
+        title: 'Enviando correo...',
+        text: 'Por favor espere.',
+        icon: 'info',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+
+    try {
+        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        const response = await fetch(`/admin/admin.cotizaciones.enviar/${cotizacionId}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json',
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            Swal.fire({
+                title: '¡Correo enviado!',
+                html: `Cotización enviada a <strong>${data.destinatario ?? 'cliente'}</strong>.<br>Estado actualizado a <strong>Enviado</strong>.`,
+                icon: 'success',
+                confirmButtonColor: '#1e3a5f',
+            });
+
+            // Actualizar badge de estado en la interfaz si existe
+            const estadoBadge = document.querySelector('.estado-cotizacion-badge');
+            if (estadoBadge && data.estado) {
+                estadoBadge.textContent = data.estado;
+            }
+        } else {
+            Swal.fire({
+                title: 'Error al enviar',
+                text: data.message ?? 'No fue posible enviar el correo. Verifique la configuración.',
+                icon: 'error',
+            });
+        }
+    } catch (e) {
+        Swal.fire({
+            title: 'Error de conexión',
+            text: 'No fue posible comunicarse con el servidor.',
+            icon: 'error',
+        });
+    } finally {
+        if (btn) { btn.disabled = false; }
+    }
+};
+
+// ========================================
 // FUNCIÓN GLOBAL PARA INICIALIZACIÓN DESDE SERVIDOR
 // ========================================
 

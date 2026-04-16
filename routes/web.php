@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Public\CotizacionRespuestaController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -30,6 +31,14 @@ Route::middleware(['auth', 'company.license'])->group(function () {
     Route::get('user/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('user/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('user/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// ── Rutas públicas para aprobación/rechazo de cotizaciones por el cliente ──
+Route::middleware('throttle:10,1')->group(function () {
+    Route::get('/cotizacion/{token}', [CotizacionRespuestaController::class, 'mostrar'])
+        ->name('public.cotizacion.respuesta');
+    Route::post('/cotizacion/{token}/responder', [CotizacionRespuestaController::class, 'responder'])
+        ->name('public.cotizacion.responder');
 });
 
 require __DIR__.'/auth.php';

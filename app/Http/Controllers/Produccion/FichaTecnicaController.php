@@ -14,13 +14,6 @@ use Illuminate\Http\Request;
 
 
 class FichaTecnicaController extends Controller
-    public function __construct()
-    {
-        $this->middleware('can:fichatecnica.index')->only('index');
-        $this->middleware('can:fichatecnica.create')->only('store');
-        $this->middleware('can:fichatecnica.edit')->only('update');
-        $this->middleware('can:fichatecnica.destroy')->only('destroy');
-    }
 {
     protected FichaTecnicaService $fichaTecnicaService;
     protected FichaTecnicaBocetoService $fichaTecnicaBocetoService;
@@ -35,7 +28,10 @@ class FichaTecnicaController extends Controller
         $this->fichaTecnicaBocetoService = $fichaTecnicaBocetoService;
         $this->fichaTecnicaMaterialService = $fichaTecnicaMaterialService;
         $this->fichaTecnicaProcesoService = $fichaTecnicaProcesoService;
-
+        $this->middleware('can:fichatecnica.index')->only('index');
+        $this->middleware('can:fichatecnica.create')->only('store');
+        $this->middleware('can:fichatecnica.edit')->only('update');
+        $this->middleware('can:fichatecnica.destroy')->only('destroy');
     }
 
 

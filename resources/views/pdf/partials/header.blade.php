@@ -18,7 +18,7 @@
                 <td width="25%">
                     <strong>REALIZADO POR:</strong><br>
                     {{ $cotizacion->usuario->name ?? 'Administrador' }}<br><br>
-                    <strong>VERSIÓN:</strong> 1<br>
+                    <strong>VERSIÓN:</strong> {{ $cotizacion->version ?? 1 }}<br>
                     <strong>FECHA:</strong><br>
                     {{ \Carbon\Carbon::parse($cotizacion->fecha)->format('d/m/Y') }}
                 </td>
