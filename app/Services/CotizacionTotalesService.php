@@ -7,6 +7,7 @@ use App\Models\CotizacionProducto;
 use App\Models\CotizacionConcepto;
 use App\Models\CotizacionLista;
 use App\Models\CotizacionViatico;
+use App\Models\Concepto;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -232,7 +233,7 @@ class CotizacionTotalesService
 
             $tipoConcepto = strtoupper($concepto->tipo);
 
-            if (in_array($tipoConcepto, ['DESCUENTO', 'DISCOUNT', 'DES', 'DESC'])) {
+            if (Concepto::esDescuento($tipoConcepto)) {
                 $valorConcepto = 0;
 
                 if ($cotizacionConcepto->porcentaje && $cotizacionConcepto->porcentaje > 0) {
@@ -263,7 +264,7 @@ class CotizacionTotalesService
 
             $tipoConcepto = strtoupper($concepto->tipo);
 
-            if (in_array($tipoConcepto, ['IMPUESTO', 'IVA', 'TAX', 'IMP'])) {
+            if (Concepto::esImpuesto($tipoConcepto)) {
                 $valorConcepto = 0;
 
                 if ($cotizacionConcepto->porcentaje && $cotizacionConcepto->porcentaje > 0) {
@@ -291,7 +292,7 @@ class CotizacionTotalesService
 
             $tipoConcepto = strtoupper($concepto->tipo);
 
-            if (in_array($tipoConcepto, ['RETENCION', 'RETENTION', 'RET', 'RETE'])) {
+            if (Concepto::esRetencion($tipoConcepto)) {
                 $valorConcepto = 0;
 
                 if ($cotizacionConcepto->porcentaje && $cotizacionConcepto->porcentaje > 0) {

@@ -104,12 +104,12 @@
                                     </label>
                                     <div class="input-group">
                                         <input type="number" id="turno_max_horas_ord" class="form-control"
-                                               value="7" min="1" max="7" step="1">
+                                               value="{{ $maxOrd }}" min="1" max="{{ $maxOrd }}" step="1">
                                         <div class="input-group-append">
                                             <span class="input-group-text bg-light text-muted" style="font-size:.85rem;">h/día</span>
                                         </div>
                                     </div>
-                                    <small class="text-muted">Máximo legal: 7 h/día</small>
+                                    <small class="text-muted">Máximo legal: {{ $maxOrd }} h/día</small>
                                     <small class="text-danger d-block" id="error_max_horas_ordinarias"></small>
                                 </div>
                             </div>
@@ -159,7 +159,7 @@
                                     </label>
                                     <div class="input-group">
                                         <input type="number" id="turno_max_extras" class="form-control"
-                                               value="2" min="0" max="7" step="1">
+                                               value="{{ $maxExtra }}" min="0" max="{{ $maxExtra }}" step="1">
                                         <div class="input-group-append">
                                             <span class="input-group-text bg-light text-muted" style="font-size:.85rem;">h/día</span>
                                         </div>

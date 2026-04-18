@@ -239,7 +239,7 @@ class CotizacionConceptoController extends Controller
                 'subtotal' => 'required|numeric|min:0',
                 'conceptos' => 'required|array',
                 'conceptos.*.concepto_id' => 'required|integer',
-                'conceptos.*.tipo' => 'required|in:impuesto,descuento',
+                'conceptos.*.tipo' => 'required|in:impuesto,descuento,retencion',
                 'conceptos.*.tipo_calculo' => 'required|in:porcentaje,valor',
                 'conceptos.*.valor' => 'required|numeric|min:0'
             ]);

@@ -22,8 +22,8 @@ class CotizacionEnviada extends Mailable
 
     public function envelope(): Envelope
     {
-        $numero = $cotizacion->num_documento ?? 'S/N';
-        $empresa = config('app.name', 'Nosotros');
+        $numero  = $this->cotizacion->num_documento ?? 'S/N';
+        $empresa = config('app.name', 'Panel Administrativo');
 
         return new Envelope(
             subject: "Cotización {$numero} – {$empresa}",

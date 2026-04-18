@@ -14,8 +14,15 @@ class Elemento extends Model
         'codigo',
         'nombre',
         'valor',
+        'valor_texto',
         'active',
+        'company_id',
     ];
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
 
     public function subElementos()
     {

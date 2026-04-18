@@ -7,7 +7,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class TablaPreciosCargoService
-{     /**
+{
+    public function __construct(protected ParametroService $parametros) {}
+
+    /**
      * Genera la tabla de precios por cargo basada en la parametrización y novedades.
      * Si $persistir es true, guarda los resultados en la tabla cargos_tabla_precios.
      *
@@ -16,9 +19,9 @@ class TablaPreciosCargoService
      */
     public function generar(bool $persistir = true): array
     {
-        $utilidad = (float) config('app.utilidadPct', 0.315);
-        $horasDiarias = (int) config('app.horasDiarias', 8);
-        $diasMes = 26;
+        $utilidad     = $this->parametros->getFloat('NOM_UTILIDAD_PCT', (float) config('app.utilidadPct', 0.315));
+        $horasDiarias = $this->parametros->getInt('NOM_HORAS_DIARIAS', (int) config('app.horasDiarias', 8));
+        $diasMes      = $this->parametros->getInt('NOM_DIAS_MES', 26);
 
         Log::debug('[TablaPreciosCargo] Inicio generar', [
             'persistir' => $persistir,

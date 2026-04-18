@@ -11,7 +11,7 @@
                     @if(!empty($cc->forma_pago))<strong>FORMA DE PAGO:</strong> {{ $cc->forma_pago }}<br>@endif
                 @else
                     TIEMPO DE ENTREGA: A convenir<br>
-                    DURACIÓN DE LA OFERTA: 30 días<br>
+                    DURACIÓN DE LA OFERTA: {{ $diasVencimiento ?? 30 }} días<br>
                     FORMA DE PAGO: Pendiente por acordar
                 @endif
             </td>

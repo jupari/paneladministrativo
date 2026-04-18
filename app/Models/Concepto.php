@@ -23,25 +23,47 @@ class Concepto extends Model
         'activo' => 'boolean',
     ];
 
-    /**
-     * Relación con cotizaciones conceptos
-     */
+    // ─────────────────────────────────────────────────────────────────────────
+    // Aliases de tipo — fuente única de verdad para clasificar conceptos
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public const ALIASES_DESCUENTO = ['DESCUENTO', 'DISCOUNT', 'DES', 'DESC'];
+    public const ALIASES_IMPUESTO  = ['IMPUESTO', 'IVA', 'TAX', 'IMP'];
+    public const ALIASES_RETENCION = ['RETENCION', 'RETENTION', 'RET', 'RETE'];
+
+    public static function esDescuento(string $tipo): bool
+    {
+        return in_array(strtoupper(trim($tipo)), self::ALIASES_DESCUENTO, true);
+    }
+
+    public static function esImpuesto(string $tipo): bool
+    {
+        return in_array(strtoupper(trim($tipo)), self::ALIASES_IMPUESTO, true);
+    }
+
+    public static function esRetencion(string $tipo): bool
+    {
+        return in_array(strtoupper(trim($tipo)), self::ALIASES_RETENCION, true);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Relaciones
+    // ─────────────────────────────────────────────────────────────────────────
+
     public function cotizacionConceptos()
     {
         return $this->hasMany(CotizacionConcepto::class, 'concepto_id');
     }
 
-    /**
-     * Scope para conceptos activos
-     */
+    // ─────────────────────────────────────────────────────────────────────────
+    // Scopes
+    // ─────────────────────────────────────────────────────────────────────────
+
     public function scopeActivos($query)
     {
         return $query->where('activo', true);
     }
 
-    /**
-     * Scope para conceptos por tipo
-     */
     public function scopePorTipo($query, $tipo)
     {
         return $query->where('tipo', $tipo);

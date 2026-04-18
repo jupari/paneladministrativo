@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Nomina;
 
 use App\Http\Controllers\Controller;
 use App\Models\NominaTurno;
+use App\Services\ParametroService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -11,6 +12,9 @@ use Yajra\DataTables\Facades\DataTables;
 
 class NominaTurnoController extends Controller
 {
+    public function __construct(
+        protected ParametroService $parametros,
+    ) {}
     public function index(Request $request)
     {
         try {
@@ -68,7 +72,10 @@ class NominaTurnoController extends Controller
                     ->make(true);
             }
 
-            return view('nomina.turnos.index');
+            return view('nomina.turnos.index', [
+                'maxOrd'   => $this->parametros->getInt('TURNO_MAX_ORD', 7),
+                'maxExtra' => $this->parametros->getInt('TURNO_MAX_EXTRA', 2),
+            ]);
 
         } catch (Exception $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
@@ -84,22 +91,25 @@ class NominaTurnoController extends Controller
 
     public function store(Request $request)
     {
+        $maxOrd   = $this->parametros->getInt('TURNO_MAX_ORD', 7);
+        $maxExtra = $this->parametros->getInt('TURNO_MAX_EXTRA', 2);
+
         $validator = Validator::make($request->all(), [
             'nombre'                 => 'required|string|max:100|unique:nom_turnos,nombre',
             'descripcion'            => 'nullable|string|max:255',
             'tipo_ordinaria'         => 'required|in:diurna,nocturna',
             'es_dominical_festivo'   => 'required|boolean',
-            'max_horas_ordinarias'   => 'required|integer|min:1|max:7',
+            'max_horas_ordinarias'   => "required|integer|min:1|max:{$maxOrd}",
             'tiene_extras_diurnas'   => 'required|boolean',
             'tiene_extras_nocturnas' => 'required|boolean',
-            'max_horas_extras'       => 'required|integer|min:0|max:2',
+            'max_horas_extras'       => "required|integer|min:0|max:{$maxExtra}",
             'active'                 => 'required|boolean',
         ], [
             'nombre.required' => 'El nombre es obligatorio.',
             'nombre.unique'   => 'Ya existe un turno con ese nombre.',
             'tipo_ordinaria.required' => 'El tipo de jornada es obligatorio.',
-            'max_horas_ordinarias.max' => 'El máximo de horas ordinarias es 7 por día.',
-            'max_horas_extras.max'     => 'El máximo de horas extra es 2 por día.',
+            'max_horas_ordinarias.max' => "El máximo de horas ordinarias es {$maxOrd} por día.",
+            'max_horas_extras.max'     => "El máximo de horas extra es {$maxExtra} por día.",
         ]);
 
         if ($validator->fails()) {
@@ -130,21 +140,24 @@ class NominaTurnoController extends Controller
 
     public function update(Request $request, $id)
     {
+        $maxOrd   = $this->parametros->getInt('TURNO_MAX_ORD', 7);
+        $maxExtra = $this->parametros->getInt('TURNO_MAX_EXTRA', 2);
+
         $validator = Validator::make($request->all(), [
             'nombre'                 => "required|string|max:100|unique:nom_turnos,nombre,{$id}",
             'descripcion'            => 'nullable|string|max:255',
             'tipo_ordinaria'         => 'required|in:diurna,nocturna',
             'es_dominical_festivo'   => 'required|boolean',
-            'max_horas_ordinarias'   => 'required|integer|min:1|max:7',
+            'max_horas_ordinarias'   => "required|integer|min:1|max:{$maxOrd}",
             'tiene_extras_diurnas'   => 'required|boolean',
             'tiene_extras_nocturnas' => 'required|boolean',
-            'max_horas_extras'       => 'required|integer|min:0|max:2',
+            'max_horas_extras'       => "required|integer|min:0|max:{$maxExtra}",
             'active'                 => 'required|boolean',
         ], [
             'nombre.required' => 'El nombre es obligatorio.',
             'nombre.unique'   => 'Ya existe un turno con ese nombre.',
-            'max_horas_ordinarias.max' => 'El máximo de horas ordinarias es 7 por día.',
-            'max_horas_extras.max'     => 'El máximo de horas extra es 2 por día.',
+            'max_horas_ordinarias.max' => "El máximo de horas ordinarias es {$maxOrd} por día.",
+            'max_horas_extras.max'     => "El máximo de horas extra es {$maxExtra} por día.",
         ]);
 
         if ($validator->fails()) {

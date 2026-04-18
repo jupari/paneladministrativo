@@ -57,11 +57,11 @@ function cleanInput() {
     $('#tipo_diurna').prop('checked', true);
     $('#btnDiurna').addClass('active');
     $('#btnNocturna').removeClass('active');
-    $('#turno_max_horas_ord').val('7');
+    $('#turno_max_horas_ord').val($('#turno_max_horas_ord').attr('max') || '7');
     $('#turno_dominical').prop('checked', false);
     $('#turno_he_diurnas').prop('checked', true);
     $('#turno_he_nocturnas').prop('checked', false);
-    $('#turno_max_extras').val('2');
+    $('#turno_max_extras').val($('#turno_max_extras').attr('max') || '2');
     $('#turno_active').prop('checked', true);
 }
 

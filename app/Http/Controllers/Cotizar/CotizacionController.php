@@ -10,6 +10,7 @@ use App\Models\Cotizacion;
 use App\Models\EstadoCotizacion;
 use App\Services\CotizacionPdfService;
 use App\Services\CotizacionService;
+use App\Services\ParametroService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -21,11 +22,16 @@ class CotizacionController extends Controller
 {
     protected $cotizacionService;
     protected $pdfService;
+    protected $parametros;
 
-    public function __construct(CotizacionService $cotizacionService, CotizacionPdfService $pdfService)
-    {
+    public function __construct(
+        CotizacionService $cotizacionService,
+        CotizacionPdfService $pdfService,
+        ParametroService $parametros
+    ) {
         $this->cotizacionService = $cotizacionService;
         $this->pdfService = $pdfService;
+        $this->parametros = $parametros;
     }
 
     /**
@@ -547,10 +553,11 @@ class CotizacionController extends Controller
             // Generar token único para aprobación
             $token = Str::random(64);
 
-            // Calcular expiración: fecha_vencimiento de la cotización o 30 días desde hoy
+            // Calcular expiración: fecha_vencimiento de la cotización o parámetro COT_TOKEN_DIAS
+            $diasToken = $this->parametros->getInt('COT_TOKEN_DIAS', 30);
             $expiracion = $cotizacion->fecha_vencimiento
                 ? $cotizacion->fecha_vencimiento->endOfDay()
-                : now()->addDays(30);
+                : now()->addDays($diasToken);
 
             // Obtener estado "Enviado"
             $estadoEnviado = EstadoCotizacion::where('estado', 'Enviado')->first();
@@ -563,7 +570,8 @@ class CotizacionController extends Controller
                 'estado_id'        => $estadoEnviado?->id ?? $cotizacion->estado_id,
             ]);
 
-            // Enviar email con PDF adjunto
+            // Enviar email con PDF adjunto (aplica config SMTP de la empresa)
+            $this->parametros->configurarMailer($cotizacion->company_id);
             Mail::to($destinatario)->send(new CotizacionEnviada($cotizacion, $this->pdfService));
 
             Log::info('Cotización enviada por correo', [

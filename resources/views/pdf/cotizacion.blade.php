@@ -101,11 +101,11 @@
     $conceptosPorTipo = ['descuentos' => [], 'impuestos' => [], 'retenciones' => []];
     foreach ($cotizacion->conceptos ?? [] as $cc) {
         $tipo = strtoupper(optional($cc->concepto)->tipo ?? '');
-        if (in_array($tipo, ['DESCUENTO', 'DISCOUNT', 'DES', 'DESC'])) {
+        if (\App\Models\Concepto::esDescuento($tipo)) {
             $conceptosPorTipo['descuentos'][] = $cc;
-        } elseif (in_array($tipo, ['IMPUESTO', 'IVA', 'TAX', 'IMP'])) {
+        } elseif (\App\Models\Concepto::esImpuesto($tipo)) {
             $conceptosPorTipo['impuestos'][] = $cc;
-        } elseif (in_array($tipo, ['RETENCION', 'RETENTION', 'RET', 'RETE'])) {
+        } elseif (\App\Models\Concepto::esRetencion($tipo)) {
             $conceptosPorTipo['retenciones'][] = $cc;
         }
     }

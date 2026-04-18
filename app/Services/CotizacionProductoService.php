@@ -8,6 +8,7 @@ use App\Models\CotizacionConcepto;
 use App\Models\CotizacionUtilidad;
 use App\Models\CotizacionSubImtes;
 use App\Models\Producto;
+use App\Models\Concepto;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -459,7 +460,7 @@ class CotizacionProductoService
                 if ($cotizacionConcepto->porcentaje && $cotizacionConcepto->porcentaje > 0) {
                     // Para descuentos se aplica sobre subtotal con utilidades
                     // Para impuestos se aplica sobre base gravable (después de descuentos)
-                    if (in_array($tipoConcepto, ['DESCUENTO', 'DISCOUNT', 'DES', 'DESC'])) {
+                    if (Concepto::esDescuento($tipoConcepto)) {
                         $valorConcepto = $subtotalConUtilidades * ($cotizacionConcepto->porcentaje / 100);
                     } else {
                         // Para impuestos y retenciones, se calculará después de descuentos
@@ -470,9 +471,9 @@ class CotizacionProductoService
                 }
 
                 // Clasificar conceptos
-                if (in_array($tipoConcepto, ['DESCUENTO', 'DISCOUNT', 'DES', 'DESC'])) {
+                if (Concepto::esDescuento($tipoConcepto)) {
                     $totalDescuentosConceptos += $valorConcepto;
-                } elseif (in_array($tipoConcepto, ['RETENCION', 'RETENTION', 'RET', 'RETE'])) {
+                } elseif (Concepto::esRetencion($tipoConcepto)) {
                     $totalRetenciones += $valorConcepto;
                 } else {
                     // Asumir que es impuesto (IVA, TAX, etc)
@@ -504,11 +505,11 @@ class CotizacionProductoService
 
                 // Solo recalcular si es porcentaje y no es descuento
                 if ($cotizacionConcepto->porcentaje && $cotizacionConcepto->porcentaje > 0 &&
-                    !in_array($tipoConcepto, ['DESCUENTO', 'DISCOUNT', 'DES', 'DESC'])) {
+                    !Concepto::esDescuento($tipoConcepto)) {
 
                     $valorCalculado = $baseGravable * ($cotizacionConcepto->porcentaje / 100);
 
-                    if (in_array($tipoConcepto, ['RETENCION', 'RETENTION', 'RET', 'RETE'])) {
+                    if (Concepto::esRetencion($tipoConcepto)) {
                         $totalRetencionesCalculadas += $valorCalculado;
                     } else {
                         $totalImpuestosCalculados += $valorCalculado;

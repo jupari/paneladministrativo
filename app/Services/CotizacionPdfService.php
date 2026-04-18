@@ -3,12 +3,16 @@
 namespace App\Services;
 
 use App\Models\Cotizacion;
+use App\Services\ParametroService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class CotizacionPdfService
 {
+    public function __construct(
+        protected ParametroService $parametros,
+    ) {}
     /**
      * Carga la cotización con todas las relaciones necesarias para el PDF.
      */
@@ -35,11 +39,13 @@ class CotizacionPdfService
      */
     public function build(Cotizacion $cotizacion): \Barryvdh\DomPDF\PDF
     {
-        $logoBase64 = $this->resolverLogoBase64($cotizacion);
+        $logoBase64     = $this->resolverLogoBase64($cotizacion);
+        $diasVencimiento = $this->parametros->getInt('COT_DIAS_VENCIMIENTO', 30, $cotizacion->company_id);
 
         $pdf = Pdf::loadView('pdf.cotizacion', [
-            'cotizacion' => $cotizacion,
-            'logoBase64' => $logoBase64,
+            'cotizacion'      => $cotizacion,
+            'logoBase64'      => $logoBase64,
+            'diasVencimiento' => $diasVencimiento,
         ]);
 
         $pdf->setPaper('A4', 'portrait');
