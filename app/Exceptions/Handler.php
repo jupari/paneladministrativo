@@ -51,6 +51,19 @@ class Handler extends ExceptionHandler
     }
 
     /**
+     * Redirect to login on session expiry for web routes.
+     * API routes still get a 401 JSON response.
+     */
+    protected function unauthenticated($request, AuthenticationException $exception)
+    {
+        if ($request->is('api/*')) {
+            return response()->json(['message' => 'No autenticado.'], 401);
+        }
+
+        return redirect()->guest(route('login'));
+    }
+
+    /**
      * Render JSON responses for all /api/* routes.
      */
     public function render($request, Throwable $e)
