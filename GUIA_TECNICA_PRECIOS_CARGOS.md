@@ -252,7 +252,7 @@ foreach ($porCargo as $cargoId => $d) {
     // ═══════════════════════════════════════
     $factoresPrecio = [
         'hora_ordinaria' => 1.0,
-        'recargo_nocturno' => 0.35,
+        'recargo_nocturno' => 1.35,
         'hora_extra_diurna' => 1.25,
         'hora_extra_nocturna' => 1.75,
         'hora_dominical' => 1.75,

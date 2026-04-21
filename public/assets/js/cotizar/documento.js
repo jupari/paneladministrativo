@@ -7840,7 +7840,9 @@ function calcularTotalGeneral() {
         const base = typeof producto.total === 'number'
             ? producto.total
             : (Number(producto.precio) || 0) * (Number(producto.cantidad) || 0);
-        return sum + base;
+        const bono         = Number(producto.bono)           || 0;
+        const novedades    = Number(producto.novedadesTotal) || 0;
+        return sum + base + bono + novedades;
     }, 0);
 }
 
@@ -9166,7 +9168,8 @@ function mostrarProductosGuardados(productos) {
         const bono              = parseFloat(producto.bono || 0);
         const salarioBase       = valorUnitario * cantidad;
 
-        if (esNomina) subtotalNomina += total;
+        const totalEfectivo = esNomina ? total + novedadesSubtotal : total;
+        if (esNomina) subtotalNomina += totalEfectivo;
         else subtotalInsumos += total;
 
         // Calcular descuento total
@@ -9267,7 +9270,7 @@ function mostrarProductosGuardados(productos) {
                                         <strong>Total producto:</strong>
                                     </td>
                                     <td class="py-1 border-0 font-weight-bold text-success">
-                                        $${total.toLocaleString('es-CO', {minimumFractionDigits: 2})}
+                                        $${totalEfectivo.toLocaleString('es-CO', {minimumFractionDigits: 2})}
                                     </td>
                                     <td class="border-0"></td>
                                 </tr>
@@ -9313,7 +9316,7 @@ function mostrarProductosGuardados(productos) {
                     : '<span class="text-muted">Sin descuento</span>'}
             </td>
             <td>
-                <strong class="text-success">$${total.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</strong>
+                <strong class="text-success">$${totalEfectivo.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</strong>
             </td>
             <td>
                 <div class="btn-group btn-group-sm">
@@ -11261,25 +11264,72 @@ function calcularValorCargoNomina(idx) {
     }
 
     const personas = parseFloat(document.getElementById(`nominaPersonas_${idx}`)?.value) || 1;
-    const tipoCosto = document.getElementById(`nominaTipoCosto_${idx}`)?.value || 'dia';
-    const diasDiurnos = parseFloat(document.getElementById(`nominaDiasDiurnos_${idx}`)?.value) || 0;
-    const horasDiurnas = parseFloat(document.getElementById(`nominaHorasDiurnas_${idx}`)?.value) || 0;
-    const diasNocturnos = parseFloat(document.getElementById(`nominaDiasNocturnos_${idx}`)?.value) || 0;
-    const dominicales = parseFloat(document.getElementById(`nominaDominicales_${idx}`)?.value) || 0;
-
-    const costoDia = Number(cargo.costo_dia || cargo.base_costo_dia || 0);
-    const costoHora = Number(cargo.costo_hora || cargo.base_costo_hora || 0);
+    const modo = document.getElementById(`nominaModo_${idx}`)?.value || 'hora';
 
     let valor = 0;
-    if (tipoCosto === 'dia') {
-        valor = (diasDiurnos + diasNocturnos + dominicales) * costoDia * personas;
+
+    if (modo === 'hora') {
+        // Modo Costo Hora: cada input representa HORAS — usar tarifas de cargos_tabla_precios
+        const horasDiurnas   = parseFloat(document.getElementById(`nominaDiasDiurnos_${idx}`)?.value)   || 0;
+        const horasNocturnas = parseFloat(document.getElementById(`nominaDiasNocturnos_${idx}`)?.value) || 0;
+        const horasDomDiu    = parseFloat(document.getElementById(`nominaDominicales_${idx}`)?.value)   || 0;
+        const horasDomNoc    = parseFloat(document.getElementById(`nominaDomNocturnos_${idx}`)?.value)  || 0;
+        const hedHoras       = parseFloat(document.getElementById(`nominaHED_${idx}`)?.value)           || 0;
+        const henHoras       = parseFloat(document.getElementById(`nominaHEN_${idx}`)?.value)           || 0;
+        const heddHoras      = parseFloat(document.getElementById(`nominaHEDD_${idx}`)?.value)          || 0;
+        const hednHoras      = parseFloat(document.getElementById(`nominaHEDN_${idx}`)?.value)          || 0;
+
+        // Tarifas desde cargo (expuestas por CotizacionProductoController)
+        const tarifaOrd  = Number(cargo.hora_ordinaria   || cargo.costo_hora || 0);
+        const tarifaRN   = Number(cargo.recargo_nocturno || 0);
+        const tarifaDom  = Number(cargo.hora_dominical   || tarifaOrd * 1.75);
+        const tarifaHED  = Number(cargo.hora_extra_diurna               || tarifaOrd * 1.25);
+        const tarifaHEN  = Number(cargo.hora_extra_nocturna             || tarifaOrd * 1.75);
+        const tarifaHEDD = Number(cargo.hora_extra_dominical_diurna     || tarifaOrd * 2.00);
+        const tarifaHEDN = Number(cargo.hora_extra_dominical_nocturna   || tarifaOrd * 2.50);
+
+        const costoOrdDiu = horasDiurnas   * tarifaOrd;
+        const costoOrdNoc = horasNocturnas * (tarifaOrd + tarifaRN);
+        const costoDomDiu = horasDomDiu    * tarifaDom;
+        const costoDomNoc = horasDomNoc    * (tarifaDom + tarifaRN);
+        const costoHED    = hedHoras       * tarifaHED;
+        const costoHEN    = henHoras       * tarifaHEN;
+        const costoHEDD   = heddHoras      * tarifaHEDD;
+        const costoHEDN   = hednHoras      * tarifaHEDN;
+
+        const costoMes = costoOrdDiu + costoOrdNoc + costoDomDiu + costoDomNoc
+                       + costoHED + costoHEN + costoHEDD + costoHEDN;
+        valor = costoMes * personas;
     } else {
-        valor = (horasDiurnas + diasNocturnos + dominicales) * costoHora * personas;
+        // Modo Costo Día (Turno): calcular horas por turno × tarifa × días trabajados
+        const params = construirParamsDesdreTurno(idx);
+        if (params) {
+            const tarifaOrd  = Number(cargo.hora_ordinaria   || cargo.costo_hora || 0);
+            const tarifaRN   = Number(cargo.recargo_nocturno || 0);
+            const tarifaDom  = Number(cargo.hora_dominical   || tarifaOrd * 1.75);
+            const tarifaHED  = Number(cargo.hora_extra_diurna               || tarifaOrd * 1.25);
+            const tarifaHEN  = Number(cargo.hora_extra_nocturna             || tarifaOrd * 1.75);
+            const tarifaHEDD = Number(cargo.hora_extra_dominical_diurna     || tarifaOrd * 2.00);
+            const tarifaHEDN = Number(cargo.hora_extra_dominical_nocturna   || tarifaOrd * 2.50);
+
+            const costoOrdDiu = params.dias_diurnos              * tarifaOrd;
+            const costoOrdNoc = params.dias_nocturnos            * (tarifaOrd + tarifaRN);
+            const costoDomDiu = params.dominicales_diurnos       * tarifaDom;
+            const costoDomNoc = params.dominicales_nocturnos     * (tarifaDom + tarifaRN);
+            const costoHED    = params.horas_extra_diurnas       * tarifaHED;
+            const costoHEN    = params.horas_extra_nocturnas     * tarifaHEN;
+            const costoHEDD   = params.horas_extra_dom_diurnas   * tarifaHEDD;
+            const costoHEDN   = params.horas_extra_dom_nocturnas * tarifaHEDN;
+
+            const costoTotal = costoOrdDiu + costoOrdNoc + costoDomDiu + costoDomNoc
+                             + costoHED + costoHEN + costoHEDD + costoHEDN;
+            valor = costoTotal * personas;
+        }
     }
 
     const valorEl = document.getElementById(`nominaValor_${idx}`);
     if (valorEl) {
-        valorEl.textContent = '$' + valor.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        valorEl.textContent = '$' + Math.round(valor).toLocaleString('es-CO');
     }
     window[`nominaValorCalculado_${idx}`] = valor;
     actualizarSubtotalNomina();
@@ -11297,6 +11347,7 @@ function actualizarSubtotalNomina() {
         if (!check || check.checked) {
             subtotal += window[`nominaValorCalculado_${idx}`] || 0;
             subtotal += window[`nominaNovedadesTotal_${idx}`] || 0;
+            subtotal += parseFloat(document.getElementById(`nominaBono_${idx}`)?.value) || 0;
         }
     });
     const el = document.getElementById('nominaSubtotalDisplay');
@@ -11345,6 +11396,7 @@ async function calcularLiquidacionNomina(idx) {
         henHoras    = params.horas_extra_nocturnas;
         heddHoras   = params.horas_extra_dom_diurnas;
         hednHoras   = params.horas_extra_dom_nocturnas;
+        console.log('[Nómina] API payload modo=dia', { diasDiurnos, diasNoct, domDiurnos, domNoct, hedHoras, henHoras, heddHoras, hednHoras });
     } else {
         // Modo Costo Hora: leer inputs existentes (sin cambios)
         diasDiurnos = parseInt(document.getElementById(`nominaDiasDiurnos_${idx}`)?.value)     || 0;
@@ -11400,6 +11452,7 @@ async function calcularLiquidacionNomina(idx) {
 
         if (json.success && json.data) {
             const data = json.data;
+            console.log('[Nómina] API respuesta OK — mes:', data.costo_empresa_mes, '| total:', data.costo_empresa_total, '| fuente:', data.fuente_calculo, data);
             window._nominaResultados[idx] = data;
             window[`nominaValorCalculado_${idx}`] = data.costo_empresa_total;
 
@@ -11434,6 +11487,7 @@ async function calcularLiquidacionNomina(idx) {
             calcularValorCargoNomina(idx);
         }
     } catch (e) {
+        console.error('[Nómina] API error, usando fallback local', e);
         // Fallback silencioso al cálculo local si el endpoint no está disponible
         calcularValorCargoNomina(idx);
     }
@@ -11619,6 +11673,7 @@ function finalizarNominaConfig() {
         const liquidacion  = window._nominaResultados?.[idx];
         const costoEmpresaMes = liquidacion ? liquidacion.costo_empresa_mes : (personas > 0 ? valorTotal / personas : valorTotal);
         const tipoCostoFinal  = modo === 'dia' ? 'dia' : 'hora';
+        const novedadesTotal  = window[`nominaNovedadesTotal_${idx}`] || 0;
 
         const productoNomina = {
             id: cargo.id,
@@ -11635,6 +11690,7 @@ function finalizarNominaConfig() {
             cantidad: personas,
             precio: costoEmpresaMes,
             bono: bono,
+            novedadesTotal: novedadesTotal,
             liquidacion_detalle: liquidacion || null,
             configuracionCosto: {
                 tipoCosto: tipoCostoFinal,
@@ -11698,17 +11754,19 @@ function agregarProductoATablaSeleccionados(producto) {
 
     const esNomina = producto.flujo_tipo === 'nomina' || producto.tipo === 'cargo_tabla';
     const badgeNomina = esNomina ? ' <span class="badge badge-warning">Nómina</span>' : '';
-    const bono = parseFloat(producto.bono || 0);
-    const valorBase = parseFloat(producto.precio) * parseFloat(producto.cantidad);
-    const valorTotal = (valorBase + bono).toFixed(2);
-    const bonoStr = bono > 0 ? ` &bull; <i class="fas fa-gift text-info"></i> Bono: $${bono.toLocaleString('es-CO')}` : '';
+    const bono          = parseFloat(producto.bono           || 0);
+    const novedadesDisp = parseFloat(producto.novedadesTotal || 0);
+    const valorBase     = parseFloat(producto.precio) * parseFloat(producto.cantidad);
+    const valorTotal    = (valorBase + bono + novedadesDisp).toFixed(2);
+    const bonoStr      = bono > 0        ? ` &bull; <i class="fas fa-gift text-info"></i> Bono: $${bono.toLocaleString('es-CO')}`               : '';
+    const novStr       = novedadesDisp > 0 ? ` &bull; <i class="fas fa-clipboard-list text-warning"></i> Nov.: $${novedadesDisp.toLocaleString('es-CO')}` : '';
 
     const tr = document.createElement('tr');
     tr.setAttribute('data-item-id', producto.id || `nomina_${Date.now()}`);
     tr.innerHTML = `
         <td>
             <strong>${producto.nombre}</strong>${badgeNomina}
-            <br><small class="text-muted">${producto.codigo || ''} &bull; ${producto.cantidad} persona(s) &bull; $${parseFloat(valorTotal).toLocaleString('es-CO')}${bonoStr}</small>
+            <br><small class="text-muted">${producto.codigo || ''} &bull; ${producto.cantidad} persona(s) &bull; $${parseFloat(valorTotal).toLocaleString('es-CO')}${bonoStr}${novStr}</small>
         </td>
         <td class="text-center">
             <button type="button" class="btn btn-sm btn-outline-danger"
@@ -11828,25 +11886,46 @@ function construirParamsDesdreTurno(idx) {
     const turno = selOpt?.dataset?.turno ? JSON.parse(selOpt.dataset.turno) : null;
     if (!turno) return null;
 
-    const dias   = parseInt(document.getElementById(`nominaDiasTurno_${idx}`)?.value) || 0;
+    const dias     = parseInt(document.getElementById(`nominaDiasTurno_${idx}`)?.value) || 0;
+    // Horas ordinarias por día según la configuración del turno (max_horas_ordinarias)
+    const horasOrd = parseInt(turno.max_horas_ordinarias) || 7;
+    // Total horas ordinarias = días trabajados × horas/día del turno
+    const horasOrdinarias = dias * horasOrd;
+
     const heDxDia = turno.tiene_extras_diurnas
         ? (parseInt(document.getElementById(`nominaHEDxDia_${idx}`)?.value) || 0) : 0;
     const heNxDia = turno.tiene_extras_nocturnas
         ? (parseInt(document.getElementById(`nominaHENxDia_${idx}`)?.value) || 0) : 0;
 
-    const esDom = !!turno.es_dominical_festivo;
+    const esDom    = !!turno.es_dominical_festivo;
     const esDiurna = turno.tipo_ordinaria === 'diurna';
 
-    return {
-        dias_diurnos:              (!esDom && esDiurna)  ? dias : 0,
-        dias_nocturnos:            (!esDom && !esDiurna) ? dias : 0,
-        dominicales_diurnos:       (esDom  && esDiurna)  ? dias : 0,
-        dominicales_nocturnos:     (esDom  && !esDiurna) ? dias : 0,
-        horas_extra_diurnas:       (!esDom) ? heDxDia * dias : 0,
-        horas_extra_nocturnas:     (!esDom) ? heNxDia * dias : 0,
-        horas_extra_dom_diurnas:   (esDom)  ? heDxDia * dias : 0,
-        horas_extra_dom_nocturnas: (esDom)  ? heNxDia * dias : 0,
+    const result = {
+        // Horas ordinarias: clasificadas por tipo de turno (diurno/nocturno) y si es dominical
+        dias_diurnos:              (!esDom && esDiurna)  ? horasOrdinarias : 0,
+        dias_nocturnos:            (!esDom && !esDiurna) ? horasOrdinarias : 0,
+        dominicales_diurnos:       (esDom  && esDiurna)  ? horasOrdinarias : 0,
+        dominicales_nocturnos:     (esDom  && !esDiurna) ? horasOrdinarias : 0,
+        // Horas extra: condición doble — es_dominical_festivo + tiene_extras_diurnas/nocturnas
+        horas_extra_diurnas:       (!esDom && !!turno.tiene_extras_diurnas)   ? heDxDia * dias : 0,
+        horas_extra_nocturnas:     (!esDom && !!turno.tiene_extras_nocturnas) ? heNxDia * dias : 0,
+        horas_extra_dom_diurnas:   (esDom  && !!turno.tiene_extras_diurnas)   ? heDxDia * dias : 0,
+        horas_extra_dom_nocturnas: (esDom  && !!turno.tiene_extras_nocturnas) ? heNxDia * dias : 0,
     };
+
+    console.log('[Nómina] construirParamsDesdreTurno', {
+        turno_nombre: turno.nombre,
+        max_horas_ordinarias: turno.max_horas_ordinarias,
+        es_dominical_festivo: turno.es_dominical_festivo,
+        tiene_extras_diurnas: turno.tiene_extras_diurnas,
+        tiene_extras_nocturnas: turno.tiene_extras_nocturnas,
+        dias_input: dias,
+        horasOrd,
+        horasOrdinarias,
+        result,
+    });
+
+    return result;
 }
 
 // ============================================================

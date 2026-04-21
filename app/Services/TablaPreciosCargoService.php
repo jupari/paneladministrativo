@@ -145,6 +145,35 @@ class TablaPreciosCargoService
             }
 
             // 2) Regla general: si valor_porcentaje == 0 -> tomar totales de la novedad segun flags
+            // 2a) Ítems de novedades de TOTALES FIJOS con valor absoluto (vpRaw > 0):
+            //     DOTACIÓN, EXAMENES, VIATICOS y ALIMENTACION pueden parametrizarse con un
+            //     valor monetario en valor_porcentaje por ítem (CAMISAS=70000, ALTURAS=65000…).
+            //     Esos valores NO son porcentajes; se acumulan como absolutos en P/Q/N/O.
+            $esNoveladTotalFijo = str_contains($novedad, 'DOTACI') || str_contains($novedad, 'DOTACION')
+                || str_contains($novedad, 'EXAMEN')
+                || str_contains($novedad, 'VIATIC')
+                || str_contains($novedad, 'ALIMENT') || str_contains($novedad, 'ALIMENTACI');
+
+            // 2) Novedades de totales fijos: usar el total pre-calculado (total_operativo)
+            //    de la novedad en lugar de sumar los ítems individuales de valor_porcentaje.
+            //    total_operativo es la fuente de verdad configurada en la novedad.
+            if ($esNoveladTotalFijo) {
+                if (str_contains($novedad, 'DOTACI') || str_contains($novedad, 'DOTACION')) {
+                    $porCargo[$cargoId]['dotacion_total'] = $toFloat($r->total_operativo);
+                } elseif (str_contains($novedad, 'EXAMEN')) {
+                    $porCargo[$cargoId]['examenes_total'] = $toFloat($r->total_operativo);
+                } elseif (str_contains($novedad, 'VIATIC')) {
+                    $t = $toFloat($r->total_operativo);
+                    if ($t > 0) $porCargo[$cargoId]['viaticos_total'] = $t;
+                } elseif (str_contains($novedad, 'ALIMENT') || str_contains($novedad, 'ALIMENTACI')) {
+                    $t = $toFloat($r->total_operativo);
+                    if ($t > 0) $porCargo[$cargoId]['aliment_total'] = $t;
+                }
+                continue;
+            }
+
+            // 2b) Totales fijos con valor_porcentaje == 0 → usar total_admon/total_operativo
+            //     de la novedad (valor agregado pre-calculado).
             if ($vpRaw == 0.0) {
                 $total = 0.0;
 
@@ -240,6 +269,11 @@ class TablaPreciosCargoService
                 if (isset($arlNiveles[$cargo->arl_nivel])) {
                     $d['pct_arp'] = (float)$arlNiveles[$cargo->arl_nivel] / 100;
                 }
+
+                // EPS empleado (4%): usar tasa global cuando no está en la parametrización del cargo
+                if ($d['pct_eps'] == 0.0) {
+                    $d['pct_eps'] = $this->parametros->getFloat('NOM_PCT_SALUD_EMP', 0.04);
+                }
             }
             unset($d); // romper referencia
         }
@@ -248,14 +282,18 @@ class TablaPreciosCargoService
         $den = (1 - $utilidad);
         if ($den <= 0) $den = 1;
 
+        // Factores de recargo/hora leídos desde la tabla elementos (configurables por empresa).
+        // Valores por defecto según ley laboral colombiana si no están parametrizados.
         $factoresPrecio = [
-            'hora_ordinaria' => 1.0,
-            'recargo_nocturno' => 0.35,
-            'hora_extra_diurna' => 1.25,
-            'hora_extra_nocturna' => 1.75,
-            'hora_dominical' => 1.75,
-            'hora_extra_dominical_diurna' => 2.0,
-            'hora_extra_dominical_nocturna' => 2.5,
+            'hora_ordinaria'                => 1.0,
+            // recargo_nocturno = solo el recargo adicional (35%), no el precio total de la hora (135%).
+            // NOM_FACTOR_RN almacena el factor total (1.35); restamos 1 para obtener solo el delta.
+            'recargo_nocturno'              => $this->parametros->getFloat('NOM_FACTOR_RN', 1.35) - 1.0,
+            'hora_extra_diurna'             => $this->parametros->getFloat('NOM_FACTOR_HED',  1.25),
+            'hora_extra_nocturna'           => $this->parametros->getFloat('NOM_FACTOR_HEN',  1.75),
+            'hora_dominical'                => $this->parametros->getFloat('NOM_FACTOR_TDD',  1.75),
+            'hora_extra_dominical_diurna'   => $this->parametros->getFloat('NOM_FACTOR_HEDD', 2.00),
+            'hora_extra_dominical_nocturna' => $this->parametros->getFloat('NOM_FACTOR_HEDN', 2.50),
         ];
 
         $resultado = [];
@@ -306,9 +344,9 @@ class TablaPreciosCargoService
             $L = round($B * $d['pct_pension'], 2);
             $M = round($B * $d['pct_ccf'], 2);
 
-            // Totales (vp=0)
-            $N = round($d['viaticos_total'], 2);
-            $O = round($d['aliment_total'], 2);
+            // Totales — con fallback a tarifas diarias parametrizadas (NOM_TRANSP_DIA / NOM_ALIMENT_DIA)
+            $N = round($d['viaticos_total'] ?: ($this->parametros->getFloat('NOM_TRANSP_DIA',  0.0) * $diasMes), 2);
+            $O = round($d['aliment_total']  ?: ($this->parametros->getFloat('NOM_ALIMENT_DIA', 0.0) * $diasMes), 2);
             $P = round($d['dotacion_total'], 2);
             $Q = round($d['examenes_total'], 2);
 

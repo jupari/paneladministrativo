@@ -23,12 +23,12 @@
                 <i class="fas fa-clock text-white mr-2"></i>
                 <h5 class="mb-0 text-white font-weight-bold">Catálogo de Turnos de Trabajo</h5>
             </div>
-            @if(auth()->user()->can('nomina.turnos.create'))
+            {{-- @if(auth()->user()->can('nomina.turnos.create'))
             <button type="button" onclick="regTurno()"
                     class="btn btn-warning btn-sm font-weight-bold shadow-sm">
                 <i class="fas fa-plus mr-1"></i> Nuevo Turno
             </button>
-            @endif
+            @endif --}}
         </div>
 
         <div class="px-4 pt-3 pb-2">

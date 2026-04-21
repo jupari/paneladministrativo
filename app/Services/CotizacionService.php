@@ -10,6 +10,7 @@ use App\Models\CotizacionConcepto;
 use App\Models\CotizacionItem;
 use App\Models\CotizacionProducto;
 use App\Models\CotizacionSubImtes;
+use App\Models\CotizacionLista;
 use App\Models\CotizacionUtilidad;
 use App\Models\CotizacionViatico;
 use App\Models\Tercero;
@@ -213,8 +214,20 @@ class CotizacionService
 
             $datos = $cotizacionOriginal->toArray();
 
-            // Remover ID y timestamps
-            unset($datos['id'], $datos['created_at'], $datos['updated_at']);
+            // Remover ID, timestamps y campos del flujo de aprobación.
+            // token_aprobacion tiene restricción unique — debe ser nulo en la nueva versión
+            // hasta que se envíe al cliente.
+            unset(
+                $datos['id'],
+                $datos['created_at'],
+                $datos['updated_at'],
+                $datos['token_aprobacion'],
+                $datos['token_expira_en'],
+                $datos['fecha_envio'],
+                $datos['fecha_respuesta'],
+                $datos['motivo_rechazo'],
+                $datos['respondido_por']
+            );
 
             // Mantener el mismo número de documento
             // Calcular la nueva versión: buscar la máxima versión para ese num_documento y sumarle 1
@@ -283,9 +296,12 @@ class CotizacionService
                 }
             }
 
-            // Duplicar productos reasignando item_id y subitem_id al nuevo mapeo
+            // Duplicar productos reasignando item_id y subitem_id al nuevo mapeo,
+            // y sus novedades operativas (CotizacionLista) vinculadas a cada producto.
             $productosOriginales = CotizacionProducto::where('cotizacion_id', $id)->get();
             foreach ($productosOriginales as $producto) {
+                $oldProductoId = $producto->id;
+
                 $datosProducto = $producto->toArray();
                 unset($datosProducto['id'], $datosProducto['created_at'], $datosProducto['updated_at']);
                 $datosProducto['cotizacion_id'] = $nuevaCotizacion->id;
@@ -298,7 +314,17 @@ class CotizacionService
                     $datosProducto['cotizacion_subitem_id'] = $subitemIdMap[$datosProducto['cotizacion_subitem_id']];
                 }
 
-                CotizacionProducto::create($datosProducto);
+                $nuevoProducto = CotizacionProducto::create($datosProducto);
+
+                // Duplicar novedades operativas vinculadas a este producto
+                $novedadesOriginales = CotizacionLista::where('cotizacion_producto_id', $oldProductoId)->get();
+                foreach ($novedadesOriginales as $novedad) {
+                    $datosNovedad = $novedad->toArray();
+                    unset($datosNovedad['id'], $datosNovedad['created_at'], $datosNovedad['updated_at']);
+                    $datosNovedad['cotizacion_id']          = $nuevaCotizacion->id;
+                    $datosNovedad['cotizacion_producto_id'] = $nuevoProducto->id;
+                    CotizacionLista::create($datosNovedad);
+                }
             }
 
             // Duplicar viáticos

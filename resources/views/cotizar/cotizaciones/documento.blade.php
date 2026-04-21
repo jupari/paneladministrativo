@@ -415,7 +415,7 @@
                                                         <div class="col-md-6">
                                                             <div class="form-group">
                                                                 <label for="item_nombre" class="form-label">Nombre<span class="text-danger">*</span></label>
-                                                                <input type="text" class="form-control" id="item_nombre" placeholder="Ingrese el nombre del item" maxlength="255" style="text-transform: uppercase;">
+                                                                <input type="text" class="form-control" id="item_nombre" placeholder="Ingrese el nombre de la capitulación" maxlength="255" style="text-transform: uppercase;">
                                                                 <div class="invalid-feedback" id="error_item_nombre"></div>
                                                             </div>
                                                         </div>

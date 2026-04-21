@@ -806,6 +806,12 @@ class CotizacionProductoController extends Controller
                         'tp.base_costo_dia',
                         'tp.base_costo_hora',
                         'tp.hora_ordinaria',
+                        'tp.recargo_nocturno',
+                        'tp.hora_extra_diurna',
+                        'tp.hora_extra_nocturna',
+                        'tp.hora_dominical',
+                        'tp.hora_extra_dominical_diurna',
+                        'tp.hora_extra_dominical_nocturna',
                         'tp.valor_dia_ordinario',
                     ])
                     ->orderBy('c.nombre')
@@ -834,6 +840,13 @@ class CotizacionProductoController extends Controller
                         'costo_dia' => (float) $row->valor_dia_ordinario,
                         'base_costo_hora' => (float) $row->base_costo_hora,
                         'base_costo_dia' => (float) $row->base_costo_dia,
+                        'hora_ordinaria' => (float) $row->hora_ordinaria,
+                        'recargo_nocturno' => (float) $row->recargo_nocturno,
+                        'hora_extra_diurna' => (float) $row->hora_extra_diurna,
+                        'hora_extra_nocturna' => (float) $row->hora_extra_nocturna,
+                        'hora_dominical' => (float) $row->hora_dominical,
+                        'hora_extra_dominical_diurna' => (float) $row->hora_extra_dominical_diurna,
+                        'hora_extra_dominical_nocturna' => (float) $row->hora_extra_dominical_nocturna,
                         'descripcion' => sprintf(
                             'Hora ordinaria: $%s | Día ordinario: $%s',
                             number_format($row->hora_ordinaria, 0, '.', ','),
