@@ -556,54 +556,9 @@ class ClienteModalSteps {
     }
 
     setupEventListeners() {
-        // Navegación de pasos - usar delegación de eventos
-        const modalBody = document.querySelector('#ModalCliente .modal-body');
-        const modalFooter = document.querySelector('#ModalCliente .modal-footer');
-
-        // Event delegation para botones de navegación
-        if (modalFooter) {
-            modalFooter.addEventListener('click', (e) => {
-                if (e.target.id === 'next-btn' || e.target.closest('#next-btn')) {
-                    console.log('Click en botón siguiente (delegado)');
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.nextStep(e);
-                } else if (e.target.id === 'prev-btn' || e.target.closest('#prev-btn')) {
-                    console.log('Click en botón anterior (delegado)');
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.prevStep(e);
-                }
-            });
-        }
-
-        // Configuración directa como respaldo
-        setTimeout(() => {
-            const nextBtn = document.getElementById('next-btn');
-            const prevBtn = document.getElementById('prev-btn');
-
-            if (nextBtn && !nextBtn.hasAttribute('data-listener-added')) {
-                console.log('Configurando event listener directo para botón siguiente');
-                nextBtn.setAttribute('data-listener-added', 'true');
-                nextBtn.addEventListener('click', (e) => {
-                    console.log('Click directo en botón siguiente');
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.nextStep(e);
-                });
-            }
-
-            if (prevBtn && !prevBtn.hasAttribute('data-listener-added')) {
-                console.log('Configurando event listener directo para botón anterior');
-                prevBtn.setAttribute('data-listener-added', 'true');
-                prevBtn.addEventListener('click', (e) => {
-                    console.log('Click directo en botón anterior');
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.prevStep(e);
-                });
-            }
-        }, 200);
+        // Los botones next-btn y prev-btn tienen onclick="nextStepHandler(event)" / prevStepHandler(event)
+        // directamente en el HTML del modal — NO se agregan listeners adicionales aquí para
+        // evitar que nextStep() se llame más de una vez por click.
 
         // Navegación por teclado
         document.addEventListener('keydown', (e) => {
@@ -1090,6 +1045,8 @@ $(document).ready(function() {
     // Limpiar cuando se cierre el modal - pero sin resetear la variable global
     $('#ModalCliente').on('hidden.bs.modal', function () {
         console.log('❌ Modal cerrado - limpiando');
+        // Restaurar título para el próximo uso (creación)
+        $('#modal-title-text').text('Registrar Cliente');
         // NO resetear clienteModalSteps para evitar pérdida de referencia
         // Solo limpiar validaciones visuales
         if (clienteModalSteps) {
@@ -1474,29 +1431,16 @@ window.handlePrevStep = function(event) {
     }
 };
 
-// Inicializar cuando el DOM esté listo
-$(document).ready(function() {
-    console.log('🚀 Inicializando modal de clientes...');
-
-    // Inicializar solo cuando se abra el modal
-    $('#ModalCliente').on('shown.bs.modal', function() {
-        if (!window.clienteModalSteps) {
-            console.log('✅ Creando instancia de ClienteModalSteps');
-            window.clienteModalSteps = new ClienteModalSteps();
-        } else {
-            console.log('✅ Reutilizando instancia existente de ClienteModalSteps');
-            // Reinicializar al paso 1
-            window.clienteModalSteps.currentStep = 1;
-            window.clienteModalSteps.updateStepDisplay();
-            window.clienteModalSteps.updateProgress();
-            window.clienteModalSteps.updateNavigationButtons();
-        }
-    });
-});
+// El segundo bloque ready fue eliminado: duplicaba el handler shown.bs.modal
+// lo que causaba doble avance de pasos (1→3 en lugar de 1→2).
+// La inicialización queda únicamente en el primer $(document).ready de este archivo.
 
 // Función resetModal para compatibilidad con clientes.js
 window.resetModal = function() {
     console.log('🔄 resetModal llamada - reiniciando modal para modo CREACIÓN');
+
+    // Restaurar título para modo creación
+    $('#modal-title-text').text('Registrar Cliente');
 
     // PRIMERA LIMPIEZA PROFUNDA antes de crear nueva instancia
     console.log('🧹 Ejecutando limpieza profunda ANTES de nueva instancia');

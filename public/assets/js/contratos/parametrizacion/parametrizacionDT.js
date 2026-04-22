@@ -358,20 +358,59 @@ function eliminarFilaNovedadesDT(idx) {
 
 function saveDataNovedadesDT() {
     if (!tablaNovedadesDT) return;
-    let data = tablaNovedadesDT.rows().data().toArray();
-    // Aquí puedes hacer el AJAX igual que en saveDataNovedades
+
+    // Índices de columnas por nombre para no depender del orden
+    const idxCat     = tablaNovedadesDT.column('categoria_id:name').index();
+    const idxCargo   = tablaNovedadesDT.column('cargo_id:name').index();
+    const idxNovedad = tablaNovedadesDT.column('novedad_detalle_id:name').index();
+    const idxAdmon   = tablaNovedadesDT.column('valor_admon:name').index();
+    const idxObra    = tablaNovedadesDT.column('valor_obra:name').index();
+    const idxValor   = tablaNovedadesDT.column('valor_porcentaje:name').index();
+
+    const payload = [];
+
+    tablaNovedadesDT.rows().every(function () {
+        const rowData = this.data();
+        const $tr = $(this.node());
+
+        // Leer siempre desde el DOM para capturar valores que aún no dispararon
+        // el evento 'change' (p. ej. valor_porcentaje recién escrito sin hacer blur).
+        const selVal  = idx => $tr.find('td').eq(idx).find('select').val()                       ?? rowData[tablaNovedadesDT.column(idx).dataSrc()];
+        const inpVal  = idx => $tr.find('td').eq(idx).find('input[type="text"]').val()            ?? rowData[tablaNovedadesDT.column(idx).dataSrc()];
+        const chkVal  = idx => ($tr.find('td').eq(idx).find('input[type="checkbox"]').is(':checked') ? 1 : 0);
+
+        payload.push({
+            id:                 rowData.id ?? null,
+            categoria_id:       selVal(idxCat),
+            cargo_id:           selVal(idxCargo),
+            novedad_detalle_id: selVal(idxNovedad),
+            valor_porcentaje:   inpVal(idxValor),
+            valor_admon:        chkVal(idxAdmon),
+            valor_obra:         chkVal(idxObra),
+        });
+    });
+
+    // Validación básica
+    const invalida = payload.find(r => !r.categoria_id || !r.cargo_id || !r.novedad_detalle_id);
+    if (invalida) {
+        toastr.warning('Hay filas incompletas. Complete Categoría, Cargo y Novedad antes de guardar.');
+        return;
+    }
+
     $.ajax({
         url: '/admin/admin.parametrizacion.storenovedades',
         method: 'POST',
         headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
         contentType: 'application/json',
-        data: JSON.stringify({ parametrizacion: data }),
-        success: function(res) {
-            toastr.success('Guardado correctamente (DataTable)');
-            CargarNovedadesDT();
+        data: JSON.stringify({ parametrizacion: payload }),
+        success: function (res) {
+            toastr.success('Guardado correctamente');
+            // Recargar la página para obtener los IDs de los registros recién creados
+            window.location.reload();
         },
-        error: function(err) {
-            toastr.error('Error al guardar (DataTable)');
+        error: function (err) {
+            let msg = err.responseJSON?.message || 'Error al guardar';
+            toastr.error(msg);
         }
     });
 }

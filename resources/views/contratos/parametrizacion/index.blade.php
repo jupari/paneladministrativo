@@ -53,7 +53,7 @@
 
                         <!-- NUEVA SECCIÓN: DataTable Novedades -->
                         <fieldset class="border p-3 mb-4 bg-light">
-                            <div class="col-md-3 my-3">
+                            <div class="my-3">
                                 <button type="button" class="btn btn-primary mb-3" onclick="agregarFilaNovedadesDT()">Nuevo Registro</button>
                                 <button id="btn-refresh-dt" class="btn btn-outline-secondary mb-3" onclick="CargarNovedadesDT()">Actualizar</button>
                             </div>

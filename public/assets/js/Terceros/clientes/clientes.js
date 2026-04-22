@@ -782,15 +782,12 @@ function registerCli() {
 function upCli(btn) {
     // Marcar que está en modo edición
     $('#ModalCliente').data('edit-mode', true);
-    // Usar la nueva función compatible para editar
-    if (window.openEditClientModal) {
-        window.openEditClientModal(btn);
-    } else {
-        // Fallback al método original
-        myModal.modal('show');
-    }
+    // Abrir el modal
+    myModal.modal('show');
 
-    $('#exampleModalLabel').html('Editar Cliente');
+    // Actualizar título correctamente sin romper la estructura del encabezado
+    $('#modal-title-text').text('Editar Cliente');
+
     // LIMPIAR CAMPOS
     cleanInput();
     cleanInputSucursal();
@@ -802,11 +799,9 @@ function upCli(btn) {
     $('#sucursal_id').val('');
     showCustomUser(btn);
     // FIN LIMPIAR CAMPOS
-
-    let u = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
-        '<button id="editar" class="btn btn-primary" onclick="updateCli(' + btn + ')">Guardar</button>';
-    $(".modal-footer").html(u);
-
+    // Nota: NO se reemplaza el footer — los botones de navegación de pasos
+    // (prev-btn, next-btn, finish-btn) deben permanecer intactos.
+    // registerCli() ya detecta modo edición vía $('#id').val() y usa la ruta update.
 }
 
 function updateCli(btn) {
@@ -1234,7 +1229,15 @@ function showContacto(btn){
             }
         });
 
-
+        // Mostrar el formulario de edición y ocultar el botón de agregar
+        const form = document.getElementById('contacto-form');
+        const addBtn = document.getElementById('addContactoBtn');
+        if (form) {
+            form.classList.remove('d-none');
+        }
+        if (addBtn) {
+            addBtn.style.display = 'none';
+        }
     });
 }
 

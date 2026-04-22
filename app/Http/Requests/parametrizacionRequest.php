@@ -22,11 +22,13 @@ class parametrizacionRequest extends FormRequest
     public function rules(): array
     {
        return [
-            'tablaCostos.*.categoria_id'           => ['required','integer'],
-            'tablaCostos.*.cargo_id'               => ['required','integer'],
-            'tablaCostos.*.novedad_detalle_id'     => ['required','integer'],
-            'tablaCostos.*.costo_dia'              => ['nullable','numeric'],
-            'tablaCostos.*.costo_hora'             => ['nullable','numeric'],
+            'parametrizacion'                          => ['required', 'array'],
+            'parametrizacion.*.categoria_id'           => ['required', 'integer'],
+            'parametrizacion.*.cargo_id'               => ['required', 'integer'],
+            'parametrizacion.*.novedad_detalle_id'     => ['required', 'integer'],
+            'parametrizacion.*.valor_porcentaje'       => ['nullable', 'numeric'],
+            'parametrizacion.*.valor_admon'            => ['nullable', 'boolean'],
+            'parametrizacion.*.valor_obra'             => ['nullable', 'boolean'],
         ];
     }
 }
