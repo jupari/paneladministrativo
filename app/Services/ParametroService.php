@@ -126,6 +126,10 @@ class ParametroService
                 'company_id' => $companyId,
                 'params'     => $applied,
             ]);
+        }else {
+            Log::debug('[ParametroService] No se encontraron parámetros de mail para empresa', [
+                'company_id' => $companyId,
+            ]);
         }
     }
 

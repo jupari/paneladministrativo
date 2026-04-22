@@ -135,10 +135,22 @@ class TablaPreciosCargoService
 
                 if ($detalle === 'BASICO' || $detalle === 'BÁSICO') {
                     $porCargo[$cargoId]['basico'] = $valorAbs;
+                    Log::debug('[TablaPreciosCargo] DATOS BÁSICOS - BASICO', [
+                        'cargo_id' => $cargoId,
+                        'valor_abs' => $valorAbs,
+                    ]);
                 } elseif (str_contains($detalle, 'AUX') && str_contains($detalle, 'TRANSP')) {
                     $porCargo[$cargoId]['aux_trans'] = $valorAbs;
+                    Log::debug('[TablaPreciosCargo] DATOS BÁSICOS - AUX. DE TRANSPORTE', [
+                        'cargo_id' => $cargoId,
+                        'valor_abs' => $valorAbs,
+                    ]);
                 } elseif ($detalle === 'AUXILIO') {
                     $porCargo[$cargoId]['auxilio'] = $valorAbs;
+                    Log::debug('[TablaPreciosCargo] DATOS BÁSICOS - AUXILIO', [
+                        'cargo_id' => $cargoId,
+                        'valor_abs' => $valorAbs,
+                    ]);
                 }
 
                 continue;
@@ -262,6 +274,14 @@ class TablaPreciosCargoService
                     if ($paramGlobal) {
                         $aplica = ((float)$cargo->salario_base) <= ((float)$paramGlobal->smlv * 2);
                         $d['aux_trans'] = $aplica ? (float)$paramGlobal->aux_transporte : 0.0;
+                        Log::debug('[TablaPreciosCargo] Aux. de transporte global', [
+                            'cargo_id' => $cargoId,
+                            'aplica' => $aplica,
+                            'salario_base' => $cargo->salario_base,
+                            'smlv' => $paramGlobal->smlv,
+                            'aux_transporte' => $paramGlobal->aux_transporte,
+                        ]);
+
                     }
                 }
 
