@@ -687,6 +687,12 @@ return [
                     'icon' => 'fas fa-tools text-secondary',
                     'can' => 'configuracion.nomina.index',
                 ],
+                [
+                    'text' => 'Conceptos',
+                    'route' => 'admin.conceptos.index',
+                    'icon' => 'fas fa-tags text-info',
+                    'can' => 'conceptos.index',
+                ],
             ],
         ],
 

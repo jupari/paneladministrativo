@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\EstadoController;
 use App\Http\Controllers\Admin\OutlookController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CompanyController;
+use App\Http\Controllers\Admin\ConceptoController;
 use App\Http\Controllers\Admin\CostCenterController;
 use App\Http\Controllers\Admin\UsuarioRolesController;
 use App\Http\Controllers\Admin\RolesPermisosController;
@@ -778,6 +779,15 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::get('admin.organization.cost-centers.edit/{id}', [CostCenterController::class,'edit'])->name('admin.costCenters.edit');
         Route::post('admin.organization.cost-centers.update/{id}', [CostCenterController::class,'update'])->name('admin.costCenters.update');
         Route::get('admin.organization.cost-centers.list', [CostCenterController::class,'list'])->name('admin.costCenters.list');
+    });
+
+    Route::controller(ConceptoController::class)->group(function () {
+        Route::get('admin.conceptos.index', 'index')->name('admin.conceptos.index');
+        Route::post('admin.conceptos', 'store')->name('admin.conceptos.store');
+        Route::get('admin.conceptos/{id}', 'edit')->name('admin.conceptos.edit');
+        Route::put('admin.conceptos/{id}', 'update')->name('admin.conceptos.update');
+        Route::patch('admin.conceptos/{id}/toggle', 'toggleActive')->name('admin.conceptos.toggle');
+        Route::delete('admin.conceptos/{id}', 'destroy')->name('admin.conceptos.destroy');
     });
 
     Route::post('/validar-identificacion', function(Request $request) {

@@ -1,32 +1,23 @@
-/* Forzar tema claro SOLO para el modal de clientes y área de contenido */
+/* Forzar tema claro SOLO para el modal de clientes */
 
-/* Área de contenido principal - fondo blanco */
-.content-wrapper,
-.main-content,
-.card,
-.card-body {
+/* Tablas dentro del modal */
+#ModalCliente .table {
     background-color: #ffffff !important;
     color: #212529 !important;
 }
 
-/* Tabla y elementos del contenido principal */
-.table {
-    background-color: #ffffff !important;
-    color: #212529 !important;
-}
-
-.table thead th {
+#ModalCliente .table thead th {
     background-color: #f8f9fa !important;
     color: #495057 !important;
     border-bottom: 2px solid #dee2e6 !important;
 }
 
-.table tbody tr {
+#ModalCliente .table tbody tr {
     background-color: #ffffff !important;
     color: #212529 !important;
 }
 
-.table tbody tr:nth-child(even) {
+#ModalCliente .table tbody tr:nth-child(even) {
     background-color: #f8f9fa !important;
 }
 

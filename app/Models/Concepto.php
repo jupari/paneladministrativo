@@ -20,7 +20,7 @@ class Concepto extends Model
 
     protected $casts = [
         'porcentaje_defecto' => 'decimal:2',
-        'activo' => 'boolean',
+        'active' => 'boolean',
     ];
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -61,7 +61,7 @@ class Concepto extends Model
 
     public function scopeActivos($query)
     {
-        return $query->where('activo', true);
+        return $query->where('active', true);
     }
 
     public function scopePorTipo($query, $tipo)

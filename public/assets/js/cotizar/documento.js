@@ -806,7 +806,7 @@ function poblarSelectConceptos() {
     if (selectImpuesto) {
         selectImpuesto.innerHTML = '<option value="">Seleccione concepto</option>';
         conceptosDisponibles
-            .filter(concepto => concepto.tipo === 'IVA' || concepto.tipo === 'IMP')
+            .filter(concepto => concepto.tipo === 'IVA' || concepto.tipo === 'IMP' ||  concepto.tipo === 'IMPUESTO')
             .forEach(concepto => {
                 const option = document.createElement('option');
                 option.value = concepto.id;
