@@ -189,11 +189,20 @@ class CotizacionItemController extends Controller
     public function destroy($id): JsonResponse
     {
         try {
-            $this->cotizacionItemService->eliminarItem($id);
+            $resultado = $this->cotizacionItemService->eliminarItem($id);
+
+            if (!$resultado['success']) {
+                $status = !empty($resultado['blocked']) ? 422 : 500;
+                return response()->json([
+                    'success' => false,
+                    'message' => $resultado['message'],
+                ], $status);
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Item eliminado exitosamente'
+                'message' => $resultado['message'],
+                'accion'  => $resultado['accion'],
             ]);
         } catch (Exception $e) {
             Log::error('Error al eliminar item: ' . $e->getMessage());
@@ -294,21 +303,26 @@ class CotizacionItemController extends Controller
     public function destroySubitem($subitemId): JsonResponse
     {
         try {
-            $subitem = CotizacionSubImtes::findOrFail($subitemId);
-            $cotizacionItemId = $subitem->cotizacion_item_id;
+            $resultado = $this->cotizacionItemService->eliminarSubitem($subitemId);
 
-            $subitem->delete();
+            if (!$resultado['success']) {
+                $status = !empty($resultado['blocked']) ? 422 : 500;
+                return response()->json([
+                    'success' => false,
+                    'message' => $resultado['message'],
+                ], $status);
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Subitem eliminado exitosamente',
-                'cotizacion_item_id' => $cotizacionItemId
+                'message' => $resultado['message'],
+                'accion'  => $resultado['accion'],
             ]);
         } catch (Exception $e) {
             Log::error('Error al eliminar subitem: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Error al eliminar el subitem: ' . $e->getMessage()
+                'message' => 'Error al eliminar el item'
             ], 500);
         }
     }

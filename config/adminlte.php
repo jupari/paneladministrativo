@@ -203,7 +203,7 @@ return [
     'classes_content_header' => '',
     'classes_content' => '',
     'classes_sidebar' => 'sidebar-dark-primary elevation-4',
-    'classes_sidebar_nav' => '',
+    'classes_sidebar_nav' => 'nav-child-indent nav-compact',
     'classes_topnav' => 'navbar-white navbar-light',
     'classes_topnav_nav' => 'navbar-expand',
     'classes_topnav_container' => 'container',
@@ -222,13 +222,13 @@ return [
 
     'sidebar_mini' => 'lg',
     'sidebar_collapse' => false,
-    'sidebar_collapse_auto_size' => false,
-    'sidebar_collapse_remember' => false,
+    'sidebar_collapse_auto_size' => true,
+    'sidebar_collapse_remember' => true,
     'sidebar_collapse_remember_no_transition' => true,
     'sidebar_scrollbar_theme' => 'os-theme-light',
     'sidebar_scrollbar_auto_hide' => 'l',
     'sidebar_nav_accordion' => true,
-    'sidebar_nav_animation_speed' => 300,
+    'sidebar_nav_animation_speed' => 200,
 
     /*
     |--------------------------------------------------------------------------
@@ -320,6 +320,8 @@ return [
             'route' => 'dashboard',
             'icon' => 'fas fa-chart-line text-primary',
             'can' => 'admin.dashboard',
+            'label' => 'Inicio',
+            'label_color' => 'primary',
         ],
 
         // ===============================
@@ -593,14 +595,18 @@ return [
                 [
                     'text' => 'Cotizaciones',
                     'route' => 'admin.cotizaciones.index',
-                    'icon' => 'fas fa-plus-circle text-success',
+                    'icon' => 'fas fa-file-alt text-success',
                     'can' => 'cotizaciones.index',
+                    'label' => 'Ver',
+                    'label_color' => 'success',
                 ],
                 [
                     'text' => 'Solicitudes de Aprobación',
                     'route' => 'admin.cotizaciones.solicitudes.index',
                     'icon' => 'fas fa-clipboard-check text-warning',
                     'can' => 'cotizaciones.solicitudes.index',
+                    'label' => 'Pendientes',
+                    'label_color' => 'warning',
                 ],
             ],
         ],
@@ -634,17 +640,6 @@ return [
                     'can' => 'produccion.reports.operating-costs.period',
                 ],
             ],
-        ],
-
-        // ===============================
-        // PARAMETRIZACIÓN
-        // ===============================
-        ['header' => 'PARAMETRIZACIÓN', 'can' => ['users.index','roles.index','configuracion.index']],
-
-        [
-            'text' => 'Parámetros',
-            'icon' => 'fas fa-cogs text-secondary',
-            'can' => ['users.index','roles.index','configuracion.index'],
         ],
 
         // ===============================

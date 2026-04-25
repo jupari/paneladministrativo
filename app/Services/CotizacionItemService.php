@@ -4,10 +4,12 @@ namespace App\Services;
 
 use App\Models\CotizacionItem;
 use App\Models\CotizacionSubImtes;
+use App\Models\CotizacionProducto;
 use App\Models\Cotizacion;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class CotizacionItemService
 {
@@ -71,7 +73,7 @@ class CotizacionItemService
             // Crear el nuevo item
             $item = new CotizacionItem();
             $item->cotizacion_id = $cotizacionId;
-            $item->nombre = trim($itemData['nombre']);
+            $item->nombre = strtoupper(trim($itemData['nombre']));
             $item->active = $itemData['active'] ?? true;
             $item->save();
 
@@ -130,7 +132,7 @@ class CotizacionItemService
                             $nombreAnterior = $item->nombre;
                             $activoAnterior = $item->active;
 
-                            $item->nombre = trim($itemData['nombre']);
+                            $item->nombre = strtoupper(trim($itemData['nombre']));
                             $item->active = $itemData['active'] ?? true;
 
                             // Solo guardar si hay cambios
@@ -151,7 +153,7 @@ class CotizacionItemService
                         // Item nuevo - crear
                         $item = new CotizacionItem();
                         $item->cotizacion_id = $cotizacionId;
-                        $item->nombre = trim($itemData['nombre']);
+                        $item->nombre = strtoupper(trim($itemData['nombre']));
                         $item->active = $itemData['active'] ?? true;
                         $item->save();
 
@@ -249,46 +251,124 @@ class CotizacionItemService
 
         try {
             $item = CotizacionItem::findOrFail($itemId);
-            $cotizacionId = $item->cotizacion_id;
 
-            // Verificar si el item tiene subitems
-            $tieneSubitems = CotizacionSubImtes::where('cotizacion_item_id', $itemId)->exists();
+            // Obtener subitems asociados al item
+            $subitemIds = CotizacionSubImtes::where('cotizacion_item_id', $itemId)
+                ->pluck('id');
 
-            if ($tieneSubitems) {
-                // Si tiene subitems, no eliminar - marcar como inactivo
-                $item->active = false;
-                $item->save();
+            if ($subitemIds->isNotEmpty()) {
+                // Verificar si algún subitem está referenciado en ord_cotizacion_productos
+                $productosVinculados = CotizacionProducto::whereIn('cotizacion_subitem_id', $subitemIds)
+                    ->count();
 
-                $mensaje = 'Item desactivado porque tiene subitems asociados';
-                $accion = 'desactivado';
-            } else {
-                // Si no tiene subitems, eliminar completamente
-                $item->delete();
+                if ($productosVinculados > 0) {
+                    // Bloquear la operación: hay productos asociados a los subitems
+                    DB::rollBack();
+                    return [
+                        'success' => false,
+                        'blocked'  => true,
+                        'message'  => "No es posible realizar esta operación. La capitulación tiene {$productosVinculados} producto(s) asociado(s) a sus items. Elimine primero los registros correspondientes en la tabla de productos de la cotización.",
+                        'accion'   => 'bloqueado',
+                        'item_id'  => $itemId,
+                    ];
+                }
 
-                $mensaje = 'Item eliminado exitosamente';
-                $accion = 'eliminado';
+                // Tiene subitems pero sin productos vinculados → desactivar
+                //$item->active = false;
+                //$item->save();
+
+                // DB::commit();
+
+                return [
+                    'success' => false,
+                    'message' => 'La capitulación no se puede eliminar porque tiene items asociados.',
+                    'accion'   => 'bloqueado',
+                    'item_id' => $itemId,
+                ];
             }
+
+            // Sin subitems → eliminar completamente
+            $item->delete();
 
             DB::commit();
 
             return [
                 'success' => true,
-                'message' => $mensaje,
-                'accion' => $accion,
+                'message' => 'Capitulación eliminada exitosamente.',
+                'accion'  => 'eliminado',
                 'item_id' => $itemId,
-                'tenia_subitems' => $tieneSubitems
             ];
 
         } catch (Exception $e) {
             DB::rollBack();
             return [
                 'success' => false,
-                'message' => 'Error al eliminar item: ' . $e->getMessage(),
-                'error' => $e->getMessage()
+                'message' => 'Error al eliminar capitulación: ' . $e->getMessage(),
+                'error'   => $e->getMessage(),
             ];
         }
     }
 
+    /**
+     * Eliminar un Subitem específico
+     */
+    public function eliminarSubitem(int $subitemId): array
+    {
+        DB::beginTransaction();
+
+        try {
+            $subitem = CotizacionSubImtes::findOrFail($subitemId);
+
+            // Obtener subitems asociados al item
+            $subitemIds = CotizacionSubImtes::where('cotizacion_item_id', $subitem->cotizacion_item_id)
+                ->pluck('id');
+
+            if ($subitemIds->isNotEmpty()) {
+                // Verificar si algún subitem está referenciado en ord_cotizacion_productos
+                $productosVinculados = CotizacionProducto::whereIn('cotizacion_subitem_id', $subitemIds)
+                    ->count();
+
+                if ($productosVinculados > 0) {
+                    // Bloquear la operación: hay productos asociados a los subitems
+                    DB::rollBack();
+                    return [
+                        'success' => false,
+                        'blocked'  => true,
+                        'message'  => "No es posible realizar esta operación. El item tiene {$productosVinculados} producto(s) asociado(s). Elimine primero los registros correspondientes en la tabla de productos de la cotización.",
+                        'accion'   => 'bloqueado',
+                        'subitem_id'  => $subitemId,
+                    ];
+                }
+
+                // Tiene subitems pero sin productos vinculados → desactivar
+                $subitem->delete();
+
+                DB::commit();
+
+                return [
+                    'success' => true,
+                    'message' => 'Subitem eliminado exitosamente.',
+                    'accion'  => 'eliminado',
+                    'subitem_id' => $subitemId,
+                ];
+            }else{
+                return [
+                    'success' => false,
+                    'message' => 'No se encontró el subitem o ya ha sido eliminado.',
+                    'accion'  => 'no_encontrado',
+                    'subitem_id' => $subitemId,
+                ];
+            }
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            return [
+                'success' => false,
+                'message' => 'Error al eliminar subitem: ' . $e->getMessage(),
+                'error'   => $e->getMessage(),
+            ];
+        }
+    }
 
 
 

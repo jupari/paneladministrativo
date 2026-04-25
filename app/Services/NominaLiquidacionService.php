@@ -81,7 +81,7 @@ class NominaLiquidacionService
 
         // PASO 3: Costo total = horas x tarifa
         $costoOrdDiu  = round($horasDiurnas   * $tarifaOrdinaria);
-        $costoOrdNoc  = round($horasNocturnas * ($tarifaOrdinaria + $tarifaRN));
+        $costoOrdNoc  = round($horasNocturnas * $tarifaRN);
         $costoDomDiu  = round($horasDomDiu    * $tarifaDomDiu);
         $costoDomNoc  = round($horasDomNoc    * ($tarifaDomDiu    + $tarifaRN));
         $costoHED     = round($hedHoras       * $tarifaHED);

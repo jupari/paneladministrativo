@@ -19,6 +19,7 @@ use App\Models\TerceroContacto;
 use App\Models\EstadoCotizacion;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CotizacionService
 {
@@ -62,7 +63,10 @@ class CotizacionService
         try {
             // Si no se proporciona número de documento, generarlo automáticamente
             if (empty($data['num_documento'])) {
+                Log::info("No se proporcionó número de documento, generando automáticamente.");
+
                 $data['num_documento'] = $this->generarNumeroDocumento();
+                Log::info("Número de documento generado: " . $data['num_documento']);
             }
 
             // Si no se proporciona versión, establecer como 1
@@ -73,6 +77,7 @@ class CotizacionService
             // Calcular totales si no están definidos
             $data = $this->calcularTotales($data);
 
+            Log::info("Creando cotización con datos: " . json_encode($data));
             $cotizacion = Cotizacion::create($data);
 
             DB::commit();
@@ -197,8 +202,19 @@ class CotizacionService
     public function generarNumeroDocumento(): string
     {
         $lastCotizacion = Cotizacion::orderBy('id', 'desc')->first();
-        $nextId = $lastCotizacion ? ($lastCotizacion->id + 1) : 1;
+        $num_documento = $lastCotizacion ? $lastCotizacion->num_documento : null;
+        $matches = [];
 
+
+        if ($num_documento) {
+            Log::info("Último número de documento: " . $num_documento);
+            preg_match('/(\d+)$/', $num_documento, $matches);
+            $nextId = isset($matches[1]) ? (int)$matches[1] + 1 : 1;
+        } else {
+            $nextId = 1;
+        }
+
+        Log::info("Siguiente número de documento: " . $nextId);
         return 'COT-' . str_pad($nextId, 6, '0', STR_PAD_LEFT);
     }
 
@@ -445,7 +461,17 @@ class CotizacionService
     public function obtenerConsecutivoDocumento(string $prefix = 'COT'): string
     {
         $lastCotizacion = Cotizacion::where('tipo',$prefix)->orderBy('id', 'desc')->first();
-        $nextId = $lastCotizacion ? ($lastCotizacion->id + 1) : 1;
+        $num_documento = $lastCotizacion ? $lastCotizacion->num_documento : null;
+        $matches = [];
+
+
+        if ($num_documento) {
+            Log::info("Último número de documento: " . $num_documento);
+            preg_match('/(\d+)$/', $num_documento, $matches);
+            $nextId = isset($matches[1]) ? (int)$matches[1] + 1 : 1;
+        } else {
+            $nextId = 1;
+        }
 
         return $prefix .'-'. str_pad($nextId, 6, '0', STR_PAD_LEFT);
     }

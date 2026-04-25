@@ -2554,6 +2554,7 @@ async function cargarItemsPorCategorias() {
                         nombre: String(item.categoria?.nombre || 'Sin categoría')
                     },
                     unidad_medida: String(item.unidad_medida || ''),
+                    dias_laborales: Number(item.dias_laborales || 0),
                     precio: item.precio || 0,
                     tipo: tipoItem,
                     // Datos específicos de parametrización / cargos tabla
@@ -6419,12 +6420,50 @@ function limpiarErroresItems() {
  * Eliminar item especí­fico
  */
 function eliminarItem(itemId) {
-    if (confirm('Â¿Está seguro de eliminar este item?')) {
-        itemsCotizacion = itemsCotizacion.filter(item => item.id !== itemId);
-        actualizarTablaItems();
-        toggleEliminarItemsSeleccionados();
-        toastr.info('Item eliminado');
-    }
+    Swal.fire({
+        title: '¿Está seguro de eliminar este item?',
+        text: 'Esta acción no se puede deshacer.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+        if (!result.value) {
+            return;
+        }
+        try {
+            const response = await fetch(`/admin/admin.cotizaciones.items.destroy/${itemId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+
+            const resultData = await response.json();
+
+            if (resultData.success) {
+                // Eliminar del array en memoria
+                itemsCotizacion = itemsCotizacion.filter(item => item.id !== itemId);
+
+                // Eliminar la fila directamente del DOM
+                const fila = document.querySelector(`tr[data-item-id="${itemId}"]`);
+                if (fila) {
+                    fila.remove();
+                }
+
+                actualizarTablaItems();
+                toggleEliminarItemsSeleccionados();
+                toastr.success('Item eliminado exitosamente');
+            } else {
+                toastr.error('Error al eliminar el item: ' + (resultData.message ?? 'Error desconocido'));
+            }
+        } catch (error) {
+            console.error('Error al eliminar item:', error);
+            toastr.error('Ocurrió un error al intentar eliminar el item');
+        }
+    });
 }
 
 /**
@@ -10618,11 +10657,11 @@ function abrirModalNominaConfig(cargos) {
     // Remover modal anterior si existe
     const modalAnterior = document.getElementById('modalNominaConfig');
     if (modalAnterior) modalAnterior.remove();
-
     window._nominaResultados = window._nominaResultados || {};
     const _fnCalc = `calcularLiquidacionNomina`;
     const filasCargos = cargos.map((cargo, idx) => {
         const costoDia  = Number(cargo.costo_dia  || cargo.base_costo_dia  || 0);
+        const diasLaborales = Number(cargo.dias_laborales || cargo.base_dias_laborales || 0);
         const nombreCargo = cargo.nombre || cargo.cargo?.nombre || 'Sin nombre';
         return `
             <div class="card mb-3 shadow-sm nomina-cargo-card" id="cardNomina_${idx}"
@@ -10668,7 +10707,7 @@ function abrirModalNominaConfig(cargos) {
                                oninput="${_fnCalc}(${idx}); document.getElementById('nominaBadgePersonas_${idx}').textContent = (this.value||1) + ' persona' + ((this.value||1)>1?'s':'');">
                         <small class="text-muted ml-3">
                             <i class="fas fa-info-circle"></i>
-                            Salario base: <strong>${costoDia > 0 ? '$' + (costoDia * 30).toLocaleString('es-CO') : 'SMLV'}</strong>/mes
+                            Salario base: <strong>${costoDia > 0 ? '$' + (costoDia * diasLaborales).toLocaleString('es-CO') : 'SMLV'}</strong>/mes
                         </small>
                     </div>
 
@@ -10704,7 +10743,7 @@ function abrirModalNominaConfig(cargos) {
                                     <div class="col-6 pr-1">
                                         <label class="mb-0" style="font-size:.72rem; color:#555;">
                                             <i class="fas fa-sun text-warning" style="font-size:.65rem;"></i>
-                                            Días diurnos
+                                            Horas diurnos
                                         </label>
                                         <input type="number" class="form-control form-control-sm text-center nomina-tiempo-ord-${idx}"
                                                id="nominaDiasDiurnos_${idx}" min="0" max="7" value="0"
@@ -10715,7 +10754,7 @@ function abrirModalNominaConfig(cargos) {
                                     <div class="col-6 pl-1">
                                         <label class="mb-0" style="font-size:.72rem; color:#555;">
                                             <i class="fas fa-moon text-indigo" style="font-size:.65rem; color:#6f42c1;"></i>
-                                            Días nocturnos
+                                            Horas nocturnos
                                             <span class="text-muted">(+35%)</span>
                                         </label>
                                         <input type="number" class="form-control form-control-sm text-center nomina-tiempo-ord-${idx}"
@@ -10733,8 +10772,8 @@ function abrirModalNominaConfig(cargos) {
                                         <input type="number" class="form-control form-control-sm text-center nomina-tiempo-ord-${idx}"
                                                id="nominaDominicales_${idx}" min="0" max="7" value="0"
                                                style="font-size:.85rem;"
-                                               onchange="validarTiempoOrdinario(${idx}); ${_fnCalc}(${idx});"
-                                               oninput="validarTiempoOrdinario(${idx}); ${_fnCalc}(${idx});">
+                                               onchange="validarTiempoDominicalesFestivos(${idx}); ${_fnCalc}(${idx});"
+                                               oninput="validarTiempoDominicalesFestivos(${idx}); ${_fnCalc}(${idx});">
                                     </div>
                                     <div class="col-6 pl-1 mt-1">
                                         <label class="mb-0" style="font-size:.72rem; color:#555;">
@@ -10745,8 +10784,8 @@ function abrirModalNominaConfig(cargos) {
                                         <input type="number" class="form-control form-control-sm text-center nomina-tiempo-ord-${idx}"
                                                id="nominaDomNocturnos_${idx}" min="0" max="7" value="0"
                                                style="font-size:.85rem;"
-                                               onchange="validarTiempoOrdinario(${idx}); ${_fnCalc}(${idx});"
-                                               oninput="validarTiempoOrdinario(${idx}); ${_fnCalc}(${idx});">
+                                               onchange="validarTiempoDominicalesFestivos(${idx}); ${_fnCalc}(${idx});"
+                                               oninput="validarTiempoDominicalesFestivos(${idx}); ${_fnCalc}(${idx});">
                                     </div>
                                 </div>
                             </div>
@@ -10915,20 +10954,15 @@ function abrirModalNominaConfig(cargos) {
 
                     <!-- ── Resultado ── -->
                     <div class="rounded px-3 py-2 mt-1 d-flex justify-content-between align-items-center"
-                         style="background: linear-gradient(90deg,#e8f5e9,#f1f8e9); border:1px solid #a5d6a7;">
+                        style="background: linear-gradient(90deg,#e8f5e9,#f1f8e9); border:1px solid #a5d6a7;">
                         <div>
                             <div style="font-size:.72rem; color:#555; text-transform:uppercase; letter-spacing:.04em;">
-                                <i class="fas fa-calculator text-success mr-1"></i>Costo empresa / mes
+                                <i class="fas fa-calculator text-success mr-1"></i>Costo empresa
                             </div>
                             <strong id="nominaValor_${idx}" style="font-size:1.15rem; color:#2e7d32;">$0</strong>
                             <small id="nominaPersonasLabel_${idx}" class="text-muted ml-1"></small>
                         </div>
                         <div class="text-right">
-                            <div id="nominaResumenRapido_${idx}" style="display:none; font-size:.75rem; color:#555; margin-bottom:4px;">
-                                Dev: <strong id="nominaDevengado_${idx}">—</strong> &bull;
-                                IBC: <strong id="nominaIBC_${idx}">—</strong> &bull;
-                                Neto: <strong id="nominaNeto_${idx}">—</strong>
-                            </div>
                             <button type="button" class="btn btn-sm btn-success"
                                     id="btnDesglose_${idx}" style="display:none; font-size:.78rem;"
                                     onclick="renderDesgloseLiquidacion(${idx})">
@@ -11025,8 +11059,7 @@ function toggleCargoNomina(idx) {
  * Revierte el campo al valor máximo permitido y muestra mensaje.
  */
 function validarTiempoOrdinario(idx) {
-    const ids = [`nominaDiasDiurnos_${idx}`, `nominaDiasNocturnos_${idx}`,
-                 `nominaDominicales_${idx}`, `nominaDomNocturnos_${idx}`];
+    const ids = [`nominaDiasDiurnos_${idx}`, `nominaDiasNocturnos_${idx}`];
     const inputs = ids.map(id => document.getElementById(id));
     const valores = inputs.map(el => parseFloat(el?.value) || 0);
     const suma = valores.reduce((a, b) => a + b, 0);
@@ -11043,6 +11076,30 @@ function validarTiempoOrdinario(idx) {
             setTimeout(() => { ultimo.style.borderColor = ''; }, 2000);
         }
         if (errEl) errEl.textContent = 'El tiempo máximo en horas de Tiempo Ordinario es 7';
+    } else {
+        if (errEl) errEl.textContent = '';
+        inputs.forEach(el => { if (el) el.style.borderColor = ''; });
+    }
+}
+
+function validarTiempoDominicalesFestivos(idx) {
+    const ids = [`nominaDominicales_${idx}`, `nominaDomNocturnos_${idx}`];
+    const inputs = ids.map(id => document.getElementById(id));
+    const valores = inputs.map(el => parseFloat(el?.value) || 0);
+    const suma = valores.reduce((a, b) => a + b, 0);
+    const errEl = document.getElementById(`errorTiempoDom_${idx}`);
+
+    if (suma > 7) {
+        // Encontrar el último campo que causó el exceso y ajustarlo
+        const exceso = suma - 7;
+        const ultimo = inputs.find(el => parseFloat(el.value) > 0);
+        if (ultimo) {
+            const val = parseFloat(ultimo.value) || 0;
+            ultimo.value = Math.max(0, val - exceso);
+            ultimo.style.borderColor = '#dc3545';
+            setTimeout(() => { ultimo.style.borderColor = ''; }, 2000);
+        }
+        if (errEl) errEl.textContent = 'El tiempo máximo en horas de Tiempo Dominical y servicio es 7';
     } else {
         if (errEl) errEl.textContent = '';
         inputs.forEach(el => { if (el) el.style.borderColor = ''; });
@@ -11498,6 +11555,98 @@ async function calcularLiquidacionNomina(idx) {
 /**
  * Muestra el modal de desglose detallado de liquidación para un cargo
  */
+// function renderDesgloseLiquidacion(idx) {
+//     const data = window._nominaResultados?.[idx];
+//     if (!data) return;
+
+//     const fmt = v => '$' + Math.round(v).toLocaleString('es-CO');
+//     const exStr = data.es_exonerado_ley1607
+//         ? '<span class="badge badge-info">EXONERADO Ley 1607</span> $0'
+//         : fmt(data.costo_empleador.seguridad_social.salud);
+
+//     const existente = document.getElementById('modalDesgloseNomina');
+//     if (existente) existente.remove();
+
+//     const html = `
+//     <div class="modal fade" id="modalDesgloseNomina" tabindex="-1" role="dialog" style="z-index:1060;">
+//         <div class="modal-dialog modal-md" role="document">
+//             <div class="modal-content">
+//                 <div class="modal-header bg-dark text-white py-2">
+//                     <h6 class="modal-title mb-0">
+//                         <i class="fas fa-list-alt mr-1"></i>
+//                         Desglose Liquidación: ${data.cargo.nombre}
+//                         (${data.cantidad_personas} persona${data.cantidad_personas > 1 ? 's' : ''})
+//                     </h6>
+//                     <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+//                 </div>
+//                 <div class="modal-body p-3" style="font-size:.85rem;">
+//                     <!-- Devengados -->
+//                     <table class="table table-sm table-borderless mb-2">
+//                         <thead><tr><th colspan="2" class="bg-light">DEVENGADOS (por persona)</th></tr></thead>
+//                         <tbody>
+//                             ${data.devengados.salario_ordinario > 0 ? `<tr><td>Salario ordinario</td><td class="text-right">${fmt(data.devengados.salario_ordinario)}</td></tr>` : ''}
+//                             ${data.devengados.recargo_nocturno > 0 ? `<tr><td>Recargo nocturno (×1.35)</td><td class="text-right">${fmt(data.devengados.recargo_nocturno)}</td></tr>` : ''}
+//                             ${data.devengados.dominicales_diurnos > 0 ? `<tr><td>Dominicales diurnos (×1.75)</td><td class="text-right">${fmt(data.devengados.dominicales_diurnos)}</td></tr>` : ''}
+//                             ${data.devengados.dominicales_nocturnos > 0 ? `<tr><td>Dominicales nocturnos (×2.10)</td><td class="text-right">${fmt(data.devengados.dominicales_nocturnos)}</td></tr>` : ''}
+//                             ${data.devengados.horas_extra_diurnas > 0 ? `<tr><td>HED (×1.25)</td><td class="text-right">${fmt(data.devengados.horas_extra_diurnas)}</td></tr>` : ''}
+//                             ${data.devengados.horas_extra_nocturnas > 0 ? `<tr><td>HEN (×1.75)</td><td class="text-right">${fmt(data.devengados.horas_extra_nocturnas)}</td></tr>` : ''}
+//                             ${data.devengados.horas_extra_dom_diurnas > 0 ? `<tr><td>HEDD (×2.00)</td><td class="text-right">${fmt(data.devengados.horas_extra_dom_diurnas)}</td></tr>` : ''}
+//                             ${data.devengados.horas_extra_dom_nocturnas > 0 ? `<tr><td>HEDN (×2.50)</td><td class="text-right">${fmt(data.devengados.horas_extra_dom_nocturnas)}</td></tr>` : ''}
+//                             ${data.devengados.aux_transporte_proporcional > 0 ? `<tr><td>Aux. transporte proporcional</td><td class="text-right">${fmt(data.devengados.aux_transporte_proporcional)}</td></tr>` : ''}
+//                             <tr class="font-weight-bold border-top"><td>Total devengado</td><td class="text-right">${fmt(data.devengados.total_devengado)}</td></tr>
+//                         </tbody>
+//                     </table>
+//                     <!-- IBC y neto -->
+//                     <table class="table table-sm table-borderless mb-2">
+//                         <thead><tr><th colspan="2" class="bg-light">EMPLEADO</th></tr></thead>
+//                         <tbody>
+//                             <tr><td>IBC</td><td class="text-right">${fmt(data.ibc)}</td></tr>
+//                             <tr><td>− Salud empleado (4%)</td><td class="text-right text-danger">−${fmt(data.deducciones_empleado.salud)}</td></tr>
+//                             <tr><td>− Pensión empleado (4%)</td><td class="text-right text-danger">−${fmt(data.deducciones_empleado.pension)}</td></tr>
+//                             <tr class="font-weight-bold border-top"><td>Neto empleado</td><td class="text-right text-primary">${fmt(data.neto_empleado)}</td></tr>
+//                         </tbody>
+//                     </table>
+//                     <!-- Costo empresa -->
+//                     <table class="table table-sm table-borderless mb-2">
+//                         <thead><tr><th colspan="2" class="bg-light">COSTO EMPRESA (Seguridad Social + Parafiscales)</th></tr></thead>
+//                         <tbody>
+//                             <tr><td>Salud empleador (8.5%)</td><td class="text-right">${exStr}</td></tr>
+//                             <tr><td>Pensión empleador (12%)</td><td class="text-right">${fmt(data.costo_empleador.seguridad_social.pension)}</td></tr>
+//                             <tr><td>ARL Nivel ${data.arl_nivel} (${data.arl_porcentaje}%)</td><td class="text-right">${fmt(data.costo_empleador.seguridad_social.arl)}</td></tr>
+//                             <tr><td>SENA (2%)</td><td class="text-right">${data.es_exonerado_ley1607 ? '<span class="badge badge-info">EXONERADO</span> $0' : fmt(data.costo_empleador.parafiscales.sena)}</td></tr>
+//                             <tr><td>ICBF (3%)</td><td class="text-right">${data.es_exonerado_ley1607 ? '<span class="badge badge-info">EXONERADO</span> $0' : fmt(data.costo_empleador.parafiscales.icbf)}</td></tr>
+//                             <tr><td>Caja Compensación (4%)</td><td class="text-right">${fmt(data.costo_empleador.parafiscales.caja)}</td></tr>
+//                         </tbody>
+//                     </table>
+//                     <table class="table table-sm table-borderless mb-2">
+//                         <thead><tr><th colspan="2" class="bg-light">PRESTACIONES SOCIALES</th></tr></thead>
+//                         <tbody>
+//                             <tr><td>Prima (8.333%)</td><td class="text-right">${fmt(data.costo_empleador.provisiones.prima)}</td></tr>
+//                             <tr><td>Cesantías (8.333%)</td><td class="text-right">${fmt(data.costo_empleador.provisiones.cesantias)}</td></tr>
+//                             <tr><td>Int. Cesantías (1%/mes)</td><td class="text-right">${fmt(data.costo_empleador.provisiones.intereses_cesantias)}</td></tr>
+//                             <tr><td>Vacaciones (4.167%)</td><td class="text-right">${fmt(data.costo_empleador.provisiones.vacaciones)}</td></tr>
+//                         </tbody>
+//                     </table>
+//                     <div class="alert alert-warning py-2 text-right mb-0">
+//                         <span>COSTO EMPRESA / mes / persona:</span>
+//                         <strong class="ml-2" style="font-size:1.05rem;">${fmt(data.costo_empresa_mes)}</strong>
+//                         ${data.cantidad_personas > 1 ? `<br><span class="text-muted">× ${data.cantidad_personas} personas = </span><strong>${fmt(data.costo_empresa_total)}</strong>` : ''}
+//                     </div>
+//                 </div>
+//                 <div class="modal-footer py-2">
+//                     <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">Cerrar</button>
+//                 </div>
+//             </div>
+//         </div>
+//     </div>`;
+
+//     document.body.insertAdjacentHTML('beforeend', html);
+//     $('#modalDesgloseNomina').modal('show');
+//     $('#modalDesgloseNomina').on('hidden.bs.modal', function () {
+//         document.getElementById('modalDesgloseNomina')?.remove();
+//     });
+// }
+
 function renderDesgloseLiquidacion(idx) {
     const data = window._nominaResultados?.[idx];
     if (!data) return;
@@ -11539,39 +11688,8 @@ function renderDesgloseLiquidacion(idx) {
                             <tr class="font-weight-bold border-top"><td>Total devengado</td><td class="text-right">${fmt(data.devengados.total_devengado)}</td></tr>
                         </tbody>
                     </table>
-                    <!-- IBC y neto -->
-                    <table class="table table-sm table-borderless mb-2">
-                        <thead><tr><th colspan="2" class="bg-light">EMPLEADO</th></tr></thead>
-                        <tbody>
-                            <tr><td>IBC</td><td class="text-right">${fmt(data.ibc)}</td></tr>
-                            <tr><td>− Salud empleado (4%)</td><td class="text-right text-danger">−${fmt(data.deducciones_empleado.salud)}</td></tr>
-                            <tr><td>− Pensión empleado (4%)</td><td class="text-right text-danger">−${fmt(data.deducciones_empleado.pension)}</td></tr>
-                            <tr class="font-weight-bold border-top"><td>Neto empleado</td><td class="text-right text-primary">${fmt(data.neto_empleado)}</td></tr>
-                        </tbody>
-                    </table>
-                    <!-- Costo empresa -->
-                    <table class="table table-sm table-borderless mb-2">
-                        <thead><tr><th colspan="2" class="bg-light">COSTO EMPRESA (Seguridad Social + Parafiscales)</th></tr></thead>
-                        <tbody>
-                            <tr><td>Salud empleador (8.5%)</td><td class="text-right">${exStr}</td></tr>
-                            <tr><td>Pensión empleador (12%)</td><td class="text-right">${fmt(data.costo_empleador.seguridad_social.pension)}</td></tr>
-                            <tr><td>ARL Nivel ${data.arl_nivel} (${data.arl_porcentaje}%)</td><td class="text-right">${fmt(data.costo_empleador.seguridad_social.arl)}</td></tr>
-                            <tr><td>SENA (2%)</td><td class="text-right">${data.es_exonerado_ley1607 ? '<span class="badge badge-info">EXONERADO</span> $0' : fmt(data.costo_empleador.parafiscales.sena)}</td></tr>
-                            <tr><td>ICBF (3%)</td><td class="text-right">${data.es_exonerado_ley1607 ? '<span class="badge badge-info">EXONERADO</span> $0' : fmt(data.costo_empleador.parafiscales.icbf)}</td></tr>
-                            <tr><td>Caja Compensación (4%)</td><td class="text-right">${fmt(data.costo_empleador.parafiscales.caja)}</td></tr>
-                        </tbody>
-                    </table>
-                    <table class="table table-sm table-borderless mb-2">
-                        <thead><tr><th colspan="2" class="bg-light">PRESTACIONES SOCIALES</th></tr></thead>
-                        <tbody>
-                            <tr><td>Prima (8.333%)</td><td class="text-right">${fmt(data.costo_empleador.provisiones.prima)}</td></tr>
-                            <tr><td>Cesantías (8.333%)</td><td class="text-right">${fmt(data.costo_empleador.provisiones.cesantias)}</td></tr>
-                            <tr><td>Int. Cesantías (1%/mes)</td><td class="text-right">${fmt(data.costo_empleador.provisiones.intereses_cesantias)}</td></tr>
-                            <tr><td>Vacaciones (4.167%)</td><td class="text-right">${fmt(data.costo_empleador.provisiones.vacaciones)}</td></tr>
-                        </tbody>
-                    </table>
                     <div class="alert alert-warning py-2 text-right mb-0">
-                        <span>COSTO EMPRESA / mes / persona:</span>
+                        <span>COSTO EMPRESA / persona:</span>
                         <strong class="ml-2" style="font-size:1.05rem;">${fmt(data.costo_empresa_mes)}</strong>
                         ${data.cantidad_personas > 1 ? `<br><span class="text-muted">× ${data.cantidad_personas} personas = </span><strong>${fmt(data.costo_empresa_total)}</strong>` : ''}
                     </div>

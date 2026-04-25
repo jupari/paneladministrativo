@@ -260,8 +260,8 @@ Route::middleware(['auth', 'company.license'])->group(function () {
                     ->name('admin.parametrizacion.generar_tabla_precios');
         Route::get('admin.parametrizacion.tabla_precios', [ParametrizacionController::class, 'tablaPreciosData'])
                 ->name('admin.parametrizacion.tabla_precios');
-        Route::post('admin.parametrizacion.generar_tabla_precios', [ParametrizacionController::class, 'generarTablaPrecios'])
-                ->name('admin.parametrizacion.generar_tabla_precios');
+        // Route::post('admin.parametrizacion.generar_tabla_precios', [ParametrizacionController::class, 'generarTablaPrecios'])
+        //         ->name('admin.parametrizacion.generar_tabla_precios');
     });
 
     Route::controller(CategoriaController::class)->group(function () {

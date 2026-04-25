@@ -9,6 +9,7 @@ use App\Models\Cotizacion;
 use App\Services\CotizacionProductoService;
 use App\Services\CotizacionTotalesService;
 use App\Models\CotizacionProducto;
+use App\Models\Elemento;
 use App\Models\ItemPropio;
 use App\Models\Novedad;
 use App\Models\Parametrizacion;
@@ -701,6 +702,7 @@ class CotizacionProductoController extends Controller
     {
         try {
             $categoriaIds = $request->input('categoria_ids', []);
+            $elementos = Elemento::where('active',1)->get();
 
             if (empty($categoriaIds)) {
                 return response()->json([
@@ -817,7 +819,7 @@ class CotizacionProductoController extends Controller
                     ->orderBy('c.nombre')
                     ->get();
 
-                $itemsNomina = $cargosTabla->map(function ($row) use ($categoriaNominaId, $categoriaNominaNombre) {
+                $itemsNomina = $cargosTabla->map(function ($row) use ($categoriaNominaId, $categoriaNominaNombre, $elementos) {
                     return [
                         'id' => $row->cargo_id,
                         'tabla_id' => $row->tabla_id,
@@ -852,6 +854,7 @@ class CotizacionProductoController extends Controller
                             number_format($row->hora_ordinaria, 0, '.', ','),
                             number_format($row->valor_dia_ordinario, 0, '.', ',')
                         ),
+                        'dias_laborales' => (int) ($elementos->firstWhere('codigo', 'NOM_DIAS_MES')?->valor ?? 26),
                     ];
                 });
             }
