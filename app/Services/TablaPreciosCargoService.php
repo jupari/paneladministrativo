@@ -19,9 +19,9 @@ class TablaPreciosCargoService
      */
     public function generar(bool $persistir = true): array
     {
-        $utilidad     = $this->parametros->getFloat('NOM_UTILIDAD_PCT', (float) config('app.utilidadPct', 0.315));
-        $horasDiarias = $this->parametros->getInt('NOM_HORAS_DIARIAS', (int) config('app.horasDiarias', 8));
-        $diasMes      = $this->parametros->getInt('NOM_DIAS_MES', 26);
+        $utilidad     = $this->parametros->getFloat('NOM_UTILIDAD_PCT', (float) config('app.utilidadPct',0));
+        $horasDiarias = $this->parametros->getInt('NOM_HORAS_DIARIAS', (int) config('app.horasDiarias', 0));
+        $diasMes      = $this->parametros->getInt('NOM_DIAS_MES', 0);
 
         Log::debug('[TablaPreciosCargo] Inicio generar', [
             'persistir' => $persistir,
@@ -133,7 +133,7 @@ class TablaPreciosCargoService
             if ($novedad === 'DATOS BÁSICOS' || $novedad === 'DATOS BASICOS') {
                 $valorAbs = $vpRaw;
 
-                if ($detalle === 'BASICO' || $detalle === 'BÁSICO') {
+                if ($detalle === 'SALARIO BASICO' || $detalle === 'SALARIO BÁSICO') {
                     $porCargo[$cargoId]['basico'] = $valorAbs;
                     Log::debug('[TablaPreciosCargo] DATOS BÁSICOS - BASICO', [
                         'cargo_id' => $cargoId,
@@ -254,49 +254,49 @@ class TablaPreciosCargoService
         // Fuente 2: nom_parametros_globales.aux_transporte → overrides AUX. DE TRANSPORTE
         // Fuente 3: nom_arl_niveles[cargos.arl_nivel]     → siempre overrides pct_arp
         // Los demás conceptos (cesantías, prima, etc.) siguen desde parametrización.
-        if (!empty($porCargo)) {
-            $paramGlobal = \App\Models\NominaParametrosGlobal::paraAno((int)date('Y'));
-            $arlNiveles  = \App\Models\NominaArlNivel::pluck('porcentaje', 'nivel'); // [1=>0.5220, ...]
-            $cargosData  = \App\Models\Cargo::whereIn('id', array_keys($porCargo))
-                ->select(['id', 'salario_base', 'arl_nivel'])
-                ->get()
-                ->keyBy('id');
+        // if (!empty($porCargo)) {
+        //     $paramGlobal = \App\Models\NominaParametrosGlobal::paraAno((int)date('Y'));
+        //     $arlNiveles  = \App\Models\NominaArlNivel::pluck('porcentaje', 'nivel'); // [1=>0.5220, ...]
+        //     $cargosData  = \App\Models\Cargo::whereIn('id', array_keys($porCargo))
+        //         ->select(['id', 'salario_base', 'arl_nivel'])
+        //         ->get()
+        //         ->keyBy('id');
 
-            foreach ($porCargo as $cargoId => &$d) {
-                $cargo = $cargosData[$cargoId] ?? null;
-                if (!$cargo) continue;
+        //     foreach ($porCargo as $cargoId => &$d) {
+        //         $cargo = $cargosData[$cargoId] ?? null;
+        //         if (!$cargo) continue;
 
-                // B: salario_base del cargo tiene prioridad sobre DATOS BÁSICOS - BASICO
-                if ($cargo->salario_base !== null) {
-                    $d['basico'] = (float)$cargo->salario_base;
+        //         // B: salario_base del cargo tiene prioridad sobre DATOS BÁSICOS - BASICO
+        //         if ($cargo->salario_base !== null) {
+        //             $d['basico'] = (float)$cargo->salario_base;
 
-                    // C: aux_transporte global cuando salario_base está configurado
-                    if ($paramGlobal) {
-                        $aplica = ((float)$cargo->salario_base) <= ((float)$paramGlobal->smlv * 2);
-                        $d['aux_trans'] = $aplica ? (float)$paramGlobal->aux_transporte : 0.0;
-                        Log::debug('[TablaPreciosCargo] Aux. de transporte global', [
-                            'cargo_id' => $cargoId,
-                            'aplica' => $aplica,
-                            'salario_base' => $cargo->salario_base,
-                            'smlv' => $paramGlobal->smlv,
-                            'aux_transporte' => $paramGlobal->aux_transporte,
-                        ]);
+        //             // C: aux_transporte global cuando salario_base está configurado
+        //             if ($paramGlobal) {
+        //                 $aplica = ((float)$cargo->salario_base) <= ((float)$paramGlobal->smlv * 2);
+        //                 $d['aux_trans'] = $aplica ? (float)$paramGlobal->aux_transporte : 0.0;
+        //                 Log::debug('[TablaPreciosCargo] Aux. de transporte global', [
+        //                     'cargo_id' => $cargoId,
+        //                     'aplica' => $aplica,
+        //                     'salario_base' => $cargo->salario_base,
+        //                     'smlv' => $paramGlobal->smlv,
+        //                     'aux_transporte' => $paramGlobal->aux_transporte,
+        //                 ]);
 
-                    }
-                }
+        //             }
+        //         }
 
-                // ARL: nivel configurado en el cargo siempre tiene prioridad sobre parametrización
-                if (isset($arlNiveles[$cargo->arl_nivel])) {
-                    $d['pct_arp'] = (float)$arlNiveles[$cargo->arl_nivel] / 100;
-                }
+        //         // ARL: nivel configurado en el cargo siempre tiene prioridad sobre parametrización
+        //         if (isset($arlNiveles[$cargo->arl_nivel])) {
+        //             $d['pct_arp'] = (float)$arlNiveles[$cargo->arl_nivel] / 100;
+        //         }
 
-                // EPS empleado (4%): usar tasa global cuando no está en la parametrización del cargo
-                if ($d['pct_eps'] == 0.0) {
-                    $d['pct_eps'] = $this->parametros->getFloat('NOM_PCT_SALUD_EMP', 0.04);
-                }
-            }
-            unset($d); // romper referencia
-        }
+        //         // EPS empleado (4%): usar tasa global cuando no está en la parametrización del cargo
+        //         if ($d['pct_eps'] == 0.0) {
+        //             $d['pct_eps'] = $this->parametros->getFloat('NOM_PCT_SALUD_EMP', 0.04);
+        //         }
+        //     }
+        //     unset($d); // romper referencia
+        // }
 
         // 4) Calcular igual que Excel + tabla precios
         $den = (1 - $utilidad);

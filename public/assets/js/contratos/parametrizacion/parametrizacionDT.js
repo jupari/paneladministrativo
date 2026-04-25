@@ -256,9 +256,9 @@ function CargarNovedadesDT() {
                     // Limpiar input valor_porcentaje en el DOM
                     $(row).find('td').eq(idxValor).find('input').val('');
                     // Forzar sincronización
-                    tablaNovedadesDT.row(dataIndex).invalidate().draw(false);
+                    tablaNovedadesDT.row(dataIndex).invalidate();
                 }
-                tablaNovedadesDT.cell(dataIndex, colIdx).data(val).draw(false);
+                tablaNovedadesDT.cell(dataIndex, colIdx).data(val);
             });
         }
     });
@@ -285,8 +285,9 @@ function CargarNovedadesDT() {
             if (novedadId) {
                 $.get('/admin/admin.novedaddetalle.show/' + novedadId, function(resp) {
                     if (resp && resp.valor_admon !== undefined) {
-                        tablaNovedadesDT.cell(dataIdx, colIdx).data(1).draw(false);
-                        tablaNovedadesDT.cell(dataIdx, idxValor).data(resp.valor_admon).draw(false);
+                        tablaNovedadesDT.cell(dataIdx, colIdx).data(1);
+                        tablaNovedadesDT.cell(dataIdx, idxValor).data(resp.valor_admon);
+                        $inputValor.val(resp.valor_admon);
                     }
                 });
             }
@@ -295,8 +296,9 @@ function CargarNovedadesDT() {
             if (novedadId) {
                 $.get('/admin/admin.novedaddetalle.show/' + novedadId, function(resp) {
                     if (resp && resp.valor_operativo !== undefined) {
-                        tablaNovedadesDT.cell(dataIdx, colIdx).data(1).draw(false);
-                        tablaNovedadesDT.cell(dataIdx, idxValor).data(resp.valor_operativo).draw(false);
+                        tablaNovedadesDT.cell(dataIdx, colIdx).data(1);
+                        tablaNovedadesDT.cell(dataIdx, idxValor).data(resp.valor_operativo);
+                        $inputValor.val(resp.valor_operativo);
                     }
                 });
             }
@@ -306,7 +308,8 @@ function CargarNovedadesDT() {
         if ((colIdx === idxAdmon || colIdx === idxObra) && !$(this).is(':checked')) {
             $chkAdmon.prop('disabled', false);
             $chkObra.prop('disabled', false);
-            tablaNovedadesDT.cell(dataIdx, idxValor).data(0).draw(false);
+            tablaNovedadesDT.cell(dataIdx, idxValor).data(0);
+            $inputValor.val(0);
         }
     });
 }
@@ -320,7 +323,7 @@ function agregarFilaNovedadesDT() {
         valor_porcentaje: '',
         valor_admon: 0,
         valor_obra: 0
-    }).draw();
+    }).draw(false);
 }
 
 

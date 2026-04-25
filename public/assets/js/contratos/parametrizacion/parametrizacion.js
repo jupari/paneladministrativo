@@ -26,8 +26,7 @@ const columnasCategoriasNovedades = [
             const id = cell.getValue()
             const cat = categoriasNovedades.find(c => c.id == id)
             return cat ? cat.nombre : ''
-        },
-        cellEdited: onCategoriaChangeNovedades // <- Detectar cambio
+        }
     }
 ]
 
@@ -225,17 +224,6 @@ async function CargarNovedades (primeraCargan) {
         ],
         placeholder: 'No hay ninguna parametrización...'
     })
-}
-
-function onCategoriaChangeNovedades (cell) {
-    const categoriaId = cell.getValue()
-    let nuevasColumnasCategoriasNovedades = [...columnasCategoriasNovedades]
-    nuevasColumnasCategoriasNovedades.push(
-        ...columnasGenerales,
-        ...columnasFinanzas
-    )
-    nuevasColumnasCategoriasNovedades.push(columnaAcciones)
-    tablaNovedades.setColumns(nuevasColumnasCategoriasNovedades)
 }
 
 function agregarFilaNovedades () {
