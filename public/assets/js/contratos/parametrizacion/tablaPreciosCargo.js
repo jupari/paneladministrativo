@@ -81,21 +81,21 @@
     }
   }
 
-  async function generarTablaPrecios() {
+async function generarTablaPrecios() {
     try {
-      const res = await fetch(TABLA_PRECIOS_POST_URL, {
+    const res = await fetch(TABLA_PRECIOS_POST_URL, {s
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken(),
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': csrfToken(),
         },
         body: JSON.stringify({}),
-      });
+    });
 
-      const json = await res.json();
-      if (!json.success) throw new Error(json.message || 'No se pudo generar la tabla');
+    const json = await res.json();
+    if (!json.success) throw new Error(json.message || 'No se pudo generar la tabla');
 
-      Swal.fire('OK', `${json.message} (Cargos: ${json.count})`, 'success');
+    Swal.fire('OK', `${json.message} (Cargos: ${json.count})`, 'success');
       await cargarTablaPrecios(); // recarga desde BD para incluir fuente_salario
     } catch (e) {
       Swal.fire('Error', e.message, 'error');
