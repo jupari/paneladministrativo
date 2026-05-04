@@ -669,12 +669,20 @@
                                             <div class="col-md-12">
                                                 <form id="formObservacion">
                                                     <div class="row">
-                                                        <div class="col-md-10">
+                                                        <div class="col-md-8">
                                                             <div class="form-group">
                                                                 <label for="observacionSelect">Seleccione una observación</label>
                                                                 <select class="form-control" id="observacionSelect">
                                                                     <option value="">Seleccione una observación...</option>
                                                                 </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <div class="form-group">
+                                                                <label>&nbsp;</label>
+                                                                <button type="button" class="btn btn-primary btn-block" id="btn_crear_observacion" onclick="abrirModalCrearObservacion()">
+                                                                    <i class="fas fa-plus-circle"></i> Nueva
+                                                                </button>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-2">
@@ -1206,6 +1214,56 @@
             </div>
         </div>
     </div> --}}
+
+    <!-- Modal para crear nueva observación -->
+    <div class="modal fade" id="modalCrearObservacion" tabindex="-1" aria-labelledby="modalCrearObservacionLabel" aria-hidden="true">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalCrearObservacionLabel">
+                        <i class="fas fa-comment-medical"></i> Crear Nueva Observación
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="formCrearObservacion">
+                        <div class="form-group">
+                            <label for="nueva_observacion_texto">
+                                Texto de la Observación <span class="text-danger">*</span>
+                            </label>
+                            <textarea
+                                class="form-control"
+                                id="nueva_observacion_texto"
+                                name="texto"
+                                rows="4"
+                                maxlength="500"
+                                placeholder="Ingrese el texto de la observación..."
+                                required
+                            ></textarea>
+                            <small class="form-text text-muted">
+                                <span id="nueva_observacion_count">0</span>/500 caracteres
+                            </small>
+                            <div class="invalid-feedback" id="error_nueva_observacion_texto"></div>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            La observación creada estará disponible inmediatamente para todas las cotizaciones.
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-primary" id="btn_guardar_nueva_observacion" onclick="guardarNuevaObservacion()">
+                        <i class="fas fa-save"></i> Guardar y Agregar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal para crear subitem -->
     <div class="modal fade" id="modalCrearSubitem" tabindex="-1" aria-labelledby="modalCrearSubitemLabel" aria-hidden="true">

@@ -103,7 +103,7 @@ class ObservacionController extends Controller
             // Desactivar observaciones existentes de la cotización
             ObservacionCotizacion::where('cotizacion_id', $request->cotizacion_id)
                 ->update(['active' => 0]);
-            
+
             Log::info('Observaciones existentes desactivadas', [
                 'cotizacion_id' => $request->cotizacion_id
             ]);
@@ -118,7 +118,7 @@ class ObservacionController extends Controller
                         'active' => 1
                     ]);
                 }
-                
+
                 Log::info('Nuevas observaciones creadas', [
                     'cotizacion_id' => $request->cotizacion_id,
                     'creadas' => count($request->observaciones)
@@ -129,8 +129,8 @@ class ObservacionController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => empty($request->observaciones) ? 
-                    'Observaciones eliminadas exitosamente' : 
+                'message' => empty($request->observaciones) ?
+                    'Observaciones eliminadas exitosamente' :
                     'Observaciones guardadas exitosamente'
             ]);
 
@@ -208,13 +208,58 @@ class ObservacionController extends Controller
     }
 
     /**
+     * Crear una nueva observación en el catálogo
+     */
+    public function crearObservacion(Request $request)
+    {
+        try {
+            $request->validate([
+                'texto' => 'required|string|max:500'
+            ]);
+
+            DB::beginTransaction();
+
+            // Crear la nueva observación
+            $observacion = Observacion::create([
+                'texto' => trim($request->texto),
+                'active' => 1
+            ]);
+
+            DB::commit();
+
+            Log::info('Nueva observación creada', [
+                'observacion_id' => $observacion->id,
+                'texto' => $observacion->texto
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Observación creada exitosamente',
+                'data' => [
+                    'id' => $observacion->id,
+                    'texto' => $observacion->texto
+                ]
+            ]);
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            Log::error('Error al crear observación: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al crear la observación: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Eliminar una observación específica de una cotización
      */
     public function destroy($id)
     {
         try {
             $observacionCotizacion = ObservacionCotizacion::findOrFail($id);
-            
+
             // Desactivar en lugar de eliminar
             $observacionCotizacion->update(['active' => 0]);
 

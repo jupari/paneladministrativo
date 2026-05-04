@@ -383,6 +383,7 @@ Route::middleware(['auth', 'company.license'])->group(function () {
     Route::controller(ObservacionController::class)->group(function () {
         Route::get('admin.cotizaciones.observaciones.getObservaciones', 'getObservaciones')->name('admin.cotizaciones.observaciones.getObservaciones');
         Route::get('admin.cotizaciones.observaciones.getCotizacionObservaciones/{cotizacionId}', 'getCotizacionObservaciones')->name('admin.cotizaciones.observaciones.getCotizacionObservaciones');
+        Route::post('admin.cotizaciones.observaciones.crear', 'crearObservacion')->name('admin.cotizaciones.observaciones.crear');
         Route::post('admin.cotizaciones.observaciones.store', 'store')->name('admin.cotizaciones.observaciones.store');
         Route::put('admin.cotizaciones.observaciones.update/{cotizacionId}', 'update')->name('admin.cotizaciones.observaciones.update');
         Route::delete('admin.cotizaciones.observaciones.destroy/{id}', 'destroy')->name('admin.cotizaciones.observaciones.destroy');

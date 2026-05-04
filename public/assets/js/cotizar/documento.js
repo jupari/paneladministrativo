@@ -104,6 +104,24 @@ async function initializeCoreFeatures() {
         });
     }
 
+    // Contador de caracteres para nueva observación en el modal
+    const nuevaObservacionTextarea = document.getElementById('nueva_observacion_texto');
+    const nuevaObservacionCount = document.getElementById('nueva_observacion_count');
+    if (nuevaObservacionTextarea && nuevaObservacionCount) {
+        nuevaObservacionTextarea.addEventListener('input', function() {
+            const length = this.value.length;
+            nuevaObservacionCount.textContent = length;
+
+            if (length > 500) {
+                this.classList.add('is-invalid');
+                document.getElementById('error_nueva_observacion_texto').textContent = 'El texto no puede exceder los 500 caracteres';
+            } else {
+                this.classList.remove('is-invalid');
+                document.getElementById('error_nueva_observacion_texto').textContent = '';
+            }
+        });
+    }
+
     // Validación en tiempo real para otros campos
     document.getElementById('proyecto').addEventListener('input', function() {
         if (this.value.length > 255) {
@@ -1302,6 +1320,87 @@ async function cargarObservacionesDisponibles() {
     } catch (error) {
         console.error('Error al cargar observaciones disponibles:', error);
         toastr.error('Error al cargar las observaciones disponibles');
+    }
+}
+
+/**
+ * Abrir modal para crear nueva observación
+ */
+function abrirModalCrearObservacion() {
+    // Limpiar el formulario
+    document.getElementById('formCrearObservacion').reset();
+    document.getElementById('nueva_observacion_count').textContent = '0';
+    document.getElementById('error_nueva_observacion_texto').textContent = '';
+    document.getElementById('nueva_observacion_texto').classList.remove('is-invalid');
+
+    // Abrir el modal
+    $('#modalCrearObservacion').modal('show');
+}
+
+/**
+ * Guardar nueva observación en la base de datos
+ */
+async function guardarNuevaObservacion() {
+    const textoInput = document.getElementById('nueva_observacion_texto');
+    const texto = textoInput.value.trim();
+    const btnGuardar = document.getElementById('btn_guardar_nueva_observacion');
+
+    // Validar
+    if (!texto) {
+        textoInput.classList.add('is-invalid');
+        document.getElementById('error_nueva_observacion_texto').textContent = 'El texto de la observación es requerido';
+        return;
+    }
+
+    if (texto.length > 500) {
+        textoInput.classList.add('is-invalid');
+        document.getElementById('error_nueva_observacion_texto').textContent = 'El texto no puede exceder los 500 caracteres';
+        return;
+    }
+
+    // Deshabilitar botón durante la petición
+    btnGuardar.disabled = true;
+    btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+    try {
+        const response = await fetch('/admin/admin.cotizaciones.observaciones.crear', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ texto: texto })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            toastr.success(data.message || 'Observación creada exitosamente');
+
+            // Cerrar el modal
+            $('#modalCrearObservacion').modal('hide');
+
+            // Recargar las observaciones disponibles
+            await cargarObservacionesDisponibles();
+
+            // Seleccionar automáticamente la observación recién creada
+            const select = document.getElementById('observacionSelect');
+            select.value = data.data.id;
+
+            // Agregar automáticamente la observación a la tabla
+            await agregarObservacion();
+
+        } else {
+            toastr.error(data.message || 'Error al crear la observación');
+        }
+
+    } catch (error) {
+        console.error('Error al crear observación:', error);
+        toastr.error('Error al crear la observación');
+    } finally {
+        // Rehabilitar botón
+        btnGuardar.disabled = false;
+        btnGuardar.innerHTML = '<i class="fas fa-save"></i> Guardar y Agregar';
     }
 }
 
