@@ -32,6 +32,7 @@ use App\Http\Controllers\Cotizar\CotizacionProductoController;
 use App\Http\Controllers\Cotizar\CotizacionViaticoController;
 use App\Http\Controllers\Cotizar\CotizacionUtilidadController;
 use App\Http\Controllers\Cotizar\NominaLiquidacionController;
+use App\Http\Controllers\OrdObservacionController;
 use App\Http\Controllers\elementos\ElementoController;
 use App\Http\Controllers\elementos\ElementosController;
 use App\Http\Controllers\elementos\SubElementoController;
@@ -295,6 +296,14 @@ Route::middleware(['auth', 'company.license'])->group(function () {
     Route::controller(CotizarController::class)->group(function () {
         Route::get('admin.cotizar.index', [CotizarController::class, 'index'])->name('admin.cotizar.index');
         Route::get('admin.cotizar.create', [CotizarController::class, 'create'])->name('admin.cotizar.create');
+    });
+
+    // Rutas para Observaciones CRUD (Catálogo general)
+    Route::controller(OrdObservacionController::class)->group(function () {
+        Route::get('admin.observaciones', 'index')->name('admin.observaciones.index');
+        Route::post('admin.observaciones', 'store')->name('admin.observaciones.store');
+        Route::put('admin.observaciones/{id}', 'update')->name('admin.observaciones.update');
+        Route::delete('admin.observaciones/{id}', 'destroy')->name('admin.observaciones.destroy');
     });
 
     // Rutas para Cotizaciones CRUD

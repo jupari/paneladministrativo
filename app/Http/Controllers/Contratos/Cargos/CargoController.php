@@ -60,13 +60,13 @@ class CargoController extends Controller
                         $acciones = '';
                         if (auth()->user()->can('cargos.edit')) {
                             $acciones .= '<button type="button" onclick="upCargo(' . $cargo->id . ')" '
-                                       . 'class="btn btn-warning btn-xs mr-1" data-toggle="tooltip" title="Editar">'
-                                       . '<i class="fas fa-edit"></i></button>';
+                                    . 'class="btn btn-warning btn-xs mr-1" data-toggle="tooltip" title="Editar">'
+                                    . '<i class="fas fa-edit"></i></button>';
                         }
                         if (auth()->user()->can('cargos.destroy')) {
                             $acciones .= '<button type="button" onclick="deleteCargo(' . $cargo->id . ')" '
-                                       . 'class="btn btn-danger btn-xs" data-toggle="tooltip" title="Eliminar">'
-                                       . '<i class="fas fa-trash"></i></button>';
+                                    . 'class="btn btn-danger btn-xs" data-toggle="tooltip" title="Eliminar">'
+                                    . '<i class="fas fa-trash"></i></button>';
                         }
                         return $acciones;
                     })

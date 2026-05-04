@@ -608,6 +608,12 @@ return [
                     'label' => 'Pendientes',
                     'label_color' => 'warning',
                 ],
+                [
+                    'text' => 'Observaciones',
+                    'route' => 'admin.observaciones.index',
+                    'icon' => 'fas fa-comments text-info',
+                    'can' => 'cotizaciones.observaciones.index', // Puedes crear un permiso específico si lo requieres
+                ],
             ],
         ],
 
