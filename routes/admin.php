@@ -374,6 +374,7 @@ Route::middleware(['auth', 'company.license'])->group(function () {
     // Rutas para Viáticos de Cotizaciones
     Route::controller(CotizacionViaticoController::class)->group(function () {
         Route::get('admin.cotizaciones.viaticos.index/{cotizacionId}', 'index')->name('admin.cotizaciones.viaticos.index');
+        Route::get('admin.cotizaciones.viaticos.cantidad/{cotizacionId}/{tipoCosto}', 'getCantidadByTipoCosto')->name('admin.cotizaciones.viaticos.cantidad');
         Route::post('admin.cotizaciones.viaticos.store', 'store')->name('admin.cotizaciones.viaticos.store');
         Route::put('admin.cotizaciones.viaticos.update/{id}', 'update')->name('admin.cotizaciones.viaticos.update');
         Route::delete('admin.cotizaciones.viaticos.destroy/{id}', 'destroy')->name('admin.cotizaciones.viaticos.destroy');

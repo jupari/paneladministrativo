@@ -1935,7 +1935,7 @@ function setupItemsEventListeners() {
     const btnLimpiarTodos = document.getElementById('btn_limpiar_todos_items');
     if (btnLimpiarTodos) {
         btnLimpiarTodos.addEventListener('click', function() {
-            if (confirm('Â¿Está seguro de eliminar todos los items?')) {
+            if (confirm('¿Está seguro de eliminar todos los items?')) {
                 limpiarTodosItems();
             }
         });
@@ -12218,22 +12218,25 @@ function _renderViaticosTabla() {
     empty && empty.classList.add('d-none');
     if (badge) badge.textContent = _viaticosData.length;
 
-    tbody.innerHTML = _viaticosData.map(v => `
-        <tr data-viatico-id="${v.id}">
-            <td>
-                <span id="viatico-concepto-display-${v.id}">${_escapeHtml(v.concepto)}</span>
-                <div id="viatico-edit-${v.id}" class="d-none input-group input-group-sm">
-                    <input type="text" class="form-control form-control-sm" id="viatico-edit-concepto-${v.id}" value="${_escapeAttr(v.concepto)}">
-                    <div class="input-group-prepend"><span class="input-group-text">$</span></div>
-                    <input type="number" class="form-control form-control-sm" id="viatico-edit-valor-${v.id}" value="${parseFloat(v.valor)}" min="0" step="1">
-                    <div class="input-group-append">
-                        <button class="btn btn-sm btn-success" onclick="guardarEdicionViatico(${v.id})"><i class="fas fa-check"></i></button>
-                        <button class="btn btn-sm btn-light border" onclick="cancelarEdicionViatico(${v.id})"><i class="fas fa-times"></i></button>
-                    </div>
-                </div>
-            </td>
-            <td id="viatico-valor-display-${v.id}">${_formatMoneda(v.valor)}</td>
-            <td class="text-right">
+    tbody.innerHTML = _viaticosData.map(v => {
+        const tipoCostoLabel = v.tipo_costo === 'hora' ? '<span class="badge badge-info">Hora</span>'
+                             : v.tipo_costo === 'dia'  ? '<span class="badge badge-primary">D\u00eda</span>'
+                             : '<span class="text-muted small">—</span>';
+        const cantidadDisplay = v.cantidad != null ? parseFloat(v.cantidad).toLocaleString('es-CO', {maximumFractionDigits: 3}) : '—';
+        // Derive unit value for edit form
+        const cantNum = parseFloat(v.cantidad || 0);
+        const valorUnitEdit = (v.tipo_costo && cantNum > 0)
+            ? (parseFloat(v.valor) / cantNum).toFixed(2)
+            : parseFloat(v.valor).toFixed(2);
+        const tipoCostoEditHora = v.tipo_costo === 'hora' ? 'selected' : '';
+        const tipoCostoEditDia  = v.tipo_costo === 'dia'  ? 'selected' : '';
+        return `
+        <tr id="viatico-row-display-${v.id}" data-viatico-id="${v.id}">
+            <td>${_escapeHtml(v.concepto)}</td>
+            <td>${tipoCostoLabel}</td>
+            <td class="text-right">${cantidadDisplay}</td>
+            <td id="viatico-valor-display-${v.id}" class="text-right">${_formatMoneda(v.valor)}</td>
+            <td class="text-center">
                 <button class="btn btn-xs btn-outline-secondary mr-1" title="Editar" onclick="editarViatico(${v.id})">
                     <i class="fas fa-pencil-alt"></i>
                 </button>
@@ -12242,7 +12245,56 @@ function _renderViaticosTabla() {
                 </button>
             </td>
         </tr>
-    `).join('');
+        <tr id="viatico-row-edit-${v.id}" class="d-none table-warning">
+            <td colspan="5">
+                <div class="row align-items-end g-2 py-1">
+                    <div class="col-md-4">
+                        <label class="small mb-1">Concepto</label>
+                        <input type="text" class="form-control form-control-sm" id="viatico-edit-concepto-${v.id}" value="${_escapeAttr(v.concepto)}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="small mb-1">Tipo de costo</label>
+                        <select class="form-control form-control-sm" id="viatico-edit-tipo-costo-${v.id}" onchange="onViaticEditTipoCostoChange(${v.id})">
+                            <option value="">— Sin tipo —</option>
+                            <option value="hora" ${tipoCostoEditHora}>Hora</option>
+                            <option value="dia"  ${tipoCostoEditDia}>Día</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="small mb-1">
+                            Cant. operarios
+                            <span id="viatico-edit-cantidad-loading-${v.id}" class="d-none">
+                                <i class="fas fa-spinner fa-spin text-warning" style="font-size:0.75rem;"></i>
+                            </span>
+                        </label>
+                        <input type="number" class="form-control form-control-sm bg-light" id="viatico-edit-cantidad-${v.id}"
+                            readonly value="${v.cantidad != null ? parseFloat(v.cantidad) : ''}" placeholder="—" step="0.001" min="0">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="small mb-1">Valor por unidad</label>
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend"><span class="input-group-text">$</span></div>
+                            <input type="number" class="form-control form-control-sm" id="viatico-edit-valor-${v.id}"
+                                value="${valorUnitEdit}" min="0" step="1" oninput="onViaticEditValorInput(${v.id})">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="small mb-1">Total</label>
+                        <div class="input-group input-group-sm">
+                            <div class="input-group-prepend"><span class="input-group-text">$</span></div>
+                            <input type="text" class="form-control form-control-sm bg-white font-weight-bold text-success" id="viatico-edit-total-${v.id}" readonly value="${parseFloat(v.valor).toFixed(2)}">
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end mt-2">
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-success" onclick="guardarEdicionViatico(${v.id})"><i class="fas fa-check mr-1"></i> Guardar</button>
+                        <button class="btn btn-secondary" onclick="cancelarEdicionViatico(${v.id})"><i class="fas fa-times"></i></button>
+                    </div>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
 }
 
 /**
@@ -12268,7 +12320,13 @@ function mostrarFormViatico() {
         form.classList.remove('d-none');
         if (btnAgregar) btnAgregar.classList.add('d-none');
         document.getElementById('nuevo-viatico-concepto').value = '';
+        const tipoCostoEl = document.getElementById('nuevo-viatico-tipo-costo');
+        if (tipoCostoEl) tipoCostoEl.value = '';
+        const cantidadEl = document.getElementById('nuevo-viatico-cantidad');
+        if (cantidadEl) cantidadEl.value = '';
         document.getElementById('nuevo-viatico-valor').value = '';
+        const totalEl = document.getElementById('nuevo-viatico-total');
+        if (totalEl) totalEl.value = '';
         document.getElementById('nuevo-viatico-concepto').focus();
     }
 }
@@ -12284,19 +12342,88 @@ function cancelarFormViatico() {
 }
 
 /**
+ * Recalcula el total mostrado cuando cambia el valor unitario
+ */
+function onViaticValorInput() {
+    const cantidad = parseFloat(document.getElementById('nuevo-viatico-cantidad')?.value || 0);
+    const valor    = parseFloat(document.getElementById('nuevo-viatico-valor')?.value || 0);
+    const totalEl  = document.getElementById('nuevo-viatico-total');
+    if (!totalEl) return;
+    if (cantidad > 0) {
+        totalEl.value = (cantidad * valor).toFixed(2);
+    } else {
+        // Sin tipo de costo seleccionado, el total es el valor directo
+        totalEl.value = valor > 0 ? valor.toFixed(2) : '';
+    }
+}
+
+/**
+ * Se dispara cuando el usuario cambia el tipo de costo en el formulario de viático.
+ * Consulta la cantidad de operarios y actualiza el total calculado.
+ */
+async function onViaticTipoCostoChange() {
+    const tipoCosto    = document.getElementById('nuevo-viatico-tipo-costo')?.value;
+    const cantidadEl   = document.getElementById('nuevo-viatico-cantidad');
+    const loadingEl    = document.getElementById('nuevo-viatico-cantidad-loading');
+    const totalEl      = document.getElementById('nuevo-viatico-total');
+    const cotizacionId = _getCotizacionId();
+
+    if (!tipoCosto) {
+        if (cantidadEl) cantidadEl.value = '';
+        if (totalEl) totalEl.value = '';
+        return;
+    }
+
+    if (!cotizacionId) {
+        alert('Primero debe guardar la cotización antes de usar tipo de costo.');
+        document.getElementById('nuevo-viatico-tipo-costo').value = '';
+        return;
+    }
+
+    if (loadingEl) loadingEl.classList.remove('d-none');
+    if (cantidadEl) cantidadEl.value = '';
+
+    try {
+        const response = await fetch(`/admin/admin.cotizaciones.viaticos.cantidad/${cotizacionId}/${tipoCosto}`, {
+            headers: { 'Accept': 'application/json' }
+        });
+        const data = await response.json();
+        if (data.success) {
+            if (cantidadEl) cantidadEl.value = data.cantidad;
+            // Recalcular total si ya hay un valor ingresado
+            const valor = parseFloat(document.getElementById('nuevo-viatico-valor')?.value || 0);
+            if (totalEl) totalEl.value = (data.cantidad * valor).toFixed(2);
+        } else {
+            if (cantidadEl) cantidadEl.value = '0';
+        }
+    } catch (err) {
+        console.error('Error al obtener cantidad por tipo costo:', err);
+        if (cantidadEl) cantidadEl.value = '0';
+    } finally {
+        if (loadingEl) loadingEl.classList.add('d-none');
+    }
+}
+
+/**
  * Guardar un nuevo viático
  */
 async function guardarNuevoViatico() {
-    const concepto = document.getElementById('nuevo-viatico-concepto')?.value?.trim();
-    const valor    = parseFloat(document.getElementById('nuevo-viatico-valor')?.value || 0);
+    const concepto   = document.getElementById('nuevo-viatico-concepto')?.value?.trim();
+    const tipoCosto  = document.getElementById('nuevo-viatico-tipo-costo')?.value || null;
+    const cantidadRaw = parseFloat(document.getElementById('nuevo-viatico-cantidad')?.value || 0);
+    const valorUnitario = parseFloat(document.getElementById('nuevo-viatico-valor')?.value || 0);
     const cotizacionId = _getCotizacionId();
+
+    // El valor a guardar: si hay tipo_costo y cantidad, es cantidad * valorUnitario, si no, es valorUnitario directo
+    const valor = (tipoCosto && cantidadRaw > 0) ? cantidadRaw * valorUnitario : valorUnitario;
+    const cantidad = (tipoCosto && cantidadRaw > 0) ? cantidadRaw : null;
 
     if (!concepto) {
         alert('Debe ingresar un concepto para el viático.');
         document.getElementById('nuevo-viatico-concepto').focus();
         return;
     }
-    if (isNaN(valor) || valor < 0) {
+    if (isNaN(valorUnitario) || valorUnitario < 0) {
         alert('El valor del viático debe ser un número mayor o igual a 0.');
         document.getElementById('nuevo-viatico-valor').focus();
         return;
@@ -12315,7 +12442,7 @@ async function guardarNuevoViatico() {
                 'X-CSRF-TOKEN': token,
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({ cotizacion_id: cotizacionId, concepto, valor })
+            body: JSON.stringify({ cotizacion_id: cotizacionId, concepto, tipo_costo: tipoCosto, cantidad, valor })
         });
 
         const data = await response.json();
@@ -12348,35 +12475,90 @@ async function guardarNuevoViatico() {
  * Mostrar formulario inline de edición de un viático
  */
 function editarViatico(id) {
-    const display = document.getElementById(`viatico-concepto-display-${id}`);
-    const editDiv = document.getElementById(`viatico-edit-${id}`);
-    const valorDisplay = document.getElementById(`viatico-valor-display-${id}`);
-    if (display) display.classList.add('d-none');
-    if (editDiv) editDiv.classList.remove('d-none');
-    if (valorDisplay) valorDisplay.classList.add('d-none');
+    const displayRow = document.getElementById(`viatico-row-display-${id}`);
+    const editRow    = document.getElementById(`viatico-row-edit-${id}`);
+    if (displayRow) displayRow.classList.add('d-none');
+    if (editRow)    editRow.classList.remove('d-none');
+    // Focus the concepto input
+    document.getElementById(`viatico-edit-concepto-${id}`)?.focus();
 }
 
 /**
  * Cancelar edición inline
  */
 function cancelarEdicionViatico(id) {
-    const display = document.getElementById(`viatico-concepto-display-${id}`);
-    const editDiv = document.getElementById(`viatico-edit-${id}`);
-    const valorDisplay = document.getElementById(`viatico-valor-display-${id}`);
-    if (display) display.classList.remove('d-none');
-    if (editDiv) editDiv.classList.add('d-none');
-    if (valorDisplay) valorDisplay.classList.remove('d-none');
+    const displayRow = document.getElementById(`viatico-row-display-${id}`);
+    const editRow    = document.getElementById(`viatico-row-edit-${id}`);
+    if (displayRow) displayRow.classList.remove('d-none');
+    if (editRow)    editRow.classList.add('d-none');
+}
+
+/**
+ * Recalcula el total del formulario de edición cuando cambia el valor unitario
+ */
+function onViaticEditValorInput(id) {
+    const cantidad = parseFloat(document.getElementById(`viatico-edit-cantidad-${id}`)?.value || 0);
+    const valor    = parseFloat(document.getElementById(`viatico-edit-valor-${id}`)?.value || 0);
+    const totalEl  = document.getElementById(`viatico-edit-total-${id}`);
+    if (!totalEl) return;
+    totalEl.value = (cantidad > 0 ? cantidad * valor : valor).toFixed(2);
+}
+
+/**
+ * Consulta la cantidad de operarios al cambiar el tipo de costo en el formulario de edición
+ */
+async function onViaticEditTipoCostoChange(id) {
+    const tipoCosto    = document.getElementById(`viatico-edit-tipo-costo-${id}`)?.value;
+    const cantidadEl   = document.getElementById(`viatico-edit-cantidad-${id}`);
+    const loadingEl    = document.getElementById(`viatico-edit-cantidad-loading-${id}`);
+    const totalEl      = document.getElementById(`viatico-edit-total-${id}`);
+    const cotizacionId = _getCotizacionId();
+
+    if (!tipoCosto) {
+        if (cantidadEl) cantidadEl.value = '';
+        const valor = parseFloat(document.getElementById(`viatico-edit-valor-${id}`)?.value || 0);
+        if (totalEl) totalEl.value = valor > 0 ? valor.toFixed(2) : '';
+        return;
+    }
+
+    if (loadingEl) loadingEl.classList.remove('d-none');
+    if (cantidadEl) cantidadEl.value = '';
+
+    try {
+        const response = await fetch(`/admin/admin.cotizaciones.viaticos.cantidad/${cotizacionId}/${tipoCosto}`, {
+            headers: { 'Accept': 'application/json' }
+        });
+        const data = await response.json();
+        if (data.success) {
+            if (cantidadEl) cantidadEl.value = data.cantidad;
+            const valor = parseFloat(document.getElementById(`viatico-edit-valor-${id}`)?.value || 0);
+            if (totalEl) totalEl.value = (data.cantidad * valor).toFixed(2);
+        } else {
+            if (cantidadEl) cantidadEl.value = '0';
+        }
+    } catch (err) {
+        console.error('Error al obtener cantidad por tipo costo (edit):', err);
+        if (cantidadEl) cantidadEl.value = '0';
+    } finally {
+        if (loadingEl) loadingEl.classList.add('d-none');
+    }
 }
 
 /**
  * Guardar los cambios de edición de un viático
  */
 async function guardarEdicionViatico(id) {
-    const concepto = document.getElementById(`viatico-edit-concepto-${id}`)?.value?.trim();
-    const valor = parseFloat(document.getElementById(`viatico-edit-valor-${id}`)?.value || 0);
+    const concepto      = document.getElementById(`viatico-edit-concepto-${id}`)?.value?.trim();
+    const tipoCosto     = document.getElementById(`viatico-edit-tipo-costo-${id}`)?.value || null;
+    const cantidadRaw   = parseFloat(document.getElementById(`viatico-edit-cantidad-${id}`)?.value || 0);
+    const valorUnitario = parseFloat(document.getElementById(`viatico-edit-valor-${id}`)?.value || 0);
+
+    const valor    = (tipoCosto && cantidadRaw > 0) ? cantidadRaw * valorUnitario : valorUnitario;
+    const cantidad = (tipoCosto && cantidadRaw > 0) ? cantidadRaw : null;
 
     if (!concepto) {
         alert('Debe ingresar un concepto.');
+        document.getElementById(`viatico-edit-concepto-${id}`)?.focus();
         return;
     }
 
@@ -12389,7 +12571,7 @@ async function guardarEdicionViatico(id) {
                 'X-CSRF-TOKEN': token,
                 'Accept': 'application/json'
             },
-            body: JSON.stringify({ concepto, valor })
+            body: JSON.stringify({ concepto, tipo_costo: tipoCosto, cantidad, valor })
         });
 
         const data = await response.json();
@@ -12397,8 +12579,10 @@ async function guardarEdicionViatico(id) {
             // Actualizar en memoria
             const idx = _viaticosData.findIndex(v => v.id === id);
             if (idx !== -1) {
-                _viaticosData[idx].concepto = data.data.concepto;
-                _viaticosData[idx].valor    = data.data.valor;
+                _viaticosData[idx].concepto   = data.data.concepto;
+                _viaticosData[idx].tipo_costo = data.data.tipo_costo;
+                _viaticosData[idx].cantidad   = data.data.cantidad;
+                _viaticosData[idx].valor      = data.data.valor;
             }
             _renderViaticosTabla();
 
@@ -12425,42 +12609,53 @@ async function guardarEdicionViatico(id) {
  * Eliminar un viático
  */
 async function eliminarViatico(id) {
-    if (!confirm('¿Está seguro de eliminar este viático?')) return;
-
-    try {
-        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        const response = await fetch(`/admin/admin.cotizaciones.viaticos.destroy/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': token,
-                'Accept': 'application/json'
-            }
-        });
-
-        const data = await response.json();
-        if (data.success) {
-            _viaticosData = _viaticosData.filter(v => v.id !== id);
-            _renderViaticosTabla();
-
-            if (data.totales) {
-                actualizarTotalesEnVista({
-                    subtotal:  data.totales.subtotal,
-                    descuento: data.totales.descuento,
-                    impuestos: data.totales.total_impuesto,
-                    viaticos:  data.totales.viaticos,
-                    total:     data.totales.total,
-                });
-                _actualizarDisplayViaticos(data.totales.viaticos);
-            }
-        } else {
-            alert(data.message || 'Error al eliminar el viático.');
+    Swal.fire({
+        title: '¿Está seguro de eliminar este viático?',
+        text: 'Esta acción no se puede deshacer.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+        if (!result.value) {
+            return;
         }
-    } catch (error) {
-        console.error('Error al eliminar viático:', error);
-        alert('Error de conexión al eliminar el viático.');
-    }
-}
+        try {
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch(`/admin/admin.cotizaciones.viaticos.destroy/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json'
+                }
+            });
 
+            const data = await response.json();
+            if (data.success) {
+                _viaticosData = _viaticosData.filter(v => v.id !== id);
+                _renderViaticosTabla();
+
+                if (data.totales) {
+                    actualizarTotalesEnVista({
+                        subtotal:  data.totales.subtotal,
+                        descuento: data.totales.descuento,
+                        impuestos: data.totales.total_impuesto,
+                        viaticos:  data.totales.viaticos,
+                        total:     data.totales.total,
+                    });
+                    _actualizarDisplayViaticos(data.totales.viaticos);
+                }
+            }else {
+                Swal.fire('Error', data.message || 'Error al eliminar el viático.', 'error');
+            }
+        } catch (error) {
+            console.error('Error al eliminar viatico:', error);
+            toastr.error('Ocurrió un error al intentar eliminar el viático');
+        }
+    });
+}
 /**
  * Escapar HTML para prevenir XSS
  */
@@ -12478,11 +12673,15 @@ function _escapeAttr(text) {
 }
 
 // Exponer funciones de viáticos globalmente
-window.mostrarFormViatico    = mostrarFormViatico;
-window.cancelarFormViatico   = cancelarFormViatico;
-window.guardarNuevoViatico   = guardarNuevoViatico;
-window.editarViatico         = editarViatico;
-window.cancelarEdicionViatico = cancelarEdicionViatico;
-window.guardarEdicionViatico = guardarEdicionViatico;
-window.eliminarViatico       = eliminarViatico;
-window.cargarViaticosExistentes = cargarViaticosExistentes;
+window.mostrarFormViatico           = mostrarFormViatico;
+window.cancelarFormViatico          = cancelarFormViatico;
+window.onViaticTipoCostoChange      = onViaticTipoCostoChange;
+window.onViaticValorInput           = onViaticValorInput;
+window.guardarNuevoViatico          = guardarNuevoViatico;
+window.editarViatico                = editarViatico;
+window.cancelarEdicionViatico       = cancelarEdicionViatico;
+window.onViaticEditTipoCostoChange  = onViaticEditTipoCostoChange;
+window.onViaticEditValorInput       = onViaticEditValorInput;
+window.guardarEdicionViatico        = guardarEdicionViatico;
+window.eliminarViatico              = eliminarViatico;
+window.cargarViaticosExistentes     = cargarViaticosExistentes;

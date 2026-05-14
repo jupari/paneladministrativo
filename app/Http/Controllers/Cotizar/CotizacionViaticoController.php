@@ -7,6 +7,7 @@ use App\Models\CotizacionViatico;
 use App\Models\Cotizacion;
 use App\Services\CotizacionTotalesService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
@@ -29,7 +30,7 @@ class CotizacionViaticoController extends Controller
 
             $viaticos = CotizacionViatico::where('cotizacion_id', $cotizacion->id)
                 ->orderBy('orden')
-                ->get(['id', 'concepto', 'valor', 'orden']);
+                ->get(['id', 'concepto', 'tipo_costo', 'cantidad', 'valor', 'orden']);
 
             return response()->json([
                 'success' => true,
@@ -43,6 +44,34 @@ class CotizacionViaticoController extends Controller
     }
 
     /**
+     * Obtener la suma de cantidad de operarios por tipo_costo en una cotización
+     */
+    public function getCantidadByTipoCosto(int $cotizacionId, string $tipoCosto)
+    {
+        try {
+            if (!in_array($tipoCosto, ['hora', 'dia'])) {
+                return response()->json(['success' => false, 'message' => 'Tipo de costo inválido'], 422);
+            }
+
+            Cotizacion::findOrFail($cotizacionId);
+
+            $cantidad = DB::table('ord_cotizacion_productos')
+                ->where('cotizacion_id', $cotizacionId)
+                ->where('tipo_costo', $tipoCosto)
+                ->where('active', true)
+                ->sum('cantidad');
+
+            return response()->json([
+                'success'  => true,
+                'cantidad' => (float) $cantidad,
+            ]);
+        } catch (Exception $e) {
+            Log::error('Error al obtener cantidad por tipo costo: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Error al obtener cantidad'], 500);
+        }
+    }
+
+    /**
      * Crear un nuevo viático
      */
     public function store(Request $request)
@@ -51,6 +80,8 @@ class CotizacionViaticoController extends Controller
             $validated = $request->validate([
                 'cotizacion_id' => 'required|integer|exists:ord_cotizacion,id',
                 'concepto'      => 'required|string|max:255',
+                'tipo_costo'    => 'nullable|in:hora,dia',
+                'cantidad'      => 'nullable|numeric|min:0',
                 'valor'         => 'required|numeric|min:0',
             ]);
 
@@ -59,6 +90,8 @@ class CotizacionViaticoController extends Controller
             $viatico = CotizacionViatico::create([
                 'cotizacion_id' => $validated['cotizacion_id'],
                 'concepto'      => $validated['concepto'],
+                'tipo_costo'    => $validated['tipo_costo'] ?? null,
+                'cantidad'      => $validated['cantidad'] ?? null,
                 'valor'         => $validated['valor'],
                 'orden'         => $orden,
             ]);
@@ -95,8 +128,10 @@ class CotizacionViaticoController extends Controller
             $viatico = CotizacionViatico::findOrFail($id);
 
             $validated = $request->validate([
-                'concepto' => 'sometimes|required|string|max:255',
-                'valor'    => 'sometimes|required|numeric|min:0',
+                'concepto'   => 'sometimes|required|string|max:255',
+                'tipo_costo' => 'sometimes|nullable|in:hora,dia',
+                'cantidad'   => 'sometimes|nullable|numeric|min:0',
+                'valor'      => 'sometimes|required|numeric|min:0',
             ]);
 
             $viatico->update($validated);

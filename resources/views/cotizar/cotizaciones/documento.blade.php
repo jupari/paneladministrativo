@@ -924,20 +924,47 @@
                                                     <div class="card-body p-3">
                                                         <h6 class="mb-3 text-muted small font-weight-bold text-uppercase">Nuevo Viático</h6>
                                                         <div class="row align-items-end">
-                                                            <div class="col-md-6">
+                                                            <div class="col-md-4">
                                                                 <label class="small mb-1">Concepto <span class="text-danger">*</span></label>
                                                                 <input type="text" class="form-control form-control-sm" id="nuevo-viatico-concepto"
                                                                     placeholder="Ej: Alimentación, Transporte, Hospedaje...">
                                                             </div>
-                                                            <div class="col-md-4">
-                                                                <label class="small mb-1">Valor <span class="text-danger">*</span></label>
+                                                            <div class="col-md-2">
+                                                                <label class="small mb-1">Tipo de costo</label>
+                                                                <select class="form-control form-control-sm" id="nuevo-viatico-tipo-costo" onchange="onViaticTipoCostoChange()">
+                                                                    <option value="">— Sin tipo —</option>
+                                                                    <option value="hora">Hora</option>
+                                                                    <option value="dia">Día</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-md-2">
+                                                                <label class="small mb-1">
+                                                                    Cant. operarios
+                                                                    <span id="nuevo-viatico-cantidad-loading" class="d-none">
+                                                                        <i class="fas fa-spinner fa-spin text-warning" style="font-size:0.75rem;"></i>
+                                                                    </span>
+                                                                </label>
+                                                                <input type="number" class="form-control form-control-sm bg-light" id="nuevo-viatico-cantidad"
+                                                                    readonly placeholder="—" step="0.001" min="0">
+                                                            </div>
+                                                            <div class="col-md-2">
+                                                                <label class="small mb-1">Valor por unidad <span class="text-danger">*</span></label>
                                                                 <div class="input-group input-group-sm">
                                                                     <div class="input-group-prepend"><span class="input-group-text">$</span></div>
-                                                                    <input type="number" class="form-control form-control-sm" id="nuevo-viatico-valor" min="0" step="1" placeholder="0">
+                                                                    <input type="number" class="form-control form-control-sm" id="nuevo-viatico-valor" min="0" step="1" placeholder="0" oninput="onViaticValorInput()">
                                                                 </div>
                                                             </div>
                                                             <div class="col-md-2">
-                                                                <div class="btn-group btn-group-sm w-100">
+                                                                <label class="small mb-1">Total calculado</label>
+                                                                <div class="input-group input-group-sm">
+                                                                    <div class="input-group-prepend"><span class="input-group-text">$</span></div>
+                                                                    <input type="text" class="form-control form-control-sm bg-white font-weight-bold text-success" id="nuevo-viatico-total" readonly placeholder="0.00">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row mt-2">
+                                                            <div class="col-12 d-flex justify-content-end">
+                                                                <div class="btn-group btn-group-sm">
                                                                     <button type="button" class="btn btn-success" onclick="guardarNuevoViatico()" title="Guardar">
                                                                         <i class="fas fa-check mr-1"></i> Guardar
                                                                     </button>
@@ -965,7 +992,9 @@
                                                 <thead class="thead-light">
                                                     <tr>
                                                         <th>Concepto</th>
-                                                        <th width="180">Valor</th>
+                                                        <th width="100">Tipo costo</th>
+                                                        <th width="100" class="text-right">Cant. op.</th>
+                                                        <th width="150" class="text-right">Total</th>
                                                         <th width="90" class="text-center">Acciones</th>
                                                     </tr>
                                                 </thead>
@@ -974,7 +1003,7 @@
                                                 </tbody>
                                                 <tfoot>
                                                     <tr class="font-weight-bold bg-warning" style="background-color: rgba(255,193,7,0.15) !important;">
-                                                        <td class="text-right">Total Viáticos:</td>
+                                                        <td colspan="3" class="text-right">Total Viáticos:</td>
                                                         <td class="text-dark" id="display-viaticos-subtotal">$0.00</td>
                                                         <td></td>
                                                     </tr>

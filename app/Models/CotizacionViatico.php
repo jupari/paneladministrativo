@@ -11,13 +11,16 @@ class CotizacionViatico extends Model
     protected $fillable = [
         'cotizacion_id',
         'concepto',
+        'tipo_costo',
+        'cantidad',
         'valor',
         'orden',
     ];
 
     protected $casts = [
-        'valor' => 'decimal:2',
-        'orden' => 'integer',
+        'valor'    => 'decimal:2',
+        'cantidad' => 'decimal:3',
+        'orden'    => 'integer',
     ];
 
     public function cotizacion()

@@ -28,7 +28,7 @@
             <h4>Contratos</h4>
         </div>
         <div class="card-body" >
-            @if(auth()->user()->hasRole('Administrator'))
+            @if(auth()->user()->can('contratos.create'))
                 <div class="col-md-3">
                 <button type="button" onclick="openModalGenerarContratosEmpleados()" class="btn btn-primary btn-block mb-1" data-toggle="tooltip" data-placement="top" title="Generar Contratos">
                     <i class="fas fa-file"></i>Generar Contratos

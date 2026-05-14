@@ -171,14 +171,14 @@ class TablaPreciosCargoService
             //    total_operativo es la fuente de verdad configurada en la novedad.
             if ($esNoveladTotalFijo) {
                 if (str_contains($novedad, 'DOTACI') || str_contains($novedad, 'DOTACION')) {
-                    $porCargo[$cargoId]['dotacion_total'] = $toFloat($r->total_operativo);
+                    $porCargo[$cargoId]['dotacion_total'] = $toFloat($r->valor_porcentaje);
                 } elseif (str_contains($novedad, 'EXAMEN')) {
-                    $porCargo[$cargoId]['examenes_total'] = $toFloat($r->total_operativo);
+                    $porCargo[$cargoId]['examenes_total'] = $toFloat($r->valor_porcentaje);
                 } elseif (str_contains($novedad, 'VIATIC')) {
-                    $t = $toFloat($r->total_operativo);
+                    $t = $toFloat($r->valor_porcentaje);
                     if ($t > 0) $porCargo[$cargoId]['viaticos_total'] = $t;
                 } elseif (str_contains($novedad, 'ALIMENT') || str_contains($novedad, 'ALIMENTACI')) {
-                    $t = $toFloat($r->total_operativo);
+                    $t = $toFloat($r->valor_porcentaje);
                     if ($t > 0) $porCargo[$cargoId]['aliment_total'] = $t;
                 }
                 continue;
