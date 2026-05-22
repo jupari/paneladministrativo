@@ -4103,8 +4103,9 @@ function renderizarTablaNovedades(itemId, novedades) {
         if (!novedad.detalles || novedad.detalles.length === 0) return;
         novedad.detalles.forEach(detalle => {
             const valorFmt = Number(detalle.valor_operativo).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            const searchText = (novedad.nombre + ' ' + detalle.nombre).toLowerCase();
             filas += `
-            <tr>
+            <tr data-search="${searchText}">
                 <td class="py-1 align-middle">
                     <small class="text-dark"><strong>${novedad.nombre}</strong> · ${detalle.nombre}</small>
                 </td>
@@ -4132,6 +4133,24 @@ function renderizarTablaNovedades(itemId, novedades) {
     }
 
     contenedor.innerHTML = `
+        <div class="mb-2">
+            <div class="input-group input-group-sm">
+                <div class="input-group-prepend">
+                    <span class="input-group-text bg-white border-right-0"><i class="fas fa-search text-muted"></i></span>
+                </div>
+                <input type="text" class="form-control border-left-0"
+                       id="filtroNovedades_${itemId}"
+                       placeholder="Buscar novedad o detalle..."
+                       oninput="filtrarNovedades('${itemId}', this.value)">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="button"
+                            onclick="document.getElementById('filtroNovedades_${itemId}').value=''; filtrarNovedades('${itemId}', '');"
+                            title="Limpiar búsqueda">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
         <div class="table-responsive">
         <table class="table table-sm table-borderless mb-0">
             <thead class="thead-light">
@@ -4142,9 +4161,33 @@ function renderizarTablaNovedades(itemId, novedades) {
                     <th class="text-right">Subtotal</th>
                 </tr>
             </thead>
-            <tbody>${filas}</tbody>
+            <tbody id="tbodyNovedades_${itemId}">${filas}</tbody>
         </table>
+        <div id="sinResultadosNovedad_${itemId}" class="text-center text-muted small py-2 d-none">
+            <i class="fas fa-search mr-1"></i> Sin resultados para la búsqueda
+        </div>
         </div>`;
+}
+
+function filtrarNovedades(itemId, query) {
+    const tbody = document.getElementById(`tbodyNovedades_${itemId}`);
+    const sinResultados = document.getElementById(`sinResultadosNovedad_${itemId}`);
+    if (!tbody) return;
+
+    const q = query.trim().toLowerCase();
+    const filas = tbody.querySelectorAll('tr');
+    let visibles = 0;
+
+    filas.forEach(tr => {
+        const texto = tr.dataset.search || '';
+        const coincide = !q || texto.includes(q);
+        tr.style.display = coincide ? '' : 'none';
+        if (coincide) visibles++;
+    });
+
+    if (sinResultados) {
+        sinResultados.classList.toggle('d-none', visibles > 0 || filas.length === 0);
+    }
 }
 
 function recalcularFilaNovedad(itemId, detalleId, valorUnitario) {
@@ -11308,8 +11351,9 @@ function renderizarNovedadesEnNomina(idx, novedades) {
         if (!novedad.detalles || novedad.detalles.length === 0) return;
         novedad.detalles.forEach(detalle => {
             const valorFmt = Number(detalle.valor_operativo).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            const searchText = (novedad.nombre + ' ' + detalle.nombre).toLowerCase();
             filas += `
-            <tr>
+            <tr data-search="${searchText}">
                 <td class="py-1 align-middle" style="font-size:.75rem;">
                     <strong>${novedad.nombre}</strong> · ${detalle.nombre}
                 </td>
@@ -11335,6 +11379,24 @@ function renderizarNovedadesEnNomina(idx, novedades) {
     }
 
     contenedor.innerHTML = `
+        <div class="mb-1">
+            <div class="input-group input-group-sm">
+                <div class="input-group-prepend">
+                    <span class="input-group-text bg-white border-right-0 py-0" style="font-size:.72rem;"><i class="fas fa-search text-muted"></i></span>
+                </div>
+                <input type="text" class="form-control border-left-0 py-0" style="font-size:.75rem;"
+                       id="filtroNovNomina_${idx}"
+                       placeholder="Buscar novedad o detalle..."
+                       oninput="filtrarNovedadesNomina(${idx}, this.value)">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary btn-sm py-0" type="button"
+                            onclick="document.getElementById('filtroNovNomina_${idx}').value=''; filtrarNovedadesNomina(${idx}, '');"
+                            title="Limpiar búsqueda" style="font-size:.72rem;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
         <div class="table-responsive" style="max-height:160px; overflow-y:auto;">
         <table class="table table-sm table-borderless mb-0" style="font-size:.78rem;">
             <thead style="background:#f5f5f5; position:sticky; top:0; z-index:1;">
@@ -11345,9 +11407,33 @@ function renderizarNovedadesEnNomina(idx, novedades) {
                     <th class="py-1 text-right">Subtotal</th>
                 </tr>
             </thead>
-            <tbody>${filas}</tbody>
+            <tbody id="tbodyNovNomina_${idx}">${filas}</tbody>
         </table>
+        <div id="sinResultadosNovNomina_${idx}" class="text-center text-muted py-1 d-none" style="font-size:.75rem;">
+            <i class="fas fa-search mr-1"></i> Sin resultados para la búsqueda
+        </div>
         </div>`;
+}
+
+function filtrarNovedadesNomina(idx, query) {
+    const tbody = document.getElementById(`tbodyNovNomina_${idx}`);
+    const sinResultados = document.getElementById(`sinResultadosNovNomina_${idx}`);
+    if (!tbody) return;
+
+    const q = query.trim().toLowerCase();
+    const filas = tbody.querySelectorAll('tr');
+    let visibles = 0;
+
+    filas.forEach(tr => {
+        const texto = tr.dataset.search || '';
+        const coincide = !q || texto.includes(q);
+        tr.style.display = coincide ? '' : 'none';
+        if (coincide) visibles++;
+    });
+
+    if (sinResultados) {
+        sinResultados.classList.toggle('d-none', visibles > 0 || filas.length === 0);
+    }
 }
 
 /**

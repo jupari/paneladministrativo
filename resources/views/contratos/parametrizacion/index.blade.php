@@ -44,7 +44,7 @@
                     <div class="tab-pane fade show active" id="novedades-tab-pane" role="tabpanel" aria-labelledby="novedades-tab" tabindex="0">
                         <fieldset class="border p-3 mb-4 d-none">
                             <div class="d-flex justify-content-start justify-content-lg-start  my-3">
-                                <button type="button" class="btn btn-primary mb-3" onclick="agregarFilaNovedades()">Nuevo Registro (Tabulator)</button>
+                                <button type="button" class="btn btn-primary mb-3" onclick="abrirModalNovedad()">Nuevo Registro (Tabulator)</button>
                                 <button id="btn-refresh" class="btn btn-outline-secondary mb-3" onclick="CargarNovedades()">Actualizar</button>
                             </div>
                             <div id="tabla-parametrizacion"></div>
@@ -54,7 +54,7 @@
                         <!-- NUEVA SECCIÓN: DataTable Novedades -->
                         <fieldset class="border p-3 mb-4 bg-light">
                             <div class="my-3">
-                                <button type="button" class="btn btn-primary mb-3" onclick="agregarFilaNovedadesDT()">Nuevo Registro</button>
+                                <button type="button" class="btn btn-primary mb-3" onclick="abrirModalNovedad()">Nuevo Registro</button>
                                 <button id="btn-refresh-dt" class="btn btn-outline-secondary mb-3" onclick="CargarNovedadesDT()">Actualizar</button>
                             </div>
                             <div id="tabla-parametrizacion-dt-wrapper" class="table-responsive">
@@ -195,6 +195,76 @@
             @endif
         </div>
     </div>
+{{-- ── Modal: Crear / Editar Novedad ──────────────────────────────────────── --}}
+<div class="modal fade" id="modal-novedad" tabindex="-1" role="dialog" aria-labelledby="modal-novedad-label" aria-hidden="true">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modal-novedad-label">
+                    <i class="fas fa-tag mr-2"></i>
+                    <span id="modal-novedad-title">Nueva Novedad</span>
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-novedad" autocomplete="off">
+                    <input type="hidden" id="novedad-modal-id">
+
+                    <div class="form-group">
+                        <label for="novedad-modal-categoria">Categoría <span class="text-danger">*</span></label>
+                        <select id="novedad-modal-categoria" class="form-control">
+                            <option value="">-- Seleccione --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="novedad-modal-cargo">Cargo <span class="text-danger">*</span></label>
+                        <select id="novedad-modal-cargo" class="form-control">
+                            <option value="">-- Seleccione --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="novedad-modal-novedad">Novedad <span class="text-danger">*</span></label>
+                        <select id="novedad-modal-novedad" class="form-control">
+                            <option value="">-- Seleccione --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row mb-2">
+                        <div class="col-auto">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="novedad-modal-admon">
+                                <label class="form-check-label" for="novedad-modal-admon">Valor Admon</label>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="novedad-modal-obra">
+                                <label class="form-check-label" for="novedad-modal-obra">Valor Obra</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="novedad-modal-valor-pct">Valor %/$</label>
+                        <input type="text" id="novedad-modal-valor-pct" class="form-control" placeholder="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-primary btn-guardar-novedad" onclick="guardarNovedad()">
+                    <i class="fas fa-save mr-1"></i>Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @stop
 
 
@@ -233,4 +303,5 @@
     <!-- Script DataTable Novedades (prueba) -->
     <script src="{{ asset('assets/js/contratos/parametrizacion/parametrizacionDT.js') }}?v={{ time() }}" type="text/javascript"></script>
     <script src="/assets/js/contratos/parametrizacion/importarCostosExcel.js"></script>
+    <script src="{{ asset('assets/js/contratos/parametrizacion/novedadesModal.js') }}?v={{ filemtime(public_path('assets/js/contratos/parametrizacion/novedadesModal.js')) }}" type="text/javascript"></script>
 @stop

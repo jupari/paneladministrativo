@@ -5,9 +5,14 @@ async function copiarFilaACargos(rowIdx) {
     const cargoOrigen = rowData?.cargo_id;
     const todasFilas = tablaNovedadesDT.rows().data().toArray();
 
-    // Construir opciones de cargos (excluye el origen)
-    const opciones = (Array.isArray(cargos) ? cargos : Object.entries(cargos || {}).map(([id, nombre]) => ({ id, nombre })))
-        .filter(o => String(o.id) !== String(cargoOrigen));
+    // Construir opciones de cargos: normalizar a [{id, nombre}], excluir origen, ordenar por nombre
+    const todosCargos = Object.entries(cargos || {}).map(([id, nombre]) => ({
+        id: String(id),
+        nombre: typeof nombre === 'object' ? (nombre.nombre ?? '') : String(nombre)
+    }));
+    const opciones = todosCargos
+        .filter(o => o.id !== String(cargoOrigen))
+        .sort((a, b) => a.nombre.toLowerCase().localeCompare(b.nombre.toLowerCase()));
 
     const selectHtml = `
         <select id="copiar_cargos" class="swal2-select" multiple style="height:180px">
@@ -181,6 +186,9 @@ function CargarNovedadesDT() {
             } },
             { data: null, orderable: false, name: 'acciones', render: function(data, type, row, meta) {
                 return `<div class="d-flex justify-content-center">
+                    <button class="btn btn-info btn-xs mr-1" onclick="editarNovedad(${meta.row})" title="Editar registro">
+                        <i class="fa fa-edit"></i>
+                    </button>
                     <button class="btn btn-danger btn-xs" onclick="eliminarFilaNovedadesDT(${meta.row})" title="Eliminar fila">
                         <i class="fa fa-trash"></i>
                     </button>

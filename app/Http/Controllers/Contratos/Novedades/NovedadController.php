@@ -34,13 +34,15 @@ class NovedadController extends Controller
         $request->merge(['detalles' => $detalles]);
 
         $request->validate([
-            'nombre' => 'required|string|max:255',
+            'nombre' => 'required|string|max:255|unique:novedades,nombre',
             'total_admon' => 'nullable',
             'total_operativo' => 'nullable',
             'active' => 'required|boolean',
             'grupo_cotiza' => 'required|boolean',
             'detalles' => 'required|array|min:1',
             'detalles.*.nombre' => 'required|string|max:255',
+        ], [
+            'nombre.unique' => 'Ya existe una novedad con ese nombre. Por favor elige un nombre diferente.',
         ]);
 
         $novedad = Novedad::create([
@@ -78,13 +80,15 @@ class NovedadController extends Controller
         $request->merge(['detalles' => $detalles]);
 
         $request->validate([
-            'nombre' => 'required|string|max:255',
+            'nombre' => 'required|string|max:255|unique:novedades,nombre,'.$id,
             'total_admon' => 'nullable',
             'total_operativo' => 'nullable',
             'active' => 'required|boolean',
             'grupo_cotiza' => 'required|boolean',
             'detalles' => 'required|array|min:1',
             'detalles.*.nombre' => 'required|string|max:255',
+        ], [
+            'nombre.unique' => 'Ya existe una novedad con ese nombre. Por favor elige un nombre diferente.',
         ]);
 
         $novedad = Novedad::findOrFail($id);
@@ -100,6 +104,44 @@ class NovedadController extends Controller
 
         // Sincronizar detalles: crear, actualizar o eliminar según corresponda
         $idsEnviados = collect($detalles)->pluck('id')->filter()->all();
+
+        // Verificar si los detalles a eliminar están referenciados en otras tablas
+        $idsAEliminar = $novedad->detalles()->whereNotIn('id', $idsEnviados)->pluck('id')->all();
+        if (!empty($idsAEliminar)) {
+            $enParametrizacion = \DB::table('parametrizacion')
+                ->join('novedades_detalle', 'novedades_detalle.id', '=', 'parametrizacion.novedad_detalle_id')
+                ->whereIn('parametrizacion.novedad_detalle_id', $idsAEliminar)
+                ->distinct()
+                ->pluck('novedades_detalle.nombre')
+                ->all();
+
+            $enCotizaciones = \DB::table('ord_cotizaciones_listas')
+                ->join('novedades_detalle', 'novedades_detalle.id', '=', 'ord_cotizaciones_listas.novedad_detalle_id')
+                ->whereIn('ord_cotizaciones_listas.novedad_detalle_id', $idsAEliminar)
+                ->distinct()
+                ->pluck('novedades_detalle.nombre')
+                ->all();
+
+            if (!empty($enParametrizacion) || !empty($enCotizaciones)) {
+                $lineas = [];
+                if (!empty($enParametrizacion)) {
+                    $lineas[] = 'Parametrización: ' . implode(', ', $enParametrizacion);
+                }
+                if (!empty($enCotizaciones)) {
+                    $lineas[] = 'Cotizaciones: ' . implode(', ', $enCotizaciones);
+                }
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se puede guardar porque algunos detalles están en uso.',
+                    'errors' => [
+                        'detalle_referenciado' => [
+                            'Los siguientes detalles no pueden eliminarse porque están relacionados con otras tablas — ' . implode(' | ', $lineas),
+                        ],
+                    ],
+                ], 422);
+            }
+        }
+
         // Eliminar detalles que ya no están
         $novedad->detalles()->whereNotIn('id', $idsEnviados)->delete();
 

@@ -82,15 +82,19 @@ function eliminarDetalle(index) {
         reverseButtons: true
     }).then((result) => {
         if (result.value) {
+            const detalleEliminado = detalles[index];
             detalles.splice(index, 1);
             actualizarTabla();
-            updateData();
-            toastr.success('Detalle eliminado correctamente.');
+            updateData(function () {
+                // Restaurar el detalle si el servidor rechaza la eliminación
+                detalles.splice(index, 0, detalleEliminado);
+                actualizarTabla();
+            });
         }
     });
 }
 
-function updateData() {
+function updateData(onError) {
 
     let activo=$('#active').is(':checked')?1:0;
     $('#active').change(function(){
@@ -130,8 +134,19 @@ function updateData() {
             toastr.success(res.message);
         },
         error: function (err) {
-           if (err.status === 422) {
+            if (err.status === 422) {
                 const errors = err.responseJSON.errors;
+
+                if (errors.detalle_referenciado) {
+                    if (typeof onError === 'function') onError();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'No se puede eliminar el detalle',
+                        text: errors.detalle_referenciado[0],
+                        confirmButtonText: 'Entendido'
+                    });
+                    return;
+                }
 
                 for (let field in errors) {
                     const mensaje = errors[field][0];

@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', 'Clientes')
+@section('title', 'Cargos')
 
 @section('plugin.Datatables')
 
@@ -53,6 +53,11 @@
         </div>
 
         <div class="card-body pt-2">
+            <div class="mb-2">
+                <button type="button" id="btn-export-excel" class="btn btn-success btn-sm">
+                    <i class="far fa-file-excel mr-1"></i> Excel
+                </button>
+            </div>
             <div class="table-responsive">
                 <table id="cargos-table" class="table table-bordered table-hover table-sm">
                     <thead class="thead-light">

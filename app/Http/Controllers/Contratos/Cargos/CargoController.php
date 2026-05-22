@@ -155,16 +155,16 @@ class CargoController extends Controller
     }
 
     /**
-     * Elimina un cargo.
+     * Desactiva un cargo (no lo elimina).
      */
     public function destroy($id)
     {
         try {
             $cargo = Cargo::findOrFail($id);
-            $cargo->delete();
-            return response()->json(['success' => true, 'message' => 'Cargo eliminado exitosamente.'], 200);
+            $cargo->update(['active' => 0]);
+            return response()->json(['success' => true, 'message' => 'Cargo desactivado exitosamente.'], 200);
         } catch (Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Error al eliminar el cargo: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Error al desactivar el cargo: ' . $e->getMessage()], 500);
         }
     }
 }

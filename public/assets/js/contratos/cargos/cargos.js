@@ -17,20 +17,8 @@ function Cargar() {
         $('#cargos-table').DataTable().destroy();
     }
 
-    $('#cargos-table').DataTable({
+    var dt = $('#cargos-table').DataTable({
         language: { url: '/assets/js/spanish.json' },
-        responsive: true,
-        dom: "<'row'<'col-sm-6'B><'col-sm-6'f>>" +
-             "<'row'<'col-sm-12'ltr>>" +
-             "<'row'<'col-sm-5'i><'col-sm-7'p>>",
-        buttons: [{
-            extend: 'excel',
-            className: 'btn btn-success btn-sm',
-            exportOptions: { columns: ':not(.exclude)' },
-            text: '<i class="far fa-file-excel"></i> Excel',
-            titleAttr: 'Exportar a Excel',
-            filename: 'cargos',
-        }],
         ajax: '/admin/admin.cargos.index',
         columns: [
             { data: 'DT_RowIndex',              name: 'DT_RowIndex',              className: 'exclude text-center', orderable: false, searchable: false },
@@ -44,6 +32,20 @@ function Cargar() {
         order: [[1, 'asc']],
         pageLength: 15,
         lengthMenu: [[10, 15, 25, 50, -1], [10, 15, 25, 50, 'Todos']],
+    });
+
+    $('#btn-export-excel').off('click').on('click', function () {
+        new $.fn.dataTable.Buttons(dt, {
+            buttons: [{
+                extend: 'excel',
+                filename: 'cargos',
+                exportOptions: {
+                    columns: function (idx, data, node) {
+                        return !$(node).hasClass('exclude');
+                    }
+                }
+            }]
+        }).container().find('a,button').first().trigger('click');
     });
 }
 
@@ -189,13 +191,13 @@ function updateCargo(id) {
 ───────────────────────────────────────────── */
 function deleteCargo(id) {
     Swal.fire({
-        title: '¿Eliminar cargo?',
-        text: 'Esta acción no se puede deshacer.',
+        title: '¿Desactivar cargo?',
+        text: 'El cargo quedará inactivo y no se eliminará.',
         type: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
         cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Sí, eliminar',
+        confirmButtonText: 'Sí, desactivar',
         cancelButtonText: 'Cancelar',
     }).then(result => {
         if (!result.value) return;
@@ -208,7 +210,7 @@ function deleteCargo(id) {
             Cargar();
             toastr.success(response.message);
         }).catch(e => {
-            toastr.error(e.responseJSON?.message || 'Error al eliminar.');
+            toastr.error(e.responseJSON?.message || 'Error al desactivar.');
         });
     });
 }

@@ -143,3 +143,8 @@
   background-color: rgba(var(--company-primary-rgb, 0, 123, 255), 0.1) !important;
   border-color: var(--company-primary, #007bff) !important;
 }
+
+/* Sidebar menu headers - fuente más pequeña */
+.nav-sidebar .nav-header {
+  font-size: 0.65rem !important;
+}
