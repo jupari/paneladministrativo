@@ -25,7 +25,6 @@ class ConfigureCompanyBranding
                 'adminlte.title_postfix' => '',
                 'adminlte.logo' => '<b>' . $company->name . '</b>',
                 'adminlte.logo_img_alt' => $company->name . ' Logo',
-                'adminlte.usermenu_header_class' => 'text-white',
             ]);
 
             // Si tiene logo, configurarlo

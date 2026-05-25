@@ -499,8 +499,9 @@ class PlantillaController extends Controller
                 $fileIdPDF = $statusJob['target_files'][0]['id'];
                 $rutaDestino = $carpetaSalida.str_replace(' ', '_', $plantilla->plantilla ."_". $datosUsuarios[0]->nombres .".pdf");
                 $resultadoPDF = $this->zamzarService->descargarArchivo($fileIdPDF,$rutaDestino);
+                $rutaRelativa = str_replace(storage_path('app/public'), '/storage', $resultadoPDF);
 
-                return response()->json(['success'=>true, 'data'=>$resultadoPDF, 'message'=>'El documento fue creado con éxito.']);
+                return response()->json(['success'=>true, 'data'=>$rutaRelativa, 'message'=>'El documento fue creado con éxito.']);
 
             }
 

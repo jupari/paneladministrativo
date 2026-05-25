@@ -423,8 +423,8 @@ function generarContratosEmpleados(){
                 let celda='';
                 documentos.forEach(el => {
                     if(el){
-                        ruta=el.replace("/home/u168992517/domains/app.minduval.com/storage/app/public", "/storage");
-                        nombreArchivo=el.replace("/home/u168992517/domains/app.minduval.com/storage/app/public/documentos_generados/", " ");
+                        ruta = el;
+                        nombreArchivo = el.replace('/storage/documentos_generados/', '');
                         console.log('ruta', ruta);
                         celda =`<td>${nombreArchivo}</td>
                                 <td class="text-center">

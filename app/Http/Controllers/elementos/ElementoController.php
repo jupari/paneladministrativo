@@ -48,7 +48,10 @@ class ElementoController extends Controller
         if (!$elemento) {
             return response()->json(['message' => 'Elemento no encontrado'], 404);
         }
-        return response()->json($elemento);
+        return response()->json([
+            'message' => 'Elemento actualizado exitosamente',
+            'data' => $elemento
+        ]);
     }
 
     public function destroy($id)
