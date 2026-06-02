@@ -11148,7 +11148,7 @@ function abrirModalNominaConfig(cargos) {
                         <div class="d-flex justify-content-between align-items-center mt-3 px-1">
                             <small class="text-muted">
                                 <i class="fas fa-shield-alt text-info mr-1"></i>
-                                Cálculo incluye SS + Parafiscales + Prestaciones (Ley 1607)
+                                Cálculo incluye SS + Parafiscales + Prestaciones
                             </small>
                             <div class="text-right">
                                 <span class="text-muted mr-1" style="font-size:.8rem;">SUBTOTAL NÓMINA</span>
