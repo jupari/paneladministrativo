@@ -6,10 +6,10 @@
 .editorconfig
 node_modules
 vendor
-storage/logs/*
-storage/framework/cache/*
-storage/framework/sessions/*
-storage/framework/views/*
+storage/*
+!storage/app/.gitignore
+!storage/framework/.gitignore
+!storage/logs/.gitignore
 bootstrap/cache/*
 tests
 .phpunit.result.cache

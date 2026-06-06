@@ -141,12 +141,41 @@ Para producción, considera:
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
+## Volúmenes Persistentes
+
+La aplicación usa volúmenes de Docker para persistir datos:
+
+- **storage-data**: Almacena archivos de `storage/` (logs, caché, sesiones, uploads)
+- **db-data**: Almacena datos de MySQL
+
+Estos volúmenes NO se borran cuando reconstruyes la imagen o recrear los contenedores.
+
+### Gestionar volúmenes
+
+```bash
+# Listar volúmenes
+docker volume ls
+
+# Ver detalles del volumen de storage
+docker volume inspect paneladministrativo_storage-data
+
+# Hacer backup del volumen de storage
+docker run --rm -v paneladministrativo_storage-data:/data -v $(pwd):/backup ubuntu tar czf /backup/storage-backup.tar.gz -C /data .
+
+# Restaurar backup
+docker run --rm -v paneladministrativo_storage-data:/data -v $(pwd):/backup ubuntu tar xzf /backup/storage-backup.tar.gz -C /data
+
+# CUIDADO: Eliminar volumen de storage (borra todos los datos)
+docker volume rm paneladministrativo_storage-data
+```
+
 ## Notas Importantes
 
 - El contenedor usa Supervisor para gestionar Nginx y PHP-FPM
 - Los logs se envían a stdout/stderr para fácil acceso con `docker logs`
-- El directorio `storage` debe tener permisos de escritura
+- El directorio `storage` es un volumen persistente que sobrevive a reconstrucciones
 - Las optimizaciones de Laravel se ejecutan automáticamente al iniciar
+- Los archivos subidos y logs se mantienen entre reinicios
 
 ## Soporte
 
