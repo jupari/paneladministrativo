@@ -12,7 +12,6 @@ use App\Models\CotizacionProducto;
 use App\Models\Elemento;
 use App\Models\ItemPropio;
 use App\Models\Novedad;
-use App\Models\Parametrizacion;
 use App\Models\ParametrizacionCosto;
 use App\Models\Producto;
 use Illuminate\Http\Request;
@@ -746,49 +745,43 @@ class CotizacionProductoController extends Controller
                 ->pluck('id')
                 ->toArray();
 
+            // NOMINA vive en la tabla "parametrizacion" (por cargo) y se resuelve más abajo
+            // desde cargos_tabla_precios. El resto de categorías con costos = 0 (MAQUINARIA,
+            // insumos, etc.) viven en "parametrizacion_costos".
+            $categoriasParametrizacionCostosCero = array_values(array_diff($categoriasConCostosCero, $categoriasNominaIds));
+
             $itemsParametrizacion = collect();
 
-            if (!empty($categoriasConCostosCero)) {
-                // Obtener datos de parametrización para categorías con costos = 0
-                $parametrizaciones = Parametrizacion::whereIn('categoria_id', $categoriasConCostosCero)
+            if (!empty($categoriaIds)) {
+                $parametrizacionCostos = ParametrizacionCosto::whereIn('categoria_id', $categoriaIds)
                     ->where('active', 1)
-                    ->with(['categoria:id,nombre', 'cargo:id,nombre'])
+                    ->orderBy('categoria_id')
+                    ->orderBy('item_nombre')
                     ->get();
 
-                // Formatear datos de parametrización para que coincidan con la estructura de items propios
-                $itemsParametrizacion = $parametrizaciones->map(function($param, $index) {
-                    $cargoNombre = $param->cargo->nombre ?? 'Sin Cargo';
-                    $categoriaNombre = $param->categoria->nombre ?? 'N/A';
+                // Formatear datos de parametrización de costos para que coincidan con la estructura de items propios
+                $itemsParametrizacion = $parametrizacionCostos->map(function ($param, $index) use ($categorias) {
+                    $categoriaNombre = optional($categorias->firstWhere('id', $param->categoria_id))->nombre ?? 'N/A';
+                    $precio = (float) ($param->costo_unitario ?? $param->costo_dia ?? 0);
 
                     return [
-                        'id' =>$param->id, // Prefijo para distinguir de items propios
+                        'id' => $param->id,
                         'categoria_id' => $param->categoria_id,
-                        'cargo_id' => $param->cargo_id,
-                        'nombre' => $cargoNombre . ' - ' . $categoriaNombre,
-                        'codigo' => 'PARAM-' . $param->categoria_id . '-' . str_pad($param->id, 3, '0', STR_PAD_LEFT),
-                        'unidad_medida' => 'Porcentaje',
+                        'nombre' => $param->item_nombre,
+                        'codigo' => $param->item ?? ('PARAM-' . $param->categoria_id . '-' . str_pad($param->id, 3, '0', STR_PAD_LEFT)),
+                        'unidad_medida' => $param->unidad_medida ?? 'Unidad',
                         'orden' => 999 + $index, // Ordenar después de items propios
-                        'valor_porcentaje' => $param->valor_porcentaje,
-                        'valor_admon' => $param->valor_admon,
-                        'valor_obra' => $param->valor_obra,
+                        'precio' => $precio,
+                        'costo_dia' => (float) ($param->costo_dia ?? 0),
+                        'costo_unitario' => (float) ($param->costo_unitario ?? 0),
                         'tipo' => 'parametrizacion',
+                        'fuente' => 'parametrizacion_costos',
                         'categoria' => [
                             'id' => $param->categoria_id,
                             'nombre' => $categoriaNombre
                         ],
-                        'cargo' => [
-                            'id' => $param->cargo_id,
-                            'nombre' => $cargoNombre
-                        ],
-                        'descripcion' => "Cargo: {$cargoNombre} | {$param->valor_porcentaje}% | Admón: $" . number_format($param->valor_admon) . " | Obra: $" . number_format($param->valor_obra)
+                        'descripcion' => "Item de parametrización: {$param->item_nombre}" . ($precio ? ' | $' . number_format($precio) : '')
                     ];
-                });
-            }
-
-            // Si la categoría NOMINA está presente, evitamos duplicar cargos: solo usamos tabla de precios
-            if (!empty($categoriasNominaIds)) {
-                $itemsParametrizacion = $itemsParametrizacion->reject(function ($item) use ($categoriasNominaIds) {
-                    return in_array($item['categoria_id'], $categoriasNominaIds, true);
                 });
             }
 
