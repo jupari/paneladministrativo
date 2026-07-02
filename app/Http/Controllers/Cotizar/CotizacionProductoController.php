@@ -283,34 +283,8 @@ class CotizacionProductoController extends Controller
     }
 
     /**
-     * Search for products to add to quotation.
-     */
-    // public function buscarProductos(Request $request): JsonResponse
-    // {
-    //     try {
-    //         $termino = $request->get('termino', '');
-    //         $limite = min((int) $request->get('limite', 50), 100); // Máximo 100
-
-    //         $productos = $this->cotizacionProductoService->buscarProductos($termino, $limite);
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'data' => $productos,
-    //             'message' => 'Productos encontrados exitosamente'
-    //         ]);
-
-    //     } catch (Exception $e) {
-    //         Log::error("Error en CotizacionProductoController@buscarProductos: " . $e->getMessage());
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Error al buscar productos: ' . $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
-
-    /**
-     * Get product details by ID for auto-fill.
-     */
+    * Get product details by ID for auto-fill.
+    */
     public function obtenerDetallesProducto(int $productoId): JsonResponse
     {
         try {
@@ -451,8 +425,6 @@ class CotizacionProductoController extends Controller
                     'errors' => $validator->errors()
                 ], 422);
             }
-
-            // TODO: Implementar guardado real en base de datos cuando las tablas estén creadas
 
             // Por ahora simulamos el guardado exitoso
             $cotizacionId = $request->cotizacion_id;
@@ -641,9 +613,7 @@ class CotizacionProductoController extends Controller
                     'errors' => $validator->errors()
                 ], 422);
             }
-
             // TODO: Implementar eliminación real en base de datos cuando las tablas estén creadas
-
             $cotizacionId = $request->cotizacion_id;
             $elementos = $request->elementos;
 
@@ -704,6 +674,10 @@ class CotizacionProductoController extends Controller
             $categoriaIds = $request->input('categoria_ids', []);
             $elementos = Elemento::where('active',1)->get();
 
+            // Cantidad de horas laborales ordinarias permitidas por turno, usada para derivar
+            // el costo_hora a partir del costo_dia (en vez de un divisor fijo de 8).
+            $horasMaxOrdinarias = (float) ($elementos->firstWhere('codigo', 'TURNO_MAX_HORAS_ORD')?->valor ?? 8);
+
             if (empty($categoriaIds)) {
                 return response()->json([
                     'success' => false,
@@ -752,26 +726,34 @@ class CotizacionProductoController extends Controller
                 // Obtener datos de parametrización para categorías con costos = 0
                 $parametrizaciones = ParametrizacionCosto::whereIn('categoria_id', $categoriaIds)
                     ->where('active', 1)
-                    ->with(['categoria:id,nombre', 'cargo:id,nombre'])
+                    ->with(['categoria:id,nombre'])
                     ->get();
 
                 // Formatear datos de parametrización para que coincidan con la estructura de items propios
-                $itemsParametrizacion = $parametrizaciones->map(function($param, $index) {
-                    $cargoNombre = $param->cargo->nombre ?? 'Sin Cargo';
+                $itemsParametrizacion = $parametrizaciones->map(function($param, $index) use ($horasMaxOrdinarias) {
+                    $cargoNombre = $param->cargo->nombre ?? '';
                     $categoriaNombre = $param->categoria->nombre ?? 'N/A';
+
+                    $costoDia = (float) ($param->costo_dia ?? 0);
+                    // costo_hora se deriva de costo_dia entre las horas laborales permitidas por
+                    // turno (elementos.valor donde codigo = TURNO_MAX_HORAS_ORD), no del valor
+                    // guardado en parametrizacion_costos.costo_hora.
+                    $costoHora = ($costoDia > 0 && $horasMaxOrdinarias > 0)
+                        ? round($costoDia / $horasMaxOrdinarias, 2)
+                        : 0;
 
                     return [
                         'id' =>$param->id, // Prefijo para distinguir de items propios
                         'categoria_id' => $param->categoria_id,
                         'cargo_id' => $param->cargo_id,
-                        'nombre' => $cargoNombre . ' - ' . $categoriaNombre,
-                        'codigo' => 'PARAM-' . $param->categoria_id . '-' . str_pad($param->id, 3, '0', STR_PAD_LEFT),
-                        'unidad_medida' => 'Porcentaje',
+                        'nombre' => $param->item_nombre ?? 'Item parametrizado',
+                        'codigo' => $param->item ?? 'ITEM' . str_pad($param->id, 3, '0', STR_PAD_LEFT),
+                        'unidad_medida' => $param->unidad_medida ?? 'SERVICIO',
                         'orden' => 999 + $index, // Ordenar después de items propios
-                        'valor_porcentaje' => $param->valor_porcentaje,
-                        'valor_admon' => $param->valor_admon,
-                        'valor_obra' => $param->valor_obra,
-                        'tipo' => 'parametrizacion',
+                        'costo_dia' => $costoDia,
+                        'costo_hora' => $costoHora,
+                        'costo_unitario' => $param->costo_unitario,
+                        'tipo' => 'parametrizacion', // Indicar que es de parametrización
                         'categoria' => [
                             'id' => $param->categoria_id,
                             'nombre' => $categoriaNombre
@@ -860,8 +842,7 @@ class CotizacionProductoController extends Controller
             }
 
             // Combinar items propios con items de parametrización y nómina
-            $todosLosItems = $itemsPropios
-                ->concat($itemsParametrizacion)
+            $todosLosItems =$itemsParametrizacion
                 ->concat($itemsNomina)
                 ->sortBy(['categoria_id', 'orden', 'nombre'])
                 ->values();
@@ -890,34 +871,7 @@ class CotizacionProductoController extends Controller
     {
         try {
             // Simulando elementos existentes en una cotización
-            $elementos = [
-                [
-                    'id' => 1,
-                    'tipo' => 'Producto',
-                    'descripcion' => 'Cemento Portland',
-                    'cantidad' => 20,
-                    'precio_unitario' => 25.50,
-                    'costo_total' => 510.00
-                ],
-                [
-                    'id' => 2,
-                    'tipo' => 'Salario',
-                    'categoria' => 'Ingeniería',
-                    'descripcion' => 'Ingeniero Civil',
-                    'tipo_costo' => 'COSTO_MES',
-                    'cantidad_dias' => 30,
-                    'valor_unitario' => 7000.00,
-                    'costo_total' => 7000.00
-                ],
-                [
-                    'id' => 3,
-                    'tipo' => 'Producto',
-                    'descripcion' => 'Arena Fina',
-                    'cantidad' => 5,
-                    'precio_unitario' => 15.00,
-                    'costo_total' => 75.00
-                ]
-            ];
+            $elementos = [];
 
             return response()->json([
                 'success' => true,
@@ -1196,26 +1150,7 @@ class CotizacionProductoController extends Controller
             }
 
             // Simulación de búsqueda
-            $productosEncontrados = [
-                [
-                    'id' => 1,
-                    'codigo' => 'CEM001',
-                    'nombre' => 'Cemento Portland Tipo I',
-                    'precio' => 25.50,
-                    'unidad' => 'Bulto',
-                    'categoria' => 'Materiales',
-                    'stock' => 100
-                ],
-                [
-                    'id' => 9,
-                    'codigo' => 'CEM002',
-                    'nombre' => 'Cemento Portland Tipo III',
-                    'precio' => 28.00,
-                    'unidad' => 'Bulto',
-                    'categoria' => 'Materiales',
-                    'stock' => 75
-                ]
-            ];
+            $productosEncontrados = [];
 
             return response()->json([
                 'success' => true,

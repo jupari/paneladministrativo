@@ -32,4 +32,9 @@ class ParametrizacionCosto extends Model
     {
         return $this->belongsTo(UnidadMedida::class, 'unidad_medida', 'sigla');
     }
+
+    public function categoria()
+    {
+        return $this->belongsTo(Categoria::class, 'categoria_id');
+    }
 }

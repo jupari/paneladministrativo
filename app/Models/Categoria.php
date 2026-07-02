@@ -28,4 +28,9 @@ class Categoria extends Model
     {
         return $this->hasMany(CotizacionProducto::class, 'categoria_id');
     }
+
+    public function parametrizacionCostos()
+    {
+        return $this->hasMany(ParametrizacionCosto::class, 'categoria_id');
+    }
 }

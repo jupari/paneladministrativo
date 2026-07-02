@@ -55,11 +55,16 @@ class CotizacionViaticoController extends Controller
 
             Cotizacion::findOrFail($cotizacionId);
 
-            $cantidad = DB::table('ord_cotizacion_productos')
-                ->where('cotizacion_id', $cotizacionId)
-                ->where('tipo_costo', $tipoCosto)
-                ->where('active', true)
-                ->sum('cantidad');
+            // Solo los productos de la categoría NOMINA representan operarios; los demás
+            // (maquinaria, insumos, servicios, etc.) no deben sumar a "Cant. operarios"
+            // aunque compartan el mismo tipo_costo (hora/dia).
+            $cantidad = DB::table('ord_cotizacion_productos as p')
+                ->join('categorias as cat', 'cat.id', '=', 'p.categoria_id')
+                ->where('p.cotizacion_id', $cotizacionId)
+                ->where('p.tipo_costo', $tipoCosto)
+                ->where('p.active', true)
+                ->whereRaw("UPPER(cat.nombre) = 'NOMINA'")
+                ->sum('p.cantidad');
 
             return response()->json([
                 'success'  => true,

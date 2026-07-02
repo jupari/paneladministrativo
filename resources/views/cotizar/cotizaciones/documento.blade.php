@@ -279,7 +279,7 @@
                         <div class="row mb-3">
                             <div class="col-12 col-md-2">
                                 <label for="num_documento" class="form-label">Documento: <span class="text-danger">*</span></label>
-                                <input type="text" id="num_documento" name="num_documento" class="form-control" readonly>
+                                <input type="text" id="num_documento" name="num_documento" class="form-control" readonly placeholder="Se asignará al guardar">
                                 <div class="invalid-feedback" id="error_num_documento"></div>
                             </div>
                             <div class="col-12 col-md-2">
@@ -1363,6 +1363,40 @@
                         </button>
                         <button type="submit" class="btn btn-primary" id="btn_guardar_subitem">
                             <i class="fas fa-save"></i> Guardar Subitem
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para editar el nombre de una Capitulación (Item) -->
+    <div class="modal fade" id="modalEditarItem" tabindex="-1" aria-labelledby="modalEditarItemLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalEditarItemLabel">
+                        <i class="fas fa-edit"></i> Editar Capitulación
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="formEditarItem" onsubmit="guardarEdicionItem(event)">
+                    <div class="modal-body">
+                        <input type="hidden" id="editar_item_id">
+                        <div class="form-group">
+                            <label for="editar_item_nombre" class="form-label">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editar_item_nombre" maxlength="255" style="text-transform: uppercase;">
+                            <div class="invalid-feedback" id="error_editar_item_nombre"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="btn_guardar_edicion_item">
+                            <i class="fas fa-save"></i> Guardar Cambios
                         </button>
                     </div>
                 </form>

@@ -96,6 +96,45 @@ class CotizacionItemService
     }
 
     /**
+     * Actualizar el nombre de un item individual existente (usado desde el modal de edición)
+     */
+    public function actualizarItem(int $itemId, array $itemData): array
+    {
+        DB::beginTransaction();
+
+        try {
+            $item = CotizacionItem::findOrFail($itemId);
+
+            if (!isset($itemData['nombre']) || empty(trim($itemData['nombre']))) {
+                throw new Exception('El nombre del item es requerido');
+            }
+
+            if (strlen(trim($itemData['nombre'])) > 255) {
+                throw new Exception('El nombre del item no puede exceder 255 caracteres');
+            }
+
+            $item->nombre = strtoupper(trim($itemData['nombre']));
+            $item->save();
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'message' => 'Item actualizado exitosamente',
+                'data' => $item->toArray()
+            ];
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            return [
+                'success' => false,
+                'message' => 'Error al actualizar item: ' . $e->getMessage(),
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
      * Guardar items de cotización (crear nuevos y actualizar existentes)
      */
     public function guardarItems(int $cotizacionId, array $items): array

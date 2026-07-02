@@ -142,7 +142,10 @@ class CotizacionController extends Controller
     {
         $clientes = $this->cotizacionService->obtenerClientes();
         $estados = $this->cotizacionService->obtenerEstados();
-        $consecutivo = $this->cotizacionService->obtenerConsecutivoDocumento('COT');
+        // No se calcula el consecutivo aquí: mostrarlo antes de guardar induce a errores
+        // cuando varios usuarios abren el formulario a la vez y ven el mismo número sugerido.
+        // El número real se asigna en el servidor al guardar (CotizacionService::crearCotizacion).
+        $consecutivo = '';
         $variable = 'crear';
         $cotizacion = null;
         return view('cotizar.cotizaciones.documento', compact('clientes', 'estados', 'consecutivo', 'variable', 'cotizacion'));

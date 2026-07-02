@@ -408,6 +408,7 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::get('admin.cotizaciones.items.getUnidadesMedida', 'getUnidadesMedida')->name('admin.cotizaciones.items.getUnidadesMedida');
         Route::post('admin.cotizaciones.items.store', 'store')->name('admin.cotizaciones.items.store');
         Route::post('admin.cotizaciones.items.createItem', 'createItem')->name('admin.cotizaciones.items.createItem');
+        Route::put('admin.cotizaciones.items.updateItem/{itemId}', 'updateItem')->name('admin.cotizaciones.items.updateItem');
         Route::put('admin.cotizaciones.items.update/{cotizacionId}', 'update')->name('admin.cotizaciones.items.update');
         Route::delete('admin.cotizaciones.items.destroy/{id}', 'destroy')->name('admin.cotizaciones.items.destroy');
         Route::post('admin.cotizaciones.items.createSubitem', 'createSubitem')->name('admin.cotizaciones.items.createSubitem');

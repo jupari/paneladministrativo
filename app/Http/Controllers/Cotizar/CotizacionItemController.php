@@ -159,6 +159,43 @@ class CotizacionItemController extends Controller
     }
 
     /**
+     * Actualizar el nombre de un item individual (usado por el modal de edición de capitulación)
+     */
+    public function updateItem(Request $request, $itemId): JsonResponse
+    {
+        try {
+            $request->validate([
+                'nombre' => 'required|string|max:255',
+            ]);
+
+            $resultado = $this->cotizacionItemService->actualizarItem(
+                $itemId,
+                $request->only(['nombre'])
+            );
+
+            if ($resultado['success']) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $resultado['message'],
+                    'data' => $resultado['data']
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => $resultado['message']
+                ], 422);
+            }
+
+        } catch (Exception $e) {
+            Log::error('Error al actualizar item individual: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar el item: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Actualizar items de cotización
      */
     public function update(CotizacionItemRequest $request, $cotizacionId): JsonResponse

@@ -21,7 +21,10 @@ class StoreCotizacionRequest extends FormRequest
     {
         return [
             // Datos básicos
-            'num_documento' => 'required|string|max:50|unique:ord_cotizacion,num_documento',
+            // Nullable: si no se envía, el servidor lo genera de forma atómica al guardar
+            // (ver CotizacionService::crearCotizacion) para evitar consecutivos duplicados
+            // cuando varios usuarios crean cotizaciones al mismo tiempo.
+            'num_documento' => 'nullable|string|max:50|unique:ord_cotizacion,num_documento',
             'fecha' => 'required|date',
             'tipo' => 'nullable|string|max:50',
             'proyecto' => 'required|string|max:255',

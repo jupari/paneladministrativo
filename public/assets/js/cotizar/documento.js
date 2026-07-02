@@ -389,6 +389,13 @@ async function guardarCotizacion() {
                     await guardarCondicionesCotizacion(cotizacionGuardadaId);
                 }
             } else {
+                // El consecutivo se asigna en el servidor al guardar; recién ahora se muestra en el campo.
+                const numDocumentoInput = document.getElementById('num_documento');
+                if (numDocumentoInput && response.data?.num_documento) {
+                    numDocumentoInput.value = response.data.num_documento;
+                }
+                consecutivo = response.data?.num_documento || consecutivo;
+
                 toastr.success('Cotización creada exitosamente');
                 document.getElementById('accordionCotizacionDetails').style.display = 'block';
                 botonesAgregarProductos.classList.remove('d-none');
@@ -2407,9 +2414,7 @@ function abrirModalSeleccionCategorias() {
                         </div>
 
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <button type="button" class="btn btn-outline-secondary" onclick="toggleTodasCategorias()">
-                                <i class="fas fa-check-double mr-1"></i>Seleccionar todas
-                            </button>
+
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -2422,6 +2427,10 @@ function abrirModalSeleccionCategorias() {
             </div>
         </div>
     `;
+
+    // <button type="button" class="btn btn-outline-secondary" onclick="toggleTodasCategorias()">
+    //                             <i class="fas fa-check-double mr-1"></i>Seleccionar todas
+    //                         </button>
 
     // Remover modal anterior si existe
     const modalAnterior = document.getElementById('modalSeleccionCategorias');
@@ -2490,13 +2499,7 @@ async function cargarCategoriasPorSeleccionar() {
 
         // Si no hay categorí­as, usar datos simulados
         if (categorias.length === 0) {
-            categorias = [
-                { id: 1, nombre: 'Materiales de Construcción' },
-                { id: 2, nombre: 'Herramientas' },
-                { id: 3, nombre: 'Equipos' },
-                { id: 4, nombre: 'Servicios' },
-                { id: 5, nombre: 'Mano de Obra' }
-            ];
+            categorias = [];
         }
 
         // Generar HTML de categorí­as
@@ -2526,7 +2529,7 @@ async function cargarCategoriasPorSeleccionar() {
         document.getElementById('categoriasContainer').innerHTML = `
             <div class="alert alert-warning">
                 <i class="fas fa-exclamation-triangle mr-2"></i>
-                Error al cargar categorí­as. Se usarán categorí­as por defecto.
+                Error al cargar categorí­as.
             </div>
         `;
     }
@@ -2665,9 +2668,9 @@ async function cargarItemsPorCategorias() {
                         } : null,
                     }),
                     ...(tipoItem === 'parametrizacion' && {
-                        valor_porcentaje: Number(item.valor_porcentaje || 0),
-                        valor_admon: Number(item.valor_admon || 0),
-                        valor_obra: Number(item.valor_obra || 0)
+                        costo_dia: Number(item.costo_dia || 0),
+                        costo_hora: Number(item.costo_hora || 0),
+                        costo_unitario: Number(item.costo_unitario || 0)
                     }),
                     ...(tipoItem === 'cargo_tabla' && {
                         tabla_precios_id: item.tabla_id || null,
@@ -2874,6 +2877,8 @@ function abrirModalSeleccionItemsPropios(itemsPropios, categoriaIds) {
  * Generar HTML para mostrar items propios
  */
 function generarHtmlItemsPropios(itemsPropios) {
+
+    console.log('Generando HTML para items propios:', itemsPropios);
     if (itemsPropios.length === 0) {
         return `
             <div class="text-center p-4 text-muted">
@@ -2913,10 +2918,12 @@ function generarHtmlItemsPropios(itemsPropios) {
         `;
 
         data.items.forEach(item => {
+            console.log('Procesando item propio:===', item);
             // Determinar el tipo de item y su información específica
             const esCargoTabla = item.tipo === 'cargo_tabla';
             const esParametrizacion = item.tipo === 'parametrizacion' || esCargoTabla;
-            const icono = esParametrizacion ? 'fas fa-user-tie' : 'fas fa-cube';
+            // const icono = esParametrizacion ? 'fas fa-user-tie' : 'fas fa-cube';
+            const icono = esParametrizacion ? 'fas fa-cube' : 'fas fa-cube';
             const tipoClass = esParametrizacion ? 'border-warning' : 'border-primary';
 
             // Asegurar que todos los valores son strings
@@ -2931,18 +2938,18 @@ function generarHtmlItemsPropios(itemsPropios) {
             let descripcion = String(item.descripcion || 'Sin descripción');
             if (item.tipo === 'parametrizacion' && item.cargo && item.cargo.nombre) {
                 const cargoNombre = String(item.cargo.nombre);
-                const valorPorcentaje = Number(item.valor_porcentaje || 0);
-                const valorAdmon = Number(item.valor_admon || 0);
-                const valorObra = Number(item.valor_obra || 0);
+                const valorDia = Number(item.costo_dia || 0);
+                const valorHora = Number(item.costo_hora || 0);
+                const valorUnitario = Number(item.costo_unitario || 0);
 
-                descripcion = `👤 ${cargoNombre} | ${valorPorcentaje}% | Admin: $${valorAdmon.toLocaleString()} | Obra: $${valorObra.toLocaleString()}`;
+                descripcion = `Valor día: $${valorDia.toLocaleString()} | Valor hora: $${valorHora.toLocaleString()} | Costo unitario : $${valorUnitario.toLocaleString()}`;
             }
 
             if (esCargoTabla) {
                 const cargoNombre = item.cargo?.nombre || item.nombre;
                 const costoHora = Number(item.costo_hora || 0);
                 const costoDia = Number(item.costo_dia || 0);
-                descripcion = `👤 ${cargoNombre} | Hora: $${costoHora.toLocaleString()} | Día: $${costoDia.toLocaleString()}`;
+                descripcion = ` Hora: $${costoHora.toLocaleString()} | Día: $${costoDia.toLocaleString()}`;
             }
 
             // Debug logging
@@ -2977,14 +2984,13 @@ function generarHtmlItemsPropios(itemsPropios) {
                                         <br><small class="text-muted item-codigo">
                                             <i class="fas fa-tag mr-1"></i>Código: ${itemCodigo}
                                         </small>
-                                        <br><small class="${esParametrizacion ? 'text-warning' : 'text-info'} item-descripcion">
+                                        <br><small class="${esParametrizacion ? 'text-info' : 'text-info'} item-descripcion">
                                             ${descripcion}
                                         </small>
                                         <br><small class="text-secondary">
                                             ${unidadMedida=='' ? `<span class="badge ${esParametrizacion ? 'bg-warning' : 'bg-info'}">${unidadMedida}</span>` : ''}
                                             ${precio ? `<span class="badge bg-success ml-1">$${precio}</span>` : ''}
-                                            ${esParametrizacion ? `<span class="badge text-white ml-1" style="background-color: #fd7e14;">📊 ${esCargoTabla ? 'Tabla precios' : 'Parametrización'}</span>` : ''}
-                                            ${esParametrizacion && item.cargo && item.cargo.nombre ? `<span class="badge bg-secondary ml-1">👤 ${String(item.cargo.nombre)}</span>` : ''}
+                                            ${esParametrizacion ? `<span class="badge text-white ml-1" style="background-color: #fd7e14;">📊 ${esCargoTabla ? 'Tabla precios' : 'Parametrización Costos'}</span>` : ''}
                                         </small>
                                     </div>
                                 </label>
@@ -3458,6 +3464,21 @@ function generarTarjetasItemsCostos(itemsPropios) {
         // Detectar si la categoría es NOMINA
         const esNomina = item.categoria && (item.categoria.nombre === 'NOMINA' || item.categoria.nombre === 'Nomina' || item.categoria.nombre === 'nómina');
 
+        // Solo mostrar el radio button de cada tipo de costo si el item trae un valor > 0 para ese campo
+        const tieneCostoUnitario = Number(item.costo_unitario || 0) > 0;
+        const tieneCostoHora = Number(item.costo_hora || 0) > 0;
+        const tieneCostoDia = Number(item.costo_dia || 0) > 0;
+
+        // Info de la tarjeta: mostrar el nombre del item y los valores de costo que trae
+        // (en vez de la descripción cruda del backend, p. ej. "Cargo: | % | Admón: $0 | Obra: $0").
+        const partesInfoCostos = [];
+        if (tieneCostoUnitario) partesInfoCostos.push(`Valor unitario: $${Number(item.costo_unitario).toLocaleString('es-CO')}`);
+        if (tieneCostoHora) partesInfoCostos.push(`Valor hora: $${Number(item.costo_hora).toLocaleString('es-CO')}`);
+        if (tieneCostoDia) partesInfoCostos.push(`Valor día: $${Number(item.costo_dia).toLocaleString('es-CO')}`);
+        const infoCostosTexto = partesInfoCostos.length > 0
+            ? `${item.nombre} — ${partesInfoCostos.join(' | ')}`
+            : (item.descripcion || '');
+
         html += `
             <div class="item-cost-card mb-4" id="cardItem_${itemId}" data-es-nomina="${esNomina}">
                 <!-- Header de la tarjeta -->
@@ -3487,10 +3508,10 @@ function generarTarjetasItemsCostos(itemsPropios) {
 
                 <!-- Contenido de configuración -->
                 <div class="card-body p-4">
-                    ${item.descripcion ? `
+                    ${infoCostosTexto ? `
                         <div class="alert alert-light border-0 mb-3" style="background-color: #f8f9ff;">
                             <small class="text-muted">
-                                <i class="fas fa-info-circle mr-1"></i>${item.descripcion}
+                                <i class="fas fa-info-circle mr-1"></i>${infoCostosTexto}
                             </small>
                         </div>
                     ` : ''}
@@ -3501,6 +3522,7 @@ function generarTarjetasItemsCostos(itemsPropios) {
                             <i class="fas fa-tag mr-2"></i>Seleccione el Tipo de Costo
                         </label>
                         <div class="row">
+                            ${tieneCostoUnitario ? `
                             <div class="col-md-4">
                                 <div class="custom-control custom-radio">
                                      <input type="radio" id="tipoUnitario_${itemId}" name="tipoCosto_${itemId}"
@@ -3516,6 +3538,8 @@ function generarTarjetasItemsCostos(itemsPropios) {
                                     </label>
                                 </div>
                             </div>
+                            ` : ''}
+                            ${tieneCostoHora ? `
                             <div class="col-md-4">
                                 <div class="custom-control custom-radio">
                                     <input type="radio" id="tipoHora_${itemId}" name="tipoCosto_${itemId}"
@@ -3531,6 +3555,8 @@ function generarTarjetasItemsCostos(itemsPropios) {
                                     </label>
                                 </div>
                             </div>
+                            ` : ''}
+                            ${tieneCostoDia ? `
                             <div class="col-md-4">
                                 <div class="custom-control custom-radio">
                                     <input type="radio" id="tipoDia_${itemId}" name="tipoCosto_${itemId}"
@@ -3546,12 +3572,13 @@ function generarTarjetasItemsCostos(itemsPropios) {
                                     </label>
                                 </div>
                             </div>
+                            ` : ''}
                         </div>
                     </div>
 
                     <!-- írea de configuración de campos (inicialmente oculta) -->
                     <div id="camposCosto_${itemId}" class="d-none">
-                        ${esNomina ? generarCamposConfiguracion(itemId) : generarCamposConfiguracionSimple(itemId)}
+                        ${esNomina ? generarCamposConfiguracion(itemId, item.unidad_medida) : generarCamposConfiguracionSimple(itemId, item.unidad_medida)}
                     </div>
 
                     ${esNomina ? `
@@ -3608,7 +3635,7 @@ function generarTarjetasItemsCostos(itemsPropios) {
  * Generar campos SIMPLIFICADOS para items NO-NOMINA (maquinaria, insumos, servicios, etc.)
  * Solo muestra: unidad de medida, cantidad, valor del costo, precio total.
  */
-function generarCamposConfiguracionSimple(itemId) {
+function generarCamposConfiguracionSimple(itemId, unidadMedida = '') {
     return `
         <div class="cost-field-group mb-3">
             <div class="row">
@@ -3618,6 +3645,7 @@ function generarCamposConfiguracionSimple(itemId) {
                             <i class="fas fa-ruler mr-1 text-secondary"></i>Unidad de Medida
                         </label>
                         <input type="text" class="form-control" id="unidadMedida_${itemId}"
+                               value="${unidadMedida || ''}"
                                placeholder="Ej: UND, DIA, HRS, KG"
                                onchange="actualizarPrecioVisual('${itemId}')">
                         <small class="form-text text-muted">Se precarga automáticamente desde la parametrización</small>
@@ -3651,7 +3679,7 @@ function generarCamposConfiguracionSimple(itemId) {
                             </div>
                             <input type="number" class="form-control" id="costoUnitario_${itemId}"
                                    placeholder="0.00" step="0.01" min="0"
-                                   onchange="actualizarPrecioVisual('${itemId}')">
+                                   onchange="actualizarPrecioVisual('${itemId}')" readonly>
                         </div>
                         <small class="form-text text-muted">Costo por unidad — puede editarlo si difiere del estándar</small>
                     </div>
@@ -3671,7 +3699,7 @@ function generarCamposConfiguracionSimple(itemId) {
                             </div>
                             <input type="number" class="form-control" id="costoHora_${itemId}"
                                    placeholder="0.00" step="0.01" min="0"
-                                   onchange="actualizarPrecioVisual('${itemId}')">
+                                   onchange="actualizarPrecioVisual('${itemId}')" readonly>
                         </div>
                         <small class="form-text text-muted">Calculado como costo/día ÷ 8 horas — puede editarlo</small>
                     </div>
@@ -3691,7 +3719,7 @@ function generarCamposConfiguracionSimple(itemId) {
                             </div>
                             <input type="number" class="form-control" id="costoDia_${itemId}"
                                    placeholder="0.00" step="0.01" min="0"
-                                   onchange="actualizarPrecioVisual('${itemId}')">
+                                   onchange="actualizarPrecioVisual('${itemId}')" readonly>
                         </div>
                         <small class="form-text text-muted">Costo por día de trabajo — puede editarlo</small>
                     </div>
@@ -3704,7 +3732,7 @@ function generarCamposConfiguracionSimple(itemId) {
 /**
  * Generar campos de configuración para un item
  */
-function generarCamposConfiguracion(itemId) {
+function generarCamposConfiguracion(itemId, unidadMedida = '') {
     return `
         <!-- Campos básicos -->
         <div class="cost-field-group mb-3">
@@ -3731,6 +3759,7 @@ function generarCamposConfiguracion(itemId) {
                             <i class="fas fa-ruler mr-1"></i>Unidad de Medida
                         </label>
                         <input type="text" class="form-control" id="unidadMedida_${itemId}"
+                               value="${unidadMedida || ''}"
                                placeholder="Ej: UND, M2, KG, ML" onchange="actualizarPrecioVisual('${itemId}')">
                         <small class="form-text text-muted">Especifique la unidad de medida del item</small>
                     </div>
@@ -3784,7 +3813,7 @@ function generarCamposConfiguracion(itemId) {
                                     <span class="input-group-text bg-warning text-dark">$</span>
                                 </div>
                                 <input type="number" class="form-control" id="costoHora_${itemId}"
-                                       placeholder="0.00" step="0.01" min="0" onchange="actualizarPrecioVisual('${itemId}')">
+                                       placeholder="0.00" step="0.01" min="0" onchange="actualizarPrecioVisual('${itemId}')" readonly>
                             </div>
                             <small class="form-text text-muted">Costo por cada hora de trabajo</small>
                         </div>
@@ -3838,7 +3867,7 @@ function generarCamposConfiguracion(itemId) {
                             <span class="input-group-text bg-success text-white">$</span>
                         </div>
                         <input type="number" class="form-control" id="costoDia_${itemId}"
-                               placeholder="0.00" step="0.01" min="0" onchange="actualizarPrecioVisual('${itemId}')">
+                               placeholder="0.00" step="0.01" min="0" onchange="actualizarPrecioVisual('${itemId}')" readonly>
                     </div>
                     <small class="form-text text-muted">Costo por cada día de trabajo</small>
                 </div>
@@ -5254,8 +5283,13 @@ async function finalizarConfiguracionCostos() {
          // Actualizar contador
         actualizarContadorProductosSeleccionados();
 
-        // Tambií©n agregar a la tabla del modal "Items Propios Seleccionados"
-        actualizarTablaItemsPropiosSeleccionados(itemsConCostos, window.subitemTemporal.subitem, window.subitemTemporal.item);
+        // NOTA: ya no se llama aquí a actualizarTablaItemsPropiosSeleccionados(). Esa función
+        // pintaba filas propias directamente en #tbodyProductosSeleccionados (sin pasar por el
+        // arreglo productosSeleccionados) y borraba permanentemente el <tr id="noProductosSeleccionados">,
+        // lo que hacía que actualizarTablaProductosSeleccionados() abortara en silencio y el
+        // Total General quedara desincronizado. La sincronización real ocurre más abajo con
+        // sincronizarItemsTablaConProductosSeleccionados() + actualizarTablaProductosSeleccionados().
+
         // Limpiar variables temporales
         window.subitemTemporal = null;
         window.itemsPropiosTemporal = null;
@@ -5282,7 +5316,9 @@ async function finalizarConfiguracionCostos() {
 
         // SINCRONIZAR: Convertir items de la tabla a productosSeleccionados
         sincronizarItemsTablaConProductosSeleccionados(itemsConCostos);
-        actualizarTotalGeneral();
+        // Repinta la tabla de "Productos Seleccionados" para que el item recién agregado
+        // sea visible (esta función ya recalcula el Total General al final).
+        actualizarTablaProductosSeleccionados();
 
         // Si hay items de nómina pendientes (flujo mixto), abrir su modal
         if (window.itemsNominaPendientes && window.itemsNominaPendientes.length > 0) {
@@ -5365,8 +5401,8 @@ function sincronizarItemsTablaConProductosSeleccionados(itemsConCostos) {
     } else {
         console.log('⚠️ No hay items con costos para sincronizar');
     }
-    // Actualizar la tabla de productos seleccionados
-    //actualizarTablaProductosSeleccionados();
+    // El refresco de la tabla y el Total General lo hace el llamador
+    // (actualizarTablaProductosSeleccionados) una vez terminada la sincronización.
 }
 
 /**
@@ -6609,23 +6645,80 @@ function eliminarItem(itemId) {
 }
 
 /**
- * Editar item (cargar en formulario)
+ * Editar item: abre el modal para cambiar el nombre de una capitulación existente
  */
 function editarItem(itemId) {
     const item = itemsCotizacion.find(i => i.id === itemId);
     if (!item) return;
 
-    // Cargar datos en el formulario
-    document.getElementById('item_nombre').value = item.nombre;
+    document.getElementById('editar_item_id').value = item.id;
+    document.getElementById('editar_item_nombre').value = item.nombre;
+    document.getElementById('editar_item_nombre').classList.remove('is-invalid');
+    document.getElementById('error_editar_item_nombre').textContent = '';
 
-    // Eliminar item de la lista (se re-agregará al guardar)
-    itemsCotizacion = itemsCotizacion.filter(i => i.id !== itemId);
-    actualizarTablaItems();
+    $('#modalEditarItem').modal('show');
+}
 
-    // Scroll al formulario
-    document.getElementById('formAgregarItem').scrollIntoView({ behavior: 'smooth' });
+/**
+ * Guardar el nombre editado de una capitulación existente (actualiza, no crea)
+ */
+async function guardarEdicionItem(event) {
+    event.preventDefault();
 
-    toastr.info('Item cargado para edición');
+    const itemId = document.getElementById('editar_item_id').value;
+    const nombreInput = document.getElementById('editar_item_nombre');
+    const nombre = nombreInput.value.trim();
+    const errorDiv = document.getElementById('error_editar_item_nombre');
+
+    if (!nombre) {
+        nombreInput.classList.add('is-invalid');
+        errorDiv.textContent = 'El nombre de la capitulación es obligatorio';
+        return;
+    }
+    if (nombre.length > 255) {
+        nombreInput.classList.add('is-invalid');
+        errorDiv.textContent = 'El nombre no puede exceder 255 caracteres';
+        return;
+    }
+    nombreInput.classList.remove('is-invalid');
+    errorDiv.textContent = '';
+
+    const btnGuardar = document.getElementById('btn_guardar_edicion_item');
+    const textoOriginal = btnGuardar.innerHTML;
+    btnGuardar.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+    btnGuardar.disabled = true;
+
+    try {
+        const response = await fetch(`/admin/admin.cotizaciones.items.updateItem/${itemId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            body: JSON.stringify({ nombre })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            const item = itemsCotizacion.find(i => i.id === parseInt(itemId));
+            if (item) {
+                item.nombre = result.data.nombre;
+            }
+            actualizarTablaItems();
+
+            $('#modalEditarItem').modal('hide');
+            toastr.success('Capitulación actualizada exitosamente');
+        } else {
+            throw new Error(result.message || 'Error al actualizar la capitulación');
+        }
+    } catch (error) {
+        console.error('Error al actualizar item:', error);
+        toastr.error('Error al actualizar la capitulación: ' + error.message);
+    } finally {
+        btnGuardar.innerHTML = textoOriginal;
+        btnGuardar.disabled = false;
+    }
 }
 
 /**
@@ -7717,10 +7810,9 @@ function abrirModalAgregarProductos() {
     $('#modalAgregarProductos').modal('show');
     // Pequeí±o delay para que el modal se renderice completamente
     setTimeout(() => {
-        const elementoTotal = document.getElementById('totalGeneral');
-        if (elementoTotal) {
-            elementoTotal.textContent = `Total: $${calcularTotalGeneral().toFixed(2)}`;
-        }
+        // Usar la misma función que suma/resta al agregar o quitar productos, para que el
+        // valor inicial quede en el mismo formato ("Total General: $ <valor>", sin duplicar el texto).
+        actualizarTotalGeneral();
         // Agregar instrucciones visuales para el usuario
         mostrarInstruccionesSeleccion();
         configurarSeleccionManualItems();
@@ -7907,30 +7999,30 @@ function deseleccionarProducto(productoId) {
 function actualizarTablaProductosSeleccionados() {
 
     const tbody = document.getElementById('tbodyProductosSeleccionados');
-    const noItemsRow = document.getElementById('noProductosSeleccionados');
 
-    // Verificar si los elementos existen
     if (!tbody) {
         console.warn('Elemento tbodyProductosSeleccionados no encontrado');
         return;
     }
-    if (!noItemsRow) {
-        console.warn('Elemento noProductosSeleccionados no encontrado');
-        return;
-    }
-    noItemsRow.style.display = 'none';
 
+    // Reconstruir siempre la tabla completa desde productosSeleccionados (única fuente de verdad).
+    // Antes se dependía de que existiera un <tr id="noProductosSeleccionados"> ya presente en el
+    // DOM; otras funciones (p. ej. actualizarTablaItemsPropiosSeleccionados) lo eliminaban de forma
+    // permanente al agregar productos, lo que hacía que esta función abortara en silencio sin
+    // repintar la tabla ni recalcular el Total General.
+    tbody.innerHTML = '';
 
     if (productosSeleccionados.length === 0) {
-        noItemsRow.style.display = 'table-row';
+        tbody.innerHTML = `
+            <tr id="noProductosSeleccionados">
+                <td colspan="2" class="text-center text-muted">
+                    No hay productos seleccionados
+                </td>
+            </tr>
+        `;
+        actualizarTotalGeneral();
         return;
     }
-    // Limpiar filas existentes excepto la de "no items"
-    Array.from(tbody.children).forEach(row => {
-        if (row.id !== 'noProductosSeleccionados') {
-            row.remove();
-        }
-    });
 
     productosSeleccionados.forEach(producto => {
         const row = document.createElement('tr');
@@ -7938,6 +8030,11 @@ function actualizarTablaProductosSeleccionados() {
         const badgeColor = esDelAcordeon ? 'bg-info' : 'bg-secondary';
         const badgeText = esDelAcordeon ? (producto.categoria || 'Acordeón') : 'Producto';
 
+        // La tabla solo define 2 columnas ("Productos" y "Acción"); antes esta fila generaba
+        // 3 <td> (usando además un .row/.col-4 de Bootstrap pensado para un contenedor ancho),
+        // lo que desalineaba el encabezado y hacía que los campos de cantidad/precio/total se
+        // encimaran. Ahora todo el contenido va en 2 <td>, igual que en las filas de nómina
+        // (agregarProductoATablaSeleccionados), usando flexbox para que se acomode sin desbordar.
         row.innerHTML = `
             <td>
                 <div class="d-flex flex-column">
@@ -7950,32 +8047,30 @@ function actualizarTablaProductosSeleccionados() {
                             <i class="fas fa-tag"></i> ${producto.codigo || 'S/C'}
                         </small>
                     </div>
-                </div>
-            </td>
-            <td>
-                <div class="row">
-                    <div class="col-4">
-                        <label class="form-label-sm">Cantidad:</label>
-                        <input type="number" class="form-control form-control-sm cantidad-producto"
-                               value="${producto.cantidad}" min="1" data-id="${producto.id}"
-                               onchange="actualizarCantidadProducto('${producto.id}', this.value)">
-                    </div>
-                    <div class="col-4">
-                        <label class="form-label-sm">Precio:</label>
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text">$</span>
-                            <input type="number" class="form-control precio-producto"
-                                   value="${producto.precio}" min="0" step="0.01" data-id="${producto.id}"
-                                   onchange="actualizarPrecioProducto('${producto.id}', this.value)">
+                    <div class="d-flex flex-wrap align-items-end mt-2" style="gap: .5rem;">
+                        <div style="width: 90px;">
+                            <label class="form-label-sm mb-0 d-block">Cantidad</label>
+                            <input type="number" class="form-control form-control-sm cantidad-producto"
+                                   value="${producto.cantidad}" min="1" data-id="${producto.id}"
+                                   onchange="actualizarCantidadProducto('${producto.id}', this.value)">
+                        </div>
+                        <div style="width: 120px;">
+                            <label class="form-label-sm mb-0 d-block">Precio</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control precio-producto"
+                                       value="${producto.precio}" min="0" step="0.01" data-id="${producto.id}"
+                                       onchange="actualizarPrecioProducto('${producto.id}', this.value)">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="form-label-sm mb-0 d-block">Total</label>
+                            <div class="fw-bold text-success">$${(Number(producto.total) || 0).toFixed(2)}</div>
                         </div>
                     </div>
-                    <div class="col-4">
-                        <label class="form-label-sm">Total:</label>
-                        <div class="fw-bold text-success">$${producto.total.toFixed(2)}</div>
-                    </div>
                 </div>
             </td>
-            <td class="text-center">
+            <td class="text-center align-middle">
                 <button type="button" class="btn btn-sm btn-outline-danger"
                         onclick="quitarProductoSeleccionado('${producto.id}')"
                         title="Quitar producto">
@@ -7995,10 +8090,11 @@ function actualizarTablaProductosSeleccionados() {
  * Actualizar el total general de productos seleccionados
  */
 function actualizarTotalGeneral() {
-
     const totalGeneral = calcularTotalGeneral();
+    console.log('📊 Total general calculado:', totalGeneral);
     productosSeleccionados.forEach(producto => {
         const productoTotal = producto.total || 0;
+        console.log(`   ${producto.nombre}: ${productoTotal}`);
     });
     const elementoTotalGeneral = document.getElementById('totalGeneral');
     if (elementoTotalGeneral) {
@@ -8016,6 +8112,7 @@ function actualizarTotalGeneral() {
  * Calcular total general de productos seleccionados (solo número)
  */
 function calcularTotalGeneral() {
+    console.log('🔢 Calculando total general de productos seleccionados...', productosSeleccionados);
     return productosSeleccionados.reduce((sum, producto) => {
         // Usa total precalculado; si no existe, calcula por cantidad * precio
         const base = typeof producto.total === 'number'
@@ -8063,7 +8160,10 @@ window.debugTotalGeneral = function() {
  * Actualizar cantidad de producto
  */
 function actualizarCantidadProducto(productoId, nuevaCantidad) {
-    const producto = productosSeleccionados.find(p => p.id === productoId);
+    // Los ids llegan como string desde el atributo "onchange" del HTML, mientras que
+    // producto.id puede ser numérico (o un float generado con Date.now()); comparar con
+    // String() evita que la búsqueda falle por tipos distintos y el total quede desactualizado.
+    const producto = productosSeleccionados.find(p => String(p.id) === String(productoId));
     if (producto) {
         producto.cantidad = parseInt(nuevaCantidad) || 1;
         producto.total = producto.precio * producto.cantidad;
@@ -8077,7 +8177,7 @@ function actualizarCantidadProducto(productoId, nuevaCantidad) {
  * Actualizar precio de producto
  */
 function actualizarPrecioProducto(productoId, nuevoPrecio) {
-    const producto = productosSeleccionados.find(p => p.id === productoId);
+    const producto = productosSeleccionados.find(p => String(p.id) === String(productoId));
     if (producto) {
         producto.precio = parseFloat(nuevoPrecio) || 0;
         producto.total = producto.precio * producto.cantidad;
@@ -8091,7 +8191,7 @@ function actualizarPrecioProducto(productoId, nuevoPrecio) {
  * Quitar producto seleccionado
  */
 function quitarProductoSeleccionado(productoId) {
-    productosSeleccionados = productosSeleccionados.filter(p => p.id !== productoId);
+    productosSeleccionados = productosSeleccionados.filter(p => String(p.id) !== String(productoId));
     actualizarTablaProductosSeleccionados();
     calcularTotales();
 }
@@ -9144,16 +9244,46 @@ function filtrarItemsPropios() {
                                codigo.includes(searchTerm) ||
                                descripcion.includes(searchTerm);
 
+                // Cada .item-propio-card está envuelto en un <div class="col-md-6 mb-3">
+                // (grid de 2 columnas). Ocultar solo la tarjeta interna dejaba ese wrapper
+                // visible con su propio margen, así que los items no-coincidentes seguían
+                // ocupando espacio: con muchas tarjetas ocultas antes de una coincidencia,
+                // se acumulaba un hueco en blanco y había que hacer scroll para encontrarla.
+                // Ocultando el wrapper completo, los que sí coinciden se acomodan sin huecos.
+                const wrapper = item.closest('.col-md-6') || item;
+
                 if (matches) {
-                    item.style.display = '';
+                    wrapper.style.display = '';
                     itemsVisibles++;
                 } else {
-                    item.style.display = 'none';
+                    wrapper.style.display = 'none';
                 }
             } catch (itemError) {
                 console.error('Error procesando item:', itemError);
             }
         });
+
+        // El contenedor tiene scroll propio (max-height + overflow-y: auto). Si el usuario ya
+        // había bajado el scroll y luego filtra, las tarjetas que coinciden se reacomodan arriba
+        // pero la vista sigue desplazada, mostrando un espacio en blanco que parece "sin resultados".
+        // Volvemos siempre al inicio del contenedor al filtrar para evitar esa confusión.
+        container.scrollTop = 0;
+
+        // Mostrar un aviso claro cuando el filtro no encuentra ninguna coincidencia real,
+        // en vez de dejar el contenedor en blanco.
+        let sinResultados = container.querySelector('#itemsPropiosSinResultados');
+        if (itemsVisibles === 0 && searchTerm) {
+            if (!sinResultados) {
+                sinResultados = document.createElement('div');
+                sinResultados.id = 'itemsPropiosSinResultados';
+                sinResultados.className = 'text-center text-muted p-4';
+                container.appendChild(sinResultados);
+            }
+            sinResultados.innerHTML = `<i class="fas fa-search mr-1"></i>No se encontraron items que coincidan con "${searchInput.value}"`;
+            sinResultados.style.display = '';
+        } else if (sinResultados) {
+            sinResultados.style.display = 'none';
+        }
 
         // Actualizar contador de items visibles
         const contadorVisibles = document.getElementById('itemsVisibles');
@@ -9189,8 +9319,15 @@ function limpiarBusquedaItemsPropios() {
         const items = container.querySelectorAll('.item-propio-card');
 
         items.forEach(item => {
-            item.style.display = '';
+            const wrapper = item.closest('.col-md-6') || item;
+            wrapper.style.display = '';
         });
+
+        const sinResultados = container.querySelector('#itemsPropiosSinResultados');
+        if (sinResultados) {
+            sinResultados.style.display = 'none';
+        }
+        container.scrollTop = 0;
 
         // Actualizar contador
         const contadorVisibles = document.getElementById('itemsVisibles');
@@ -10697,6 +10834,33 @@ async function cargarValoresPorDefecto(itemId, tipoItem, tipoCosto) {
  */
 async function cargarValoresDefectoPorTipo(itemId, tipoCosto) {
     try {
+        // Prioridad 1: usar directamente el valor que ya viene en itemsPropios
+        // (costo_unitario, costo_hora o costo_dia) para el tipo de costo seleccionado.
+        let itemData = window.itemsPropiosDisponibles
+            ? window.itemsPropiosDisponibles.find(item => String(item.id) === String(itemId))
+            : null;
+
+        const campoCostoPorTipo = { unitario: 'costo_unitario', hora: 'costo_hora', dia: 'costo_dia' };
+        const inputIdPorTipo = { unitario: `costoUnitario_${itemId}`, hora: `costoHora_${itemId}`, dia: `costoDia_${itemId}` };
+        const badgeIdPorTipo = { unitario: `badgeSugerido_unitario_${itemId}`, hora: `badgeSugerido_hora_${itemId}`, dia: `badgeSugerido_dia_${itemId}` };
+
+        if (itemData) {
+            const costoDesdeItem = Number(itemData[campoCostoPorTipo[tipoCosto]] || 0);
+            if (costoDesdeItem > 0) {
+                const costoInput = document.getElementById(inputIdPorTipo[tipoCosto]);
+                if (costoInput) {
+                    costoInput.value = costoDesdeItem;
+                    const badge = document.getElementById(badgeIdPorTipo[tipoCosto]);
+                    if (badge) badge.classList.remove('d-none');
+                    actualizarPrecioVisual(itemId);
+                    if (typeof calcularPrecioItem === 'function') calcularPrecioItem(itemId);
+                    const unidadMedida = itemData.unidad_medida || document.getElementById(`unidadMedida_${itemId}`)?.value || '';
+                    mostrarNotificacionValoresCargados(tipoCosto, costoDesdeItem, unidadMedida);
+                    return;
+                }
+            }
+        }
+
         // Verificar si ya tenemos los costos cacheados en el card element
         const cardEl = document.getElementById(`cardItem_${itemId}`);
         if (cardEl && cardEl.dataset.costosDisponibles) {
@@ -10722,12 +10886,7 @@ async function cargarValoresDefectoPorTipo(itemId, tipoCosto) {
             return;
         }
 
-        // Sin cache: hacer petición al backend
-        let itemData = null;
-        if (window.itemsPropiosDisponibles) {
-            itemData = window.itemsPropiosDisponibles.find(item => String(item.id) === String(itemId));
-        }
-
+        // Sin cache ni valor directo en itemsPropios: hacer petición al backend
         if (!itemData) {
             console.log(`No se encontró información del item ${itemId} para cargar valores por defecto`);
             return;
@@ -12064,8 +12223,10 @@ function agregarProductoATablaSeleccionados(producto) {
     const bonoStr      = bono > 0        ? ` &bull; <i class="fas fa-gift text-info"></i> Bono: $${bono.toLocaleString('es-CO')}`               : '';
     const novStr       = novedadesDisp > 0 ? ` &bull; <i class="fas fa-clipboard-list text-warning"></i> Nov.: $${novedadesDisp.toLocaleString('es-CO')}` : '';
 
+    const itemId = producto.id || `nomina_${Date.now()}`;
+
     const tr = document.createElement('tr');
-    tr.setAttribute('data-item-id', producto.id || `nomina_${Date.now()}`);
+    tr.setAttribute('data-item-id', itemId);
     tr.innerHTML = `
         <td>
             <strong>${producto.nombre}</strong>${badgeNomina}
@@ -12073,12 +12234,39 @@ function agregarProductoATablaSeleccionados(producto) {
         </td>
         <td class="text-center">
             <button type="button" class="btn btn-sm btn-outline-danger"
-                    onclick="this.closest('tr').remove(); actualizarTotalGeneral();">
+                    onclick="eliminarProductoNominaDeTabla('${itemId}', this)">
                 <i class="fas fa-times"></i>
             </button>
         </td>
     `;
     tbody.appendChild(tr);
+}
+
+/**
+ * Quita una fila de nómina de la tabla de productos seleccionados y, sobre todo,
+ * su entrada correspondiente en el arreglo productosSeleccionados. Antes el botón
+ * solo removía la fila del DOM y el producto seguía contando en el arreglo, por lo
+ * que el Total General no bajaba al quitarlo.
+ */
+function eliminarProductoNominaDeTabla(itemId, btnElement) {
+    productosSeleccionados = productosSeleccionados.filter(p => String(p.id) !== String(itemId));
+
+    const fila = btnElement.closest('tr');
+    if (fila) fila.remove();
+
+    const tbody = document.getElementById('tbodyProductosSeleccionados');
+    if (tbody && tbody.querySelectorAll('tr').length === 0) {
+        tbody.innerHTML = `
+            <tr id="noProductosSeleccionados">
+                <td colspan="2" class="text-center text-muted">
+                    No hay productos seleccionados
+                </td>
+            </tr>
+        `;
+    }
+
+    actualizarTotalGeneral();
+    calcularTotales();
 }
 
 // ============================================================

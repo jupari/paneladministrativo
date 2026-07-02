@@ -65,7 +65,7 @@ class CotizacionService
             if (empty($data['num_documento'])) {
                 Log::info("No se proporcionó número de documento, generando automáticamente.");
 
-                $data['num_documento'] = $this->generarNumeroDocumento();
+                $data['num_documento'] = $this->generarNumeroDocumento(true);
                 Log::info("Número de documento generado: " . $data['num_documento']);
             }
 
@@ -199,9 +199,15 @@ class CotizacionService
     /**
      * Generar siguiente número de documento
      */
-    public function generarNumeroDocumento(): string
+    public function generarNumeroDocumento(bool $lock = false): string
     {
-        $lastCotizacion = Cotizacion::orderBy('id', 'desc')->first();
+        $query = Cotizacion::orderBy('id', 'desc');
+        if ($lock) {
+            // Bloquea la última fila dentro de la transacción de crearCotizacion para
+            // serializar la asignación del consecutivo entre guardados concurrentes.
+            $query->lockForUpdate();
+        }
+        $lastCotizacion = $query->first();
         $num_documento = $lastCotizacion ? $lastCotizacion->num_documento : null;
         $matches = [];
 
