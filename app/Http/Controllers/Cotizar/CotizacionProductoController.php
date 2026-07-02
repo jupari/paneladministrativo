@@ -748,9 +748,9 @@ class CotizacionProductoController extends Controller
 
             $itemsParametrizacion = collect();
 
-            if (!empty($categoriasConCostosCero)) {
+            if (!empty($categoriaIds)) {
                 // Obtener datos de parametrización para categorías con costos = 0
-                $parametrizaciones = Parametrizacion::whereIn('categoria_id', $categoriasConCostosCero)
+                $parametrizaciones = ParametrizacionCosto::whereIn('categoria_id', $categoriaIds)
                     ->where('active', 1)
                     ->with(['categoria:id,nombre', 'cargo:id,nombre'])
                     ->get();
