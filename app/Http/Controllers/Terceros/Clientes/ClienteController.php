@@ -92,7 +92,7 @@ class ClienteController extends Controller
                 'vendedores'=>$vendedores,
                 'vendedorxrol'=>$vendedorxrol,
                 'user_id'=>$authUser->id,
-                'tercerotipo_id'=>1
+                'tercerotipo_id'=>2
             ]);
         } catch (\Exception $e) {
             Log::error("Error en ClienteController@index: " . $e->getMessage());

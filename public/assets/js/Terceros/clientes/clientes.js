@@ -265,7 +265,7 @@ function Cargar() {
                 //{ data: 'active', name: 'active',className:'text-center'},
                 { data: 'acciones', name: 'acciones', className: 'exclude'},
             ],
-            order: [[1, "asc"]],
+            order: [[10, "desc"]],
             pageLength: 10,
             lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "Todo(s)"]],
         }
@@ -366,18 +366,9 @@ function cleanInput(btn) {
 
     const bool = (btn == null) ? false : true;
 
-    console.log('🧹 cleanInput() iniciado');
-
     // PRESERVAR valores críticos antes de limpiar
     const tercerotipo_preserved = $('#tercerotipo_id').val();
     const user_preserved = $('#user_id').val();
-
-    console.log('🔒 PRESERVANDO valores críticos:', {
-        tercerotipo_id: tercerotipo_preserved,
-        user_id: user_preserved,
-        tercerotipo_existe: $('#tercerotipo_id').length > 0,
-        user_existe: $('#user_id').length > 0
-    });
 
     // Campos del formulario actual (SIN tercerotipo_id ni user_id)
     const fields = [
@@ -403,8 +394,6 @@ function cleanInput(btn) {
         $('#' + field).val(''); // Limpiar el valor
     });
 
-    console.log('🧽 Campos limpiados, procediendo a restaurar valores críticos...');
-
     // RESTAURAR valores críticos
     $('#tercerotipo_id').val(tercerotipo_preserved);
     $('#user_id').val(user_preserved);
@@ -413,8 +402,6 @@ function cleanInput(btn) {
         tercerotipo_id: $('#tercerotipo_id').val(),
         user_id: $('#user_id').val()
     };
-
-    console.log('🔓 RESTAURADOS valores críticos:', restaurado);
 
     // Verificar que la restauración fue exitosa
     if (restaurado.tercerotipo_id !== tercerotipo_preserved) {
@@ -430,7 +417,6 @@ function cleanInput(btn) {
     // Opcional: desmarcar todos los checkboxes si es necesario
     $('input[type="checkbox"]').prop('checked', false);
 
-    console.log('✅ cleanInput() completado');
 }
 
 function cleanInputSucursal(btn) {
@@ -445,8 +431,8 @@ function cleanInputSucursal(btn) {
         'celular',
         'correo',
         'ciudad_id',
-        'sucursal_departamento_id',
-        'sucursal_pais_id',
+        'departamento_id',
+        'pais_id',
         'direccion',
         'persona_contacto',
         'id'
@@ -456,6 +442,12 @@ function cleanInputSucursal(btn) {
     fields.forEach(field => {
         $('#sucursal_' + field).val(''); // Limpiar el valor
     });
+
+    // Los selects de Departamento y Ciudad se pueblan dinámicamente según el país
+    // seleccionado; hay que resetear también sus opciones para no dejar las del
+    // país anterior (limpiar solo el value no era suficiente).
+    $('#sucursal_departamento_id').empty().append('<option value="">Seleccione un departamento</option>');
+    $('#sucursal_ciudad_id').empty().append('<option value="">Seleccione una ciudad</option>');
 
     // Opcional: desmarcar todos los checkboxes si es necesario
     $('input[type="checkbox"]').prop('checked', false);
@@ -554,24 +546,14 @@ function showCustomUser(btn) {
 
 //Registrar usuario
 function regCli() {
-    console.log('🆕 regCli() - Abriendo modal para crear cliente');
-
     try {
         // Desmarcar modo de edición para creación
         $('#ModalCliente').removeData('edit-mode');
-        console.log('🔄 Modo de edición desmarcado para CREACIÓN');
 
         // Método directo y simple para abrir el modal PRIMERO
-        console.log('🔄 Abriendo modal...');
         $('#ModalCliente').modal('show');
-        console.log('✅ Modal abierto');
 
         $('#exampleModalLabel').html('<i class="fas fa-user-plus mr-2"></i>Registrar Cliente');
-
-        // VERIFICAR valores iniciales ANTES de cualquier limpieza
-        console.log('📊 Valores ANTES de limpiar:');
-        console.log('   - tercerotipo_id:', $('#tercerotipo_id').val());
-        console.log('   - user_id:', $('#user_id').val());
 
         // ASEGURAR valores críticos ANTES de cualquier limpieza
         let tercerotipo_inicial = $('#tercerotipo_id').val();
@@ -580,7 +562,6 @@ function regCli() {
         if (!tercerotipo_inicial || tercerotipo_inicial === '') {
             tercerotipo_inicial = '2';
             $('#tercerotipo_id').val(tercerotipo_inicial);
-            console.log('🔧 ESTABLECIDO tercerotipo_id = 1');
         }
 
         if (!user_inicial || user_inicial === '') {
@@ -588,13 +569,7 @@ function regCli() {
             const userFromGlobal = window.permisos && window.permisos.id ? window.permisos.id : null;
             user_inicial = userFromGlobal || '1'; // Valor por defecto
             $('#user_id').val(user_inicial);
-            console.log('🔧 ESTABLECIDO user_id =', user_inicial);
         }
-
-        console.log('💾 Valores críticos asegurados:', {
-            tercerotipo_id: tercerotipo_inicial,
-            user_id: user_inicial
-        });
 
         // LIMPIAR CAMPOS - pero preservando los críticos
         cleanInput();
@@ -610,43 +585,27 @@ function regCli() {
         // VERIFICAR Y RESTAURAR si es necesario
         if (!$('#tercerotipo_id').val() || $('#tercerotipo_id').val() === '') {
             $('#tercerotipo_id').val(tercerotipo_inicial);
-            console.log('🔧 RESTAURADO tercerotipo_id =', tercerotipo_inicial);
         }
 
         if (!$('#user_id').val() || $('#user_id').val() === '') {
             $('#user_id').val(user_inicial);
-            console.log('🔧 RESTAURADO user_id =', user_inicial);
         }
-
-        // VERIFICAR valores DESPUÉS de la limpieza
-        console.log('📊 Valores DESPUÉS de limpiar:');
-        console.log('   - tercerotipo_id:', $('#tercerotipo_id').val());
-        console.log('   - user_id:', $('#user_id').val());
 
         // RESETEAR el sistema de navegación por pasos PERO preservando campos críticos
         if (typeof resetModal === 'function') {
-            console.log('🔄 Ejecutando resetModal...');
             resetModal();
 
             // Asegurar nuevamente los valores después del reset
             if (!$('#tercerotipo_id').val()) {
                 $('#tercerotipo_id').val(tercerotipo_inicial);
-                console.log('🔧 POST-RESET: Restaurado tercerotipo_id');
             }
             if (!$('#user_id').val()) {
                 $('#user_id').val(user_inicial);
-                console.log('🔧 POST-RESET: Restaurado user_id');
             }
         }
-
-        // VERIFICACIÓN FINAL
-        console.log('🔍 VERIFICACIÓN FINAL:');
-        console.log('   - tercerotipo_id:', $('#tercerotipo_id').val());
-        console.log('   - user_id:', $('#user_id').val());
-
     } catch (error) {
         console.error('❌ Error al abrir modal:', error);
-        alert('Error al abrir el modal. Verifique la consola para más detalles.');
+        // alert('Error al abrir el modal. Verifique la consola para más detalles.');
     }
 }
 
@@ -659,17 +618,17 @@ function registerCli() {
     const clienteId = $('#id').val();
     const isEditMode = clienteId && clienteId !== '' && clienteId !== '0';
 
-    console.log('🔍 Detectando modo:', {
-        clienteId: clienteId,
-        isEditMode: isEditMode,
-        modalEditMode: $('#ModalCliente').data('edit-mode')
-    });
+    // console.log('🔍 Detectando modo:', {
+    //     clienteId: clienteId,
+    //     isEditMode: isEditMode,
+    //     modalEditMode: $('#ModalCliente').data('edit-mode')
+    // });
 
     // Usar la ruta correcta según el modo
     const route = isEditMode ? `/admin/admin.clientes.update/${clienteId}` : "/admin/admin.clientes.store";
     const method = isEditMode ? 'POST' : 'POST';
 
-    console.log('🔗 Usando ruta:', route);
+    // console.log('🔗 Usando ruta:', route);
 
     // Crear un objeto FormData directamente desde el formulario
     let ajax_data = new FormData();
@@ -678,8 +637,9 @@ function registerCli() {
     const telefonoLimpio = $('#telefono').val().replace(/[^\d]/g, '');
     const celularLimpio = $('#celular').val().replace(/[^\d]/g, '');
 
+    let terceroTipo='2';
     // Agregar los nuevos campos del formulario
-    ajax_data.append('tercerotipo_id', $('#tercerotipo_id').val());
+    ajax_data.append('tercerotipo_id', terceroTipo);
     ajax_data.append('tipoidentificacion_id', $('#tipoidentificacion_id').val());
     ajax_data.append('identificacion', $('#identificacion').val());
     ajax_data.append('dv', $('#dv').val());
@@ -721,7 +681,7 @@ function registerCli() {
 
     }).catch(e => {
         // Manejo de errores
-        console.error('❌ Error en registerCli():', e);
+        // console.error('❌ Error en registerCli():', e);
         limpiarValidaciones(); // Reemplaza con tu función de limpieza de validaciones
 
         // Verificar si existe la respuesta JSON
@@ -914,17 +874,18 @@ function limpiarValidaciones() {
 
 function limpiarValidacionesSucursal() {
     const fields = [
-        'nombres',
-        'apellidos',
+        'nombre_sucursal',
+        'persona_contacto',
+        'correo',
         'telefono',
         'celular',
-        'cargo',
-        'ext',
+        'ciudad_id',
+        'direccion',
     ];
 
     // Limpiar los mensajes de error para cada campo
     fields.forEach(field => {
-        $('#error_sucursal_' + field).text(''); // Asume que los errores tienen el formato 'error_<campo>'
+        $('#error_sucursal_' + field).text('').hide(); // Asume que los errores tienen el formato 'error_<campo>'
     });
 }
 
@@ -934,6 +895,7 @@ function limpiarValidacionesContacto() {
         'apellidos',
         'telefono',
         'celular',
+        'correo',
         'cargo',
         'ext',
     ];
@@ -949,8 +911,8 @@ function registerSucursal(){
     tercero_id=$('#id').val();
     sucursal_id=$('#sucursal_id').val();
     if(tercero_id==''){
-        registerCli();
-        //saveSucursal();
+        // Primero crear el cliente, luego la sucursal
+        registerCliForSucursal();
     }else if(tercero_id!='' && sucursal_id==''){
         saveSucursal();
     }else if(tercero_id!='' && sucursal_id!=''){
@@ -972,8 +934,9 @@ function registerContacto(){
     }
 }
 
-// Nueva función para registrar cliente cuando se crea un contacto
-function registerCliForContacto() {
+// Crea el cliente (usado cuando aún no existe, ej: desde Contactos o Sucursales)
+// y, una vez creado, continúa con el guardado que el usuario en realidad quería hacer.
+function crearClienteYLuego(callbackExito, spinnerId) {
     const route = "/admin/admin.clientes.store";
 
     // Crear un objeto FormData directamente desde el formulario
@@ -983,8 +946,9 @@ function registerCliForContacto() {
     const telefonoLimpio = $('#telefono').val().replace(/[^\d]/g, '');
     const celularLimpio = $('#celular').val().replace(/[^\d]/g, '');
 
+    let terceroTipo='2';
     // Agregar los nuevos campos del formulario
-    ajax_data.append('tercerotipo_id', $('#tercerotipo_id').val());
+    ajax_data.append('tercerotipo_id', terceroTipo);
     ajax_data.append('tipoidentificacion_id', $('#tipoidentificacion_id').val());
     ajax_data.append('identificacion', $('#identificacion').val());
     ajax_data.append('dv', $('#dv').val());
@@ -1012,28 +976,64 @@ function registerCliForContacto() {
         processData: false,
     }).then(response => {
         $('#id').val(response.data.id);
-        // Una vez creado el cliente, crear el contacto
-        //saveContacto();
         toastr.success('Cliente creado exitosamente');
+        // Una vez creado el cliente, continuar con el guardado pendiente (contacto/sucursal)
+        callbackExito();
 
     }).catch(e => {
-        $('#spinnerRegisterContacto').addClass('d-none');
-        $('#spinnerRegisterContacto').removeClass('d-block');
+        if (spinnerId) {
+            $('#' + spinnerId).addClass('d-none');
+            $('#' + spinnerId).removeClass('d-block');
+        }
 
         limpiarValidaciones();
         const arr = e.responseJSON;
         const toast = arr.errors;
 
         if (e.status == 422) {
+            // Campos de cada paso, para saber a cuál regresar y mostrar el error
+            const camposPorPaso = {
+                1: ['tipopersona_id', 'tipoidentificacion_id', 'identificacion', 'dv', 'nombres', 'apellidos', 'nombre_establecimiento'],
+                2: ['telefono', 'celular', 'correo', 'correo_fe', 'ciudad_id', 'direccion', 'vendedor_id']
+            };
+
+            let allErrors = [];
+            let pasoConError = null;
+
             $.each(toast, function (key, value) {
-                $('#error_' + key).text(value[0]);
+                $('#error_' + key).text(value[0]).show();
+                allErrors = allErrors.concat(value);
+
+                if (pasoConError === null) {
+                    if (camposPorPaso[1].includes(key)) {
+                        pasoConError = 1;
+                    } else if (camposPorPaso[2].includes(key)) {
+                        pasoConError = 2;
+                    }
+                }
             });
-            toastr.error('Por favor corrija los errores en el formulario');
+
+            // Regresar al paso donde está el campo con error, para que el mensaje sea visible
+            if (pasoConError && window.clienteModalSteps && typeof window.clienteModalSteps.goToStep === 'function') {
+                window.clienteModalSteps.goToStep(pasoConError);
+            }
+
+            toastr.error('Por favor corrija los errores en el formulario:\n' + allErrors.join('\n'));
         } else {
             console.log(e.responseJSON);
             toastr.error('Error al crear el cliente');
         }
     });
+}
+
+// Registrar cliente cuando se crea un contacto
+function registerCliForContacto() {
+    crearClienteYLuego(saveContacto, 'spinnerRegisterContacto');
+}
+
+// Registrar cliente cuando se crea una sucursal
+function registerCliForSucursal() {
+    crearClienteYLuego(saveSucursal, 'spinnerRegisterSucursal');
 }
 
 function saveSucursal(){
@@ -1083,10 +1083,12 @@ function saveSucursal(){
 
             if (e.status == 422) {
                 // Errores de validación
+                let allErrors = [];
                 $.each(toast, function (key, value) {
-                    $('#error_sucursal_' + key).text(value[0]);
+                    $('#error_sucursal_' + key).text(value[0]).show();
+                    allErrors = allErrors.concat(value);
                 });
-                toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.'); // Muestra el mensaje de error
+                toastr.warning('No fue posible guardar el registro:\n' + allErrors.join('\n')); // Muestra el mensaje de error
             } else if (e.status == 403) {
                 // Errores de permisos
                 $('#ModalCliente').modal('toggle');
@@ -1147,7 +1149,7 @@ function saveContacto(){
             // Errores de validación
             let allErrors = [];
             $.each(toast, function (key, value) {
-                $('#error_contacto_' + key).text(value.join(' '));
+                $('#error_contacto_' + key).text(value.join(' ')).show();
                 allErrors = allErrors.concat(value);
             });
             toastr.warning('No fue posible guardar el contacto.\n' + allErrors.join('\n'));
@@ -1290,10 +1292,12 @@ function updateSucursal(btn){
         if (e.status === 422) {
             // Errores de validación
             // Bootstrap 4 - backdrop configurado en modal show
+            let allErrors = [];
             $.each(toast, function(key, value) {
-                $('#error_sucursal_' + key).text(value[0]);
+                $('#error_sucursal_' + key).text(value[0]).show();
+                allErrors = allErrors.concat(value);
             });
-            toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.');  // Muestra el mensaje de error
+            toastr.warning('No fue posible guardar el registro:\n' + allErrors.join('\n'));  // Muestra el mensaje de error
         } else if (e.status === 403) {
             // Errores de permisos
             myModal.modal('toggle');
@@ -1351,7 +1355,7 @@ function updateContacto(btn){
             // Errores de validación
             // Bootstrap 4 - backdrop configurado en modal show
             $.each(toast, function(key, value) {
-                $('#error_contacto_' + key).text(value[0]);
+                $('#error_contacto_' + key).text(value[0]).show();
             });
             toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.');  // Muestra el mensaje de error
         } else if (e.status === 403) {
@@ -1441,8 +1445,6 @@ function deleteContacto(id){
 
 function actualizarValidaciones()
 {
-    console.log('🔄 actualizarValidaciones llamada');
-
     const tipoPersonaSelect = document.getElementById('tipopersona_id');
     if (!tipoPersonaSelect) {
         console.log('⚠️ Elemento tipopersona_id no encontrado - reintentando en 100ms');
@@ -1470,13 +1472,10 @@ function actualizarValidaciones()
     const apellidosGroup = apellidosInput.closest('.form-group');
 
     if (!nombreEstablecimientoGroup || !nombresGroup || !apellidosGroup) {
-        console.log('⚠️ Contenedores form-group no encontrados - usando fallback');
         // Fallback: usar los mismos campos si no se encuentran los contenedores
         const nombreEstablecimientoGroupFallback = nombreEstablecimientoInput.parentElement;
         const nombresGroupFallback = nombresInput.parentElement;
         const apellidosGroupFallback = apellidosInput.parentElement;
-
-        console.log('Usando contenedores padre directos');
     }
 
     const finalNombreGroup = nombreEstablecimientoGroup || nombreEstablecimientoInput.parentElement;
@@ -1484,14 +1483,11 @@ function actualizarValidaciones()
     const finalApellidosGroup = apellidosGroup || apellidosInput.parentElement;
 
     let tipoPersonaSeleccionado = tipoPersonaSelect.options[tipoPersonaSelect.selectedIndex].text.toLowerCase();
-    console.log('🏷️ Tipo de persona seleccionado:', tipoPersonaSeleccionado);
 
     if (tipoPersonaSeleccionado.includes("jurídica")) {
-        console.log('👤 Configurando para persona jurídica');
         // Mostrar campo "Nombre del Establecimiento" y hacerlo obligatorio
         if (finalNombreGroup) {
             finalNombreGroup.style.display = "block";
-            console.log('✅ Mostrando nombre del establecimiento');
         }
         nombreEstablecimientoInput.setAttribute("required", "required");
 
@@ -1500,25 +1496,20 @@ function actualizarValidaciones()
         if (finalApellidosGroup) finalApellidosGroup.style.display = "none";
         nombresInput.removeAttribute("required");
         apellidosInput.removeAttribute("required");
-        console.log('✅ Ocultando nombres y apellidos');
     } else {
-        console.log('👤 Configurando para persona natural');
         // Mostrar "Nombres" y "Apellidos" y hacerlos obligatorios
         if (finalNombresGroup) finalNombresGroup.style.display = "block";
         if (finalApellidosGroup) finalApellidosGroup.style.display = "block";
         nombresInput.setAttribute("required", "required");
         apellidosInput.setAttribute("required", "required");
-        console.log('✅ Mostrando nombres y apellidos');
 
         // Ocultar "Nombre del Establecimiento" y quitar obligatoriedad
         if (finalNombreGroup) {
             finalNombreGroup.style.display = "none";
-            console.log('✅ Ocultando nombre del establecimiento');
         }
         nombreEstablecimientoInput.removeAttribute("required");
     }
 
-    console.log('✅ actualizarValidaciones completada');
 }
 
 function obtenerVendedor() {
@@ -1539,7 +1530,6 @@ function obtenerVendedor() {
 
 // Función temporal de debug para probar validaciones
 function testValidaciones() {
-    console.log('🧪 Iniciando test de validaciones...');
 
     // Limpiar formulario
     $('#ModalCliente form')[0].reset();

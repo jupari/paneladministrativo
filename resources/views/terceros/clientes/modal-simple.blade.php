@@ -231,12 +231,12 @@
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group">
-                                            <label for="correo">Correo Electrónico</label>
+                                            <label for="correo" class="required">Correo Electrónico</label>
                                             <div class="input-group">
                                                 <div class="input-group-prepend">
                                                     <span class="input-group-text"><i class="fas fa-envelope"></i></span>
                                                 </div>
-                                                <input type="email" id="correo" class="form-control" placeholder="correo@empresa.com">
+                                                <input type="email" id="correo" class="form-control" placeholder="correo@empresa.com" required>
                                             </div>
                                             <span class="text-danger" id="error_correo"></span>
                                             <div class="valid-feedback">¡Email válido!</div>
@@ -347,6 +347,7 @@
                                             <div class="form-group">
                                                 <label for="contacto_nombres">Nombres</label>
                                                     <input type="text" id="contacto_nombres" class="form-control" placeholder="Nombres" maxlength="250">
+                                                    <span class="text-danger" id="error_contacto_nombres"></span>
                                                     <script>
                                                     document.addEventListener('DOMContentLoaded', function() {
                                                         var contactoNombres = document.getElementById('contacto_nombres');
@@ -364,6 +365,7 @@
                                             <div class="form-group">
                                                 <label for="contacto_apellidos">Apellidos</label>
                                                     <input type="text" id="contacto_apellidos" class="form-control" placeholder="Apellidos" maxlength="250">
+                                                    <span class="text-danger" id="error_contacto_apellidos"></span>
                                                     <script>
                                                     document.addEventListener('DOMContentLoaded', function() {
                                                         var contactoApellidos = document.getElementById('contacto_apellidos');
@@ -381,14 +383,16 @@
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="form-group">
-                                                <label for="contacto_correo">Correo</label>
+                                                <label for="contacto_correo" class="required">Correo</label>
                                                 <input type="email" id="contacto_correo" class="form-control" placeholder="correo@empresa.com">
+                                                <span class="text-danger" id="error_contacto_correo"></span>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group">
-                                                <label for="contacto_cargo">Cargo</label>
+                                                <label for="contacto_cargo" class="required">Cargo</label>
                                                 <input type="text" id="contacto_cargo" class="form-control" placeholder="Cargo">
+                                                <span class="text-danger" id="error_contacto_cargo"></span>
                                             </div>
                                         </div>
                                     </div>
@@ -397,18 +401,21 @@
                                             <div class="form-group">
                                                 <label for="contacto_celular">Celular</label>
                                                 <input type="text" id="contacto_celular" class="form-control" placeholder="Celular">
+                                                <span class="text-danger" id="error_contacto_celular"></span>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label for="contacto_telefono">Teléfono</label>
                                                 <input type="text" id="contacto_telefono" class="form-control" placeholder="Teléfono">
+                                                <span class="text-danger" id="error_contacto_telefono"></span>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label for="contacto_ext">Ext</label>
                                                 <input type="text" id="contacto_ext" class="form-control" placeholder="Extensión">
+                                                <span class="text-danger" id="error_contacto_ext"></span>
                                             </div>
                                         </div>
                                     </div>
@@ -467,34 +474,39 @@
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="form-group">
-                                                <label for="sucursal_nombre_sucursal">Nombre Comercial</label>
+                                                <label for="sucursal_nombre_sucursal" class="required">Nombre Comercial</label>
                                                 <input type="text" id="sucursal_nombre_sucursal" class="form-control" placeholder="Nombre de la sucursal">
+                                                <span class="text-danger" id="error_sucursal_nombre_sucursal"></span>
                                             </div>
                                         </div>
                                         <div class="col-md-6">
                                             <div class="form-group">
-                                                <label for="sucursal_persona_contacto">Persona de Contacto</label>
+                                                <label for="sucursal_persona_contacto" class="required">Persona de Contacto</label>
                                                 <input type="text" id="sucursal_persona_contacto" class="form-control" placeholder="Nombre del contacto">
+                                                <span class="text-danger" id="error_sucursal_persona_contacto"></span>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="form-group">
-                                                <label for="sucursal_correo">Correo</label>
+                                                <label for="sucursal_correo" class="required">Correo</label>
                                                 <input type="email" id="sucursal_correo" class="form-control" placeholder="sucursal@empresa.com">
+                                                <span class="text-danger" id="error_sucursal_correo"></span>
                                             </div>
                                         </div>
                                         <div class="col-md-3">
                                             <div class="form-group">
                                                 <label for="sucursal_telefono">Teléfono</label>
                                                 <input type="text" id="sucursal_telefono" class="form-control" placeholder="Teléfono">
+                                                <span class="text-danger" id="error_sucursal_telefono"></span>
                                             </div>
                                         </div>
                                         <div class="col-md-3">
                                             <div class="form-group">
                                                 <label for="sucursal_celular">Celular</label>
                                                 <input type="text" id="sucursal_celular" class="form-control" placeholder="Celular">
+                                                <span class="text-danger" id="error_sucursal_celular"></span>
                                             </div>
                                         </div>
                                     </div>
@@ -526,12 +538,14 @@
                                                 <select id="sucursal_ciudad_id" class="form-control">
                                                     <option value="">Seleccione...</option>
                                                 </select>
+                                                <span class="text-danger" id="error_sucursal_ciudad_id"></span>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="form-group">
                                         <label for="sucursal_direccion">Dirección</label>
                                         <textarea id="sucursal_direccion" class="form-control" rows="2" placeholder="Dirección completa"></textarea>
+                                        <span class="text-danger" id="error_sucursal_direccion"></span>
                                     </div>
                                     <div class="text-right">
                                         <button type="button" class="btn btn-secondary btn-sm" id="cancelSucursalBtn">

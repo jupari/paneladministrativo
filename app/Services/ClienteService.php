@@ -19,7 +19,7 @@ class ClienteService
 
         $query = Tercero::with('tipoPersona', 'tipoIdentificacion', 'ciudad')
             ->where('company_id', $companyId)
-            ->orderBy('created_at')
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return $query;

@@ -255,7 +255,7 @@ class ClienteModalSteps {
         // Validación en tiempo real
         this.validationRules = {
             1: ['tipopersona_id', 'tipoidentificacion_id', 'identificacion', 'nombres', 'apellidos'],
-            2: ['ciudad_id', 'direccion'],
+            2: ['correo', 'ciudad_id', 'direccion', 'telefono', 'celular', 'correo_fe'],
             3: [], // Opcional
             4: []  // Opcional
         };
@@ -310,10 +310,25 @@ class ClienteModalSteps {
         }
 
         // Validaciones específicas
-        if (value && fieldId === 'identificacion') {
+        if (isValid && value && fieldId === 'identificacion') {
             if (!/^[0-9]+$/.test(value)) {
                 isValid = false;
                 message = 'Solo se permiten números';
+            }
+        }
+
+        if (isValid && value && (fieldId === 'correo' || fieldId === 'correo_fe')) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(value)) {
+                isValid = false;
+                message = 'Formato de email inválido';
+            }
+        }
+
+        if (isValid && value && (fieldId === 'telefono' || fieldId === 'celular')) {
+            if (!/^[0-9]{10}$/.test(value)) {
+                isValid = false;
+                message = `El ${fieldId === 'telefono' ? 'teléfono' : 'celular'} debe tener 10 dígitos numéricos`;
             }
         }
 
@@ -353,6 +368,7 @@ class ClienteModalSteps {
 
         if (errorElement) {
             errorElement.textContent = message;
+            errorElement.style.display = message ? 'block' : 'none';
         }
     }
 
@@ -360,6 +376,7 @@ class ClienteModalSteps {
         const errorElement = document.getElementById(`error_${field.id}`);
         if (errorElement) {
             errorElement.textContent = '';
+            errorElement.style.display = 'none';
         }
         field.classList.remove('is-invalid');
     }
@@ -578,7 +595,7 @@ class ClienteModalSteps {
         this.setupSucursalEvents();
 
         // Auto-save draft
-        this.setupAutoSave();
+        // this.setupAutoSave();
     }
 
     setupContactoEvents() {
@@ -639,55 +656,55 @@ class ClienteModalSteps {
         });
     }
 
-    setupAutoSave() {
-        let autoSaveTimer;
-        const form = document.getElementById('cliente-form');
+    // setupAutoSave() {
+    //     let autoSaveTimer;
+    //     const form = document.getElementById('cliente-form');
 
-        if (form) {
-            form.addEventListener('input', () => {
-                clearTimeout(autoSaveTimer);
-                autoSaveTimer = setTimeout(() => {
-                    this.saveDraft();
-                }, 30000); // Auto-guardar cada 30 segundos
-            });
-        }
-    }
+    //     if (form) {
+    //         form.addEventListener('input', () => {
+    //             clearTimeout(autoSaveTimer);
+    //             autoSaveTimer = setTimeout(() => {
+    //                 this.saveDraft();
+    //             }, 30000); // Auto-guardar cada 30 segundos
+    //         });
+    //     }
+    // }
 
-    saveDraft() {
-        const formData = new FormData(document.getElementById('cliente-form'));
-        const draftData = Object.fromEntries(formData);
+    // saveDraft() {
+    //     const formData = new FormData(document.getElementById('cliente-form'));
+    //     const draftData = Object.fromEntries(formData);
 
-        localStorage.setItem('cliente_draft', JSON.stringify({
-            data: draftData,
-            timestamp: new Date().toISOString()
-        }));
+    //     localStorage.setItem('cliente_draft', JSON.stringify({
+    //         data: draftData,
+    //         timestamp: new Date().toISOString()
+    //     }));
 
-        this.showToast('info', 'Borrador guardado', 'Sus cambios se han guardado automáticamente', 2000);
-    }
+    //     this.showToast('info', 'Borrador guardado', 'Sus cambios se han guardado automáticamente', 2000);
+    // }
 
-    loadDraft() {
-        const draft = localStorage.getItem('cliente_draft');
-        if (draft) {
-            try {
-                const draftData = JSON.parse(draft);
-                // Cargar datos del borrador si el usuario lo confirma
-                if (confirm('Se encontró un borrador guardado. ¿Desea cargarlo?')) {
-                    Object.keys(draftData.data).forEach(key => {
-                        const field = document.getElementById(key);
-                        if (field) {
-                            field.value = draftData.data[key];
-                        }
-                    });
-                }
-            } catch (e) {
-                console.error('Error loading draft:', e);
-            }
-        }
-    }
+    // loadDraft() {
+    //     const draft = localStorage.getItem('cliente_draft');
+    //     if (draft) {
+    //         try {
+    //             const draftData = JSON.parse(draft);
+    //             // Cargar datos del borrador si el usuario lo confirma
+    //             if (confirm('Se encontró un borrador guardado. ¿Desea cargarlo?')) {
+    //                 Object.keys(draftData.data).forEach(key => {
+    //                     const field = document.getElementById(key);
+    //                     if (field) {
+    //                         field.value = draftData.data[key];
+    //                     }
+    //                 });
+    //             }
+    //         } catch (e) {
+    //             console.error('Error loading draft:', e);
+    //         }
+    //     }
+    // }
 
-    clearDraft() {
-        localStorage.removeItem('cliente_draft');
-    }
+    // clearDraft() {
+    //     localStorage.removeItem('cliente_draft');
+    // }
 
     setupToastSystem() {
         // Crear contenedor de toasts si no existe
