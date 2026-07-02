@@ -235,6 +235,8 @@ function Cargar() {
                 "url": "/assets/js/spanish.json"
             },
             responsive: true,
+            processing: true,
+            stateSave: true,
             dom: "<'row'<'col-sm-6'B><'col-sm-6'f>>" +
                 "<'row'<'col-sm-12'ltr>>" +
                 "<'row'<'col-sm-5'i><'col-sm-7'p>>",
@@ -248,22 +250,29 @@ function Cargar() {
                     text: '<i class="far fa-file-excel"></i>',
                     titleAttr: 'Exportar a Excel',
                     filename: 'reporte_excel'
+                },
+                {
+                    extend: 'colvis',
+                    className: 'btn btn-secondary',
+                    text: '<i class="fas fa-columns"></i>',
+                    titleAttr: 'Mostrar/ocultar columnas',
+                    columns: ':not(.exclude)'
                 }],
             ajax: '/admin/admin.clientes.index',
                 columns: [
-                { data: 'DT_RowIndex', name: 'DT_RowIndex', className: 'exclude', orderable: false,searchable: false},
-                { data: 'tipoid', name: 'tipoid'},
-                { data: 'identificacion', name: 'identificacion'},
-                { data: 'tipopersona', name: 'tipopersona'},
-                { data: 'nombres', name: 'nombres'},
-                { data: 'apellidos', name: 'apellidos'},
-                { data: 'nombre_estableciemiento', name: 'nombre_estableciemiento'},
-                { data: 'correo', name: 'correo'},
-                { data: 'telefono', name: 'telefono'},
-                { data: 'celular', name: 'celular'},
-                { data: 'created_at', name: 'created_at'},
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', className: 'exclude', orderable: false, searchable: false, responsivePriority: 1},
+                { data: 'tipoid', name: 'tipoid', responsivePriority: 6},
+                { data: 'identificacion', name: 'identificacion', responsivePriority: 2},
+                { data: 'tipopersona', name: 'tipopersona', responsivePriority: 5, render: renderTipoPersona},
+                { data: 'nombres', name: 'nombres', responsivePriority: 3},
+                { data: 'apellidos', name: 'apellidos', responsivePriority: 4},
+                { data: 'nombre_estableciemiento', name: 'nombre_estableciemiento', responsivePriority: 9},
+                { data: 'correo', name: 'correo', responsivePriority: 7},
+                { data: 'telefono', name: 'telefono', responsivePriority: 10},
+                { data: 'celular', name: 'celular', responsivePriority: 11},
+                { data: 'created_at', name: 'created_at', responsivePriority: 8},
                 //{ data: 'active', name: 'active',className:'text-center'},
-                { data: 'acciones', name: 'acciones', className: 'exclude'},
+                { data: 'acciones', name: 'acciones', className: 'exclude', responsivePriority: 1},
             ],
             order: [[10, "desc"]],
             pageLength: 10,
@@ -271,6 +280,16 @@ function Cargar() {
         }
     );
     // table.ajax.reload();
+}
+
+// Pinta el tipo de persona como badge para diferenciar rápidamente Natural / Jurídica
+function renderTipoPersona(data, type) {
+    if (type !== 'display' || !data) {
+        return data;
+    }
+    const esJuridica = data.toLowerCase().includes('jur');
+    const badgeClass = esJuridica ? 'badge-primary' : 'badge-info';
+    return '<span class="badge ' + badgeClass + '">' + data + '</span>';
 }
 
 function CargarSucursales(id) {

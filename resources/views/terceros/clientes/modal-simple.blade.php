@@ -59,17 +59,8 @@
                                     // Valores de fallback inmediatos
                                     const tercerotipo_fallback = '{{ $tercerotipo_id ?? "1" }}';
                                     const user_fallback = '{{ $user_id ?? auth()->id() }}';
-
-                                    console.log('🔧 Estableciendo valores fallback:');
-                                    console.log('   - tercerotipo_fallback:', tercerotipo_fallback);
-                                    console.log('   - user_fallback:', user_fallback);
-
                                     $('#tercerotipo_id').val(tercerotipo_fallback);
                                     $('#user_id').val(user_fallback);
-
-                                    console.log('✅ Valores finales establecidos:');
-                                    console.log('   - tercerotipo_id final:', $('#tercerotipo_id').val());
-                                    console.log('   - user_id final:', $('#user_id').val());
                                 } else {
                                     console.error('❌ jQuery no disponible después de esperar');
                                 }

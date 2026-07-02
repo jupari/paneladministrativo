@@ -20,8 +20,6 @@ class ClienteModalSteps {
         this.setupEventListeners();
         this.setupToastSystem();
         this.checkDependencies();
-
-        console.log('✅ Nueva instancia ClienteModalSteps creada');
     }
 
     checkDependencies() {
@@ -49,7 +47,6 @@ class ClienteModalSteps {
     }
 
     updateStepDisplay() {
-        console.log(`Mostrando paso ${this.currentStep} de ${this.totalSteps}`);
 
         // Ocultar todos los pasos
         for (let i = 1; i <= this.totalSteps; i++) {
@@ -57,7 +54,6 @@ class ClienteModalSteps {
             if (stepContent) {
                 stepContent.classList.add('d-none');
                 stepContent.classList.remove('fade-in');
-                console.log(`Paso step-${i} oculto`);
             } else {
                 console.error(`Elemento step-${i} no encontrado en el DOM`);
             }
@@ -70,7 +66,6 @@ class ClienteModalSteps {
             setTimeout(() => {
                 currentStepContent.classList.add('fade-in');
             }, 10);
-            console.log(`Paso step-${this.currentStep} mostrado`);
         } else {
             console.error(`Elemento step-${this.currentStep} no encontrado en el DOM`);
         }
@@ -141,21 +136,15 @@ class ClienteModalSteps {
     }
 
     ensureNavigationButtons() {
-        console.log('🔧 Asegurando que los botones de navegación estén disponibles');
-
         const prevBtn = document.getElementById('prev-btn');
         const nextBtn = document.getElementById('next-btn');
 
         if (!prevBtn || !nextBtn) {
-            console.log('❌ Botones de navegación no encontrados en DOM');
-            console.log('prev-btn:', !!prevBtn, 'next-btn:', !!nextBtn);
 
             // Intentar buscar en el footer
             const footer = document.querySelector('#ModalCliente .modal-footer');
             if (footer) {
-                console.log('✅ Footer encontrado, verificando botones...');
                 const allButtons = footer.querySelectorAll('button');
-                console.log(`Encontrados ${allButtons.length} botones en footer`);
                 allButtons.forEach((btn, index) => {
                     console.log(`Botón ${index}: id="${btn.id}" onclick="${btn.getAttribute('onclick')}" classes="${btn.className}"`);
                 });
@@ -164,8 +153,6 @@ class ClienteModalSteps {
                 this.recreateNavigationButtons(footer);
             }
         } else {
-            console.log('✅ Botones de navegación encontrados correctamente');
-
             // FORZAR que los botones sean visibles removiendo d-none
             prevBtn.classList.remove('d-none');
             nextBtn.classList.remove('d-none');
@@ -174,28 +161,20 @@ class ClienteModalSteps {
             // Asegurar que los botones tengan los event handlers correctos
             if (prevBtn && !prevBtn.onclick) {
                 prevBtn.setAttribute('onclick', 'prevStepHandler(event)');
-                console.log('✅ onclick asignado a prevBtn');
             }
 
             if (nextBtn && !nextBtn.onclick) {
                 nextBtn.setAttribute('onclick', 'nextStepHandler(event)');
-                console.log('✅ onclick asignado a nextBtn');
             }
 
             // Luego aplicar la lógica normal de visibilidad según el paso
             setTimeout(() => {
                 this.updateNavigationButtons();
             }, 50);
-
-            console.log('✅ Estado final botones:');
-            console.log('   - prev-btn visible:', !prevBtn.classList.contains('d-none'));
-            console.log('   - next-btn visible:', !nextBtn.classList.contains('d-none'));
         }
     }
 
     recreateNavigationButtons(footer) {
-        console.log('🚑 Recreando botones de navegación que faltan...');
-
         // Buscar el contenedor de navegación de pasos
         let stepNav = footer.querySelector('.step-navigation');
         if (!stepNav) {
@@ -221,7 +200,6 @@ class ClienteModalSteps {
             prevBtn.setAttribute('onclick', 'prevStepHandler(event)');
             prevBtn.innerHTML = '<i class="fas fa-chevron-left mr-1"></i>Anterior';
             stepNav.appendChild(prevBtn);
-            console.log('✅ Botón prev-btn recreado');
         }
 
         // Recrear botón siguiente si no existe
@@ -233,7 +211,6 @@ class ClienteModalSteps {
             nextBtn.setAttribute('onclick', 'nextStepHandler(event)');
             nextBtn.innerHTML = 'Siguiente<i class="fas fa-chevron-right ml-1"></i>';
             stepNav.appendChild(nextBtn);
-            console.log('✅ Botón next-btn recreado');
         }
 
         // Recrear botón finalizar si no existe
@@ -245,10 +222,7 @@ class ClienteModalSteps {
             finishBtn.setAttribute('onclick', 'registerCliWithFeedback()');
             finishBtn.innerHTML = '<i class="fas fa-check mr-1"></i>Finalizar y Guardar';
             stepNav.appendChild(finishBtn);
-            console.log('✅ Botón finish-btn recreado');
         }
-
-        console.log('🚑 Recreación de botones completada');
     }
 
     setupValidation() {
@@ -382,8 +356,6 @@ class ClienteModalSteps {
     }
 
     clearValidationErrors() {
-        console.log('🧹 Limpiando errores de validación COMPLETA');
-
         // Remover TODAS las clases de validación de todos los campos
         document.querySelectorAll('.is-valid, .is-invalid, .was-validated').forEach(field => {
             field.classList.remove('is-valid', 'is-invalid', 'was-validated');
@@ -448,8 +420,6 @@ class ClienteModalSteps {
                 }
             }
         });
-
-        console.log('✅ Errores de validación limpiados COMPLETAMENTE');
     }
 
     autoCalculateDV(identificacion) {
@@ -482,8 +452,6 @@ class ClienteModalSteps {
 
     validateLoadedData() {
         // Función para validar y marcar como válidos los campos que ya tienen datos (modo edición)
-        console.log('Validando datos cargados para modo edición');
-
         // Validar campos de cada paso que tengan datos
         for (let step = 1; step <= this.totalSteps; step++) {
             const stepFields = this.validationRules[step] || [];
@@ -492,7 +460,6 @@ class ClienteModalSteps {
                 if (field && field.value && field.value.trim() !== '') {
                     // Si el campo tiene datos, marcarlo como válido
                     this.setFieldValidation(field, true, '');
-                    console.log(`Campo ${fieldId} marcado como válido (tiene datos: "${field.value}")`);
                 }
             });
         }
@@ -502,15 +469,12 @@ class ClienteModalSteps {
             const field = document.getElementById(fieldId);
             if (field && field.value && field.value.trim() !== '') {
                 this.setFieldValidation(field, true, '');
-                console.log(`Campo opcional ${fieldId} marcado como válido`);
             }
         });
 
         // Forzar revalidación de todos los pasos para modo edición
-        console.log('Validación completa de pasos:');
         for (let step = 1; step <= this.totalSteps; step++) {
             const isStepValid = this.validateStep(step);
-            console.log(`Paso ${step}: ${isStepValid ? 'VÁLIDO' : 'INVÁLIDO'}`);
         }
     }
 
@@ -538,13 +502,10 @@ class ClienteModalSteps {
             event.stopPropagation();
         }
 
-        console.log(`Intentando avanzar del paso ${this.currentStep} al paso ${this.currentStep + 1}`);
-
         if (this.validateCurrentStep()) {
             if (this.currentStep < this.totalSteps) {
                 const previousStep = this.currentStep;
                 this.currentStep++;
-                console.log(`✅ Avanzando del paso ${previousStep} al paso ${this.currentStep}`);
                 this.updateStepDisplay();
                 this.updateProgress();
                 this.updateNavigationButtons();
@@ -553,7 +514,6 @@ class ClienteModalSteps {
                 console.log('Ya está en el último paso');
             }
         } else {
-            console.log('❌ Validación del paso actual falló');
             this.showToast('error', 'Campos requeridos', 'Complete todos los campos obligatorios para continuar');
         }
     }
@@ -655,56 +615,6 @@ class ClienteModalSteps {
             if (field) field.value = '';
         });
     }
-
-    // setupAutoSave() {
-    //     let autoSaveTimer;
-    //     const form = document.getElementById('cliente-form');
-
-    //     if (form) {
-    //         form.addEventListener('input', () => {
-    //             clearTimeout(autoSaveTimer);
-    //             autoSaveTimer = setTimeout(() => {
-    //                 this.saveDraft();
-    //             }, 30000); // Auto-guardar cada 30 segundos
-    //         });
-    //     }
-    // }
-
-    // saveDraft() {
-    //     const formData = new FormData(document.getElementById('cliente-form'));
-    //     const draftData = Object.fromEntries(formData);
-
-    //     localStorage.setItem('cliente_draft', JSON.stringify({
-    //         data: draftData,
-    //         timestamp: new Date().toISOString()
-    //     }));
-
-    //     this.showToast('info', 'Borrador guardado', 'Sus cambios se han guardado automáticamente', 2000);
-    // }
-
-    // loadDraft() {
-    //     const draft = localStorage.getItem('cliente_draft');
-    //     if (draft) {
-    //         try {
-    //             const draftData = JSON.parse(draft);
-    //             // Cargar datos del borrador si el usuario lo confirma
-    //             if (confirm('Se encontró un borrador guardado. ¿Desea cargarlo?')) {
-    //                 Object.keys(draftData.data).forEach(key => {
-    //                     const field = document.getElementById(key);
-    //                     if (field) {
-    //                         field.value = draftData.data[key];
-    //                     }
-    //                 });
-    //             }
-    //         } catch (e) {
-    //             console.error('Error loading draft:', e);
-    //         }
-    //     }
-    // }
-
-    // clearDraft() {
-    //     localStorage.removeItem('cliente_draft');
-    // }
 
     setupToastSystem() {
         // Crear contenedor de toasts si no existe
@@ -811,7 +721,6 @@ class ClienteModalSteps {
 
     // Método para restablecer el modal
     reset(preserveData = false) {
-        console.log('Reseteando modal, preservar datos:', preserveData);
         this.currentStep = 1;
         this.contactos = [];
         this.sucursales = [];
@@ -835,7 +744,7 @@ class ClienteModalSteps {
                 error.textContent = '';
             });
         } else {
-            console.log('Datos del formulario preservados para edición');
+
         }
 
         // Limpiar atributos de listeners para permitir nueva configuración
@@ -889,8 +798,6 @@ window.prevStepHandler = function(event) {
         event.preventDefault();
         event.stopPropagation();
     }
-
-    console.log('🔄 prevStepHandler llamada');
     if (window.clienteModalSteps) {
         // Navegación libre para retroceder (sin validación)
         if (window.clienteModalSteps.currentStep > 1) {
@@ -902,18 +809,13 @@ window.prevStepHandler = function(event) {
     }
 };
 
-console.log('✅ Funciones globales nextStepHandler y prevStepHandler definidas después de la clase');
-
 // Funciones de debugging
 window.debugSteps = function() {
     console.log('🔍 === DEBUG PASOS ===');
     if (window.clienteModalSteps) {
-        console.log('Paso actual:', window.clienteModalSteps.currentStep);
-        console.log('Total pasos:', window.clienteModalSteps.totalSteps);
 
         for (let i = 1; i <= window.clienteModalSteps.totalSteps; i++) {
             const stepElement = document.getElementById(`step-${i}`);
-            console.log(`Paso ${i}:`, stepElement ? 'EXISTE' : 'NO EXISTE');
             if (stepElement) {
                 console.log(`  - Visible: ${!stepElement.classList.contains('d-none')}`);
                 console.log(`  - Clases: ${stepElement.className}`);
@@ -922,12 +824,10 @@ window.debugSteps = function() {
     } else {
         console.log('❌ clienteModalSteps no disponible');
     }
-    console.log('🔍 === FIN DEBUG ===');
 };
 
 window.forceStep = function(stepNumber) {
     if (window.clienteModalSteps && stepNumber >= 1 && stepNumber <= window.clienteModalSteps.totalSteps) {
-        console.log(`🔧 Forzando navegación al paso ${stepNumber}`);
         window.clienteModalSteps.currentStep = stepNumber;
         window.clienteModalSteps.updateStepDisplay();
         window.clienteModalSteps.updateProgress();
@@ -941,15 +841,12 @@ window.forceStep = function(stepNumber) {
 let clienteModalSteps = null;
 
 $(document).ready(function() {
-    console.log('Modal Steps Enhanced cargado');
-
     // Guardar funciones originales antes de sobrescribirlas (solo si no son nuestras)
     if (typeof window.registerContacto === 'function') {
         // Solo guardar si la función no es la que nosotros definimos
         const funcStr = window.registerContacto.toString();
         if (!funcStr.includes('registerContacto llamada')) {
             window.originalRegisterContacto = window.registerContacto;
-            console.log('Función registerContacto original guardada');
         } else {
             console.log('La función registerContacto ya es nuestra, no la guardamos');
         }
@@ -960,7 +857,6 @@ $(document).ready(function() {
         const funcStr = window.registerSucursal.toString();
         if (!funcStr.includes('registerSucursal llamada')) {
             window.originalRegisterSucursal = window.registerSucursal;
-            console.log('Función registerSucursal original guardada');
         } else {
             console.log('La función registerSucursal ya es nuestra, no la guardamos');
         }
@@ -968,10 +864,8 @@ $(document).ready(function() {
 
     // Inicializar cuando se abra el modal
     $('#ModalCliente').on('shown.bs.modal', function () {
-        console.log('🚀 Modal abierto, inicializando pasos');
 
         // LIMPIEZA INMEDIATA para evitar validaciones residuales
-        console.log('🧹 Limpieza inmediata de validaciones residuales');
         document.querySelectorAll('.is-valid, .is-invalid, .was-validated').forEach(field => {
             field.classList.remove('is-valid', 'is-invalid', 'was-validated');
         });
@@ -982,10 +876,8 @@ $(document).ready(function() {
         // Esperar un momento para que el DOM esté completamente renderizado
         setTimeout(() => {
             // SIEMPRE crear nueva instancia para evitar corrupción
-            console.log('🔄 Creando nueva instancia de ClienteModalSteps (forzado)');
             clienteModalSteps = new ClienteModalSteps();
             window.clienteModalSteps = clienteModalSteps;
-            console.log('✅ window.clienteModalSteps asignada:', window.clienteModalSteps);
 
             // LIMPIEZA COMPLETA con la nueva instancia
             clienteModalSteps.clearValidationErrors();
@@ -1006,10 +898,8 @@ $(document).ready(function() {
             // Dar tiempo para que se carguen los datos antes de verificar modo
             setTimeout(() => {
                 const isEditMode = checkIfEditMode();
-                console.log('🔍 Verificando modo después de carga - Modo edición:', isEditMode);
 
                 if (isEditMode) {
-                    console.log('📝 Configurando para modo edición');
                     // En modo edición, permitir navegación libre entre pasos
                     clienteModalSteps.editMode = true;
                     clienteModalSteps.allowFreeNavigation = true;
@@ -1017,10 +907,8 @@ $(document).ready(function() {
 
                     // Forzar actualización de validaciones para mostrar/ocultar campos
                     setTimeout(() => {
-                        console.log('📝 Ejecutando actualizarValidaciones en modo edición');
                         if (typeof actualizarValidaciones === 'function') {
                             actualizarValidaciones();
-                            console.log('✅ actualizarValidaciones ejecutada para modo edición');
                         }
                     }, 50);
 
@@ -1029,31 +917,22 @@ $(document).ready(function() {
                         clienteModalSteps.validateLoadedData();
                     }, 200);
                 } else {
-                    console.log('✨ Configurando para modo creación');
-                    // En modo nuevo, empezar en paso 1 con validación normal
+                   // En modo nuevo, empezar en paso 1 con validación normal
                     clienteModalSteps.editMode = false;
                     clienteModalSteps.allowFreeNavigation = false;
                     clienteModalSteps.currentStep = 1;
 
                     // También ejecutar actualizarValidaciones en modo creación
                     setTimeout(() => {
-                        console.log('✨ Ejecutando actualizarValidaciones en modo creación');
                         if (typeof actualizarValidaciones === 'function') {
                             actualizarValidaciones();
-                            console.log('✅ actualizarValidaciones ejecutada para modo creación');
                         }
                     }, 50);
-
-                    // Cargar borrador si existe
-                    clienteModalSteps.loadDraft();
                 }
-
                 // Siempre actualizar la interfaz
                 clienteModalSteps.updateStepDisplay();
                 clienteModalSteps.updateProgress();
                 clienteModalSteps.updateNavigationButtons();
-
-                console.log('✅ Inicialización completa');
             }, 300); // Dar más tiempo para que se carguen los datos
 
         }, 200);
@@ -1061,7 +940,6 @@ $(document).ready(function() {
 
     // Limpiar cuando se cierre el modal - pero sin resetear la variable global
     $('#ModalCliente').on('hidden.bs.modal', function () {
-        console.log('❌ Modal cerrado - limpiando');
         // Restaurar título para el próximo uso (creación)
         $('#modal-title-text').text('Registrar Cliente');
         // NO resetear clienteModalSteps para evitar pérdida de referencia
@@ -1071,167 +949,44 @@ $(document).ready(function() {
         }
     });
 });
-
-
-
-// Función global para compatibilidad con contactos - DESHABILITADA
-// Usar la función original de clientes.js
-/*
-window.registerContacto = function() {
-    console.log('registerContacto llamada');
-
-    // Verificar si hay una función original diferente guardada
-    if (typeof window.originalRegisterContacto === 'function' &&
-        window.originalRegisterContacto !== window.registerContacto) {
-        console.log('Ejecutando función registerContacto original');
-        window.originalRegisterContacto();
-    } else {
-        console.log('No hay función registerContacto original o es la misma, ejecutando lógica por defecto');
-
-        // Lógica por defecto para agregar contacto
-        const form = document.getElementById('contacto-form');
-        if (form) {
-            // Recopilar datos del formulario de contacto
-            const contactoData = {
-                nombres: document.getElementById('contacto_nombres')?.value || '',
-                apellidos: document.getElementById('contacto_apellidos')?.value || '',
-                correo: document.getElementById('contacto_correo')?.value || '',
-                cargo: document.getElementById('contacto_cargo')?.value || '',
-                celular: document.getElementById('contacto_celular')?.value || '',
-                telefono: document.getElementById('contacto_telefono')?.value || '',
-                ext: document.getElementById('contacto_ext')?.value || ''
-            };
-
-            console.log('Datos del contacto:', contactoData);
-
-            // Aquí podrías agregar la lógica para procesar el contacto
-            // Por ejemplo, agregarlo a una lista o enviarlo al servidor
-
-            if (window.clienteModalSteps) {
-                window.clienteModalSteps.showToast('info', 'Contacto agregado', 'El contacto ha sido agregado (funcionalidad básica)');
-            }
-
-            // Limpiar el formulario
-            if (window.clienteModalSteps) {
-                window.clienteModalSteps.clearContactoForm();
-            }
-
-            // Ocultar el formulario
-            form.classList.add('d-none');
-            document.getElementById('addContactoBtn')?.style.setProperty('display', 'block');
-        }
-    }
-};
-*/
-
-// Función global para compatibilidad con sucursales - DESHABILITADA
-// Usar la función original de clientes.js
-/*
-window.registerSucursal = function() {
-    console.log('registerSucursal llamada');
-
-    // Verificar si hay una función original diferente guardada
-    if (typeof window.originalRegisterSucursal === 'function' &&
-        window.originalRegisterSucursal !== window.registerSucursal) {
-        console.log('Ejecutando función registerSucursal original');
-        window.originalRegisterSucursal();
-    } else {
-        console.log('No hay función registerSucursal original o es la misma, ejecutando lógica por defecto');
-
-        // Lógica por defecto para agregar sucursal
-        const form = document.getElementById('sucursal-form');
-        if (form) {
-            // Recopilar datos del formulario de sucursal
-            const sucursalData = {
-                nombre_sucursal: document.getElementById('sucursal_nombre_sucursal')?.value || '',
-                persona_contacto: document.getElementById('sucursal_persona_contacto')?.value || '',
-                correo: document.getElementById('sucursal_correo')?.value || '',
-                telefono: document.getElementById('sucursal_telefono')?.value || '',
-                celular: document.getElementById('sucursal_celular')?.value || '',
-                direccion: document.getElementById('sucursal_direccion')?.value || ''
-            };
-
-            console.log('Datos de la sucursal:', sucursalData);
-
-            // Aquí podrías agregar la lógica para procesar la sucursal
-            // Por ejemplo, agregarla a una lista o enviarla al servidor
-
-            if (window.clienteModalSteps) {
-                window.clienteModalSteps.showToast('info', 'Sucursal agregada', 'La sucursal ha sido agregada (funcionalidad básica)');
-            }
-
-            // Limpiar el formulario
-            if (window.clienteModalSteps) {
-                window.clienteModalSteps.clearSucursalForm();
-            }
-
-            // Ocultar el formulario
-            form.classList.add('d-none');
-            document.getElementById('addSucursalBtn')?.style.setProperty('display', 'block');
-        }
-    }
-};
-*/
-
 // Función mejorada para guardar cliente con UX mejorado
 window.registerCliWithFeedback = function() {
-    console.log('🚀 Iniciando registro de cliente con feedback mejorado...');
-
     const finishBtn = document.getElementById('finish-btn');
 
     // Mostrar estado de carga
     if (finishBtn) {
         finishBtn.disabled = true;
         finishBtn.innerHTML = '<span class="spinner-border spinner-border-sm mr-2"></span>Guardando...';
-        console.log('✅ Botón actualizado a estado de carga');
     }
 
     // Mostrar toast de proceso
     if (window.clienteModalSteps) {
         window.clienteModalSteps.showToast('info', 'Procesando...', 'Guardando información del cliente', 3000);
-        console.log('✅ Toast de procesamiento mostrado');
     }
 
     // DETECTAR MODO DE EDICIÓN
     const isEditMode = $('#ModalCliente').data('edit-mode');
     const clienteId = $('#id').val();
 
-    console.log('🔍 Modo detectado:', isEditMode ? 'EDICIÓN' : 'CREACIÓN');
-    console.log('🆔 Cliente ID:', clienteId);
-
     // PREPARAR tercerotipo_id Y user_id según el modo
     if (!isEditMode) {
         // En modo CREACIÓN: asegurar que tercerotipo_id = tipopersona_id
         const tipopersona_val = $('#tipopersona_id').val();
         $('#tercerotipo_id').val(tipopersona_val);
-        console.log('➕ MODO CREACIÓN - Actualizando tercerotipo_id:', tipopersona_val);
-
-        // DEBUGGING EXHAUSTIVO DEL user_id
-        console.log('🔍 DEBUG EXHAUSTIVO user_id:');
-        console.log('   - Campo user_id existe:', $('#user_id').length > 0);
-        console.log('   - Valor actual del campo:', $('#user_id').val());
-        console.log('   - Valor como string:', "'" + $('#user_id').val() + "'");
-        console.log('   - Tipo del valor:', typeof $('#user_id').val());
-        console.log('   - Es cadena vacía:', $('#user_id').val() === '');
-        console.log('   - Es undefined:', $('#user_id').val() === undefined);
-        console.log('   - Es null:', $('#user_id').val() === null);
 
         // INTENTAR REPARAR user_id si está vacío
         let current_user_id = $('#user_id').val();
 
         if (!current_user_id || current_user_id === '' || current_user_id === 'undefined') {
-            console.warn('⚠️ user_id está vacío, intentando reparar...');
 
             // Buscar valor desde atributo value del input
             const userInputElement = document.getElementById('user_id');
             if (userInputElement) {
                 const attrValue = userInputElement.getAttribute('value');
-                console.log('   - Valor desde atributo:', attrValue);
 
                 if (attrValue && attrValue !== '') {
                     $('#user_id').val(attrValue);
                     current_user_id = attrValue;
-                    console.log('✅ user_id reparado desde atributo:', current_user_id);
                 }
             }
         }
@@ -1252,7 +1007,6 @@ window.registerCliWithFeedback = function() {
             }
             return;
         }
-        console.log('➕ MODO CREACIÓN - user_id configurado correctamente:', current_user_id);
     } else {
         // En modo EDICIÓN: mantener el user_id original (ya viene cargado desde el controlador)
         console.log('📝 MODO EDICIÓN - Manteniendo user_id original:', $('#user_id').val());
@@ -1263,7 +1017,6 @@ window.registerCliWithFeedback = function() {
     const user_val = $('#user_id').val();
 
     if (!tercerotipo_val || tercerotipo_val === '') {
-        console.error('❌ ERROR: tercerotipo_id está vacío');
         if (window.clienteModalSteps) {
             window.clienteModalSteps.showToast('error', 'Error', 'Debe seleccionar un tipo de persona');
         }
@@ -1276,7 +1029,6 @@ window.registerCliWithFeedback = function() {
     }
 
     if (!user_val || user_val === '') {
-        console.error('❌ ERROR: user_id está vacío');
         if (window.clienteModalSteps) {
             window.clienteModalSteps.showToast('error', 'Error', 'Campo user_id no configurado correctamente');
         }
@@ -1288,14 +1040,8 @@ window.registerCliWithFeedback = function() {
         return;
     }
 
-    console.log('🔍 DEBUG - Valores críticos:');
-    console.log('   - tercerotipo_id final:', tercerotipo_val);
-    console.log('   - user_id:', user_val);
-    console.log('   - tipopersona_id seleccionado:', $('#tipopersona_id').val());
-
     // Verificar si la función original existe
     if (typeof window.registerCli !== 'function') {
-        console.error('❌ Función registerCli no encontrada');
         if (window.clienteModalSteps) {
             window.clienteModalSteps.showToast('error', 'Error del sistema', 'Función de registro no disponible');
         }
@@ -1314,8 +1060,6 @@ window.registerCliWithFeedback = function() {
         const originalError = options.error;
 
         options.success = function(response) {
-            console.log('✅ Respuesta de éxito recibida:', response);
-
             // Mostrar toast de éxito
             if (window.clienteModalSteps) {
                 window.clienteModalSteps.showToast('success', '¡Éxito!', response.message || 'Cliente guardado correctamente');
@@ -1342,11 +1086,8 @@ window.registerCliWithFeedback = function() {
         };
 
         options.error = function(xhr, status, error) {
-            console.log('❌ Error en respuesta:', xhr, status, error);
-
             // Restaurar función AJAX original
             $.ajax = originalAjax;
-
             // Manejar errores con UX mejorado
             if (xhr.status === 422) {
                 if (window.clienteModalSteps) {
@@ -1380,22 +1121,18 @@ window.registerCliWithFeedback = function() {
 
         return originalAjax.call(this, options);
     };
-
     // Ejecutar función original con mejoras aplicadas
-    console.log('🎯 Ejecutando función registerCli original...');
     window.registerCli();
 };
 
 // Funciones globales para navegación de pasos (definidas sin window. para compatibilidad directa)
 function nextStepHandler(event) {
-    console.log('nextStepHandler llamada', event);
     if (event) {
         event.preventDefault();
         event.stopPropagation();
     }
 
     if (window.clienteModalSteps) {
-        console.log('Llamando nextStep en clienteModalSteps');
         window.clienteModalSteps.nextStep(event);
     } else {
         console.error('window.clienteModalSteps no disponible');
@@ -1403,14 +1140,12 @@ function nextStepHandler(event) {
 }
 
 function prevStepHandler(event) {
-    console.log('prevStepHandler llamada', event);
     if (event) {
         event.preventDefault();
         event.stopPropagation();
     }
 
     if (window.clienteModalSteps) {
-        console.log('Llamando prevStep en clienteModalSteps');
         window.clienteModalSteps.prevStep(event);
     } else {
         console.error('window.clienteModalSteps no disponible');
@@ -1423,12 +1158,10 @@ window.prevStepHandler = prevStepHandler;
 
 // Funciones globales para navegación de pasos (LEGACY - mantener por compatibilidad)
 window.handleNextStep = function(event) {
-    console.log('handleNextStep llamada', event);
     event.preventDefault();
     event.stopPropagation();
 
     if (window.clienteModalSteps) {
-        console.log('Llamando nextStep en clienteModalSteps');
         window.clienteModalSteps.nextStep(event);
     } else {
         console.error('window.clienteModalSteps no disponible');
@@ -1436,12 +1169,10 @@ window.handleNextStep = function(event) {
 };
 
 window.handlePrevStep = function(event) {
-    console.log('handlePrevStep llamada', event);
     event.preventDefault();
     event.stopPropagation();
 
     if (window.clienteModalSteps) {
-        console.log('Llamando prevStep en clienteModalSteps');
         window.clienteModalSteps.prevStep(event);
     } else {
         console.error('window.clienteModalSteps no disponible');
@@ -1454,14 +1185,8 @@ window.handlePrevStep = function(event) {
 
 // Función resetModal para compatibilidad con clientes.js
 window.resetModal = function() {
-    console.log('🔄 resetModal llamada - reiniciando modal para modo CREACIÓN');
-
     // Restaurar título para modo creación
     $('#modal-title-text').text('Registrar Cliente');
-
-    // PRIMERA LIMPIEZA PROFUNDA antes de crear nueva instancia
-    console.log('🧹 Ejecutando limpieza profunda ANTES de nueva instancia');
-
     // Limpiar formulario PRIMERO - pero preservar campos críticos
     const form = document.querySelector('#ModalCliente form');
     if (form) {
@@ -1470,19 +1195,12 @@ window.resetModal = function() {
             user_id: $('#user_id').val(),
             tercerotipo_id: $('#tercerotipo_id').val()
         };
-        console.log('💾 Preservando valores críticos antes del reset:', criticalValues);
-
         form.reset();
         form.classList.remove('was-validated');
-        console.log('✅ Formulario reseteado y clases removidas');
 
         // RESTAURAR valores críticos después del reset
         $('#user_id').val(criticalValues.user_id);
         $('#tercerotipo_id').val(criticalValues.tercerotipo_id);
-        console.log('✅ Valores críticos restaurados después del reset:', {
-            user_id: $('#user_id').val(),
-            tercerotipo_id: $('#tercerotipo_id').val()
-        });
     }
 
     // Limpiar todas las validaciones visuales MANUALMENTE Y AGRESIVAMENTE
@@ -1501,7 +1219,6 @@ window.resetModal = function() {
         user_id: $('#user_id').val(),
         tercerotipo_id: $('#tercerotipo_id').val()
     };
-    console.log('🔐 PRESERVANDO antes de limpiar inputs:', criticalValuesBeforeCleaning);
 
     // Limpiar todos los inputs específicamente
     document.querySelectorAll('#ModalCliente input, #ModalCliente select, #ModalCliente textarea').forEach(field => {
@@ -1520,13 +1237,7 @@ window.resetModal = function() {
     // RESTAURAR valores críticos después de limpiar
     $('#user_id').val(criticalValuesBeforeCleaning.user_id);
     $('#tercerotipo_id').val(criticalValuesBeforeCleaning.tercerotipo_id);
-    console.log('🔓 RESTAURADOS después de limpiar inputs:', {
-        user_id: $('#user_id').val(),
-        tercerotipo_id: $('#tercerotipo_id').val()
-    });
 
-    // AHORA crear nueva instancia limpia
-    console.log('🆕 Creando nueva instancia ClienteModalSteps (resetModal)');
     window.clienteModalSteps = new ClienteModalSteps();
 
     // Configurar para modo creación
@@ -1547,7 +1258,6 @@ window.resetModal = function() {
 
     // TERCERA LIMPIEZA específica para campos problemáticos
     setTimeout(() => {
-        console.log('🧹 Limpieza final tardía para asegurar campos limpios');
         document.querySelectorAll('#ModalCliente input, #ModalCliente select, #ModalCliente textarea').forEach(field => {
             field.classList.remove('is-valid', 'is-invalid', 'border-success', 'border-danger');
             field.style.borderColor = '';
@@ -1563,9 +1273,6 @@ window.resetModal = function() {
 
     // CUARTA LIMPIEZA tardía adicional
     setTimeout(() => {
-        console.log('🧹 Limpieza ultra tardía para casos persistentes');
         window.clienteModalSteps.clearValidationErrors();
     }, 300);
 };
-
-// Fin del archivo - verificar que todas las funciones estén cerradas correctamente

@@ -1,22 +1,15 @@
 // SCRIPT DE FUERZA BRUTA PARA MODAL - SIMPLIFICADO
 $(document).ready(function() {
-    console.log('💪 Script de Fuerza Bruta cargado - versión simplificada');
 
     // Función de limpieza completa
     window.limpiarTodoElModal = function() {
-        console.log('🧹 Limpiando todo el modal...');
 
         try {
             // PRESERVAR valores críticos antes de limpiar
             const tercerotipo_preserved = $('#tercerotipo_id').val();
             const user_preserved = $('#user_id').val();
 
-            console.log('🔒 PRESERVANDO en limpiarTodoElModal:', {
-                tercerotipo_id: tercerotipo_preserved,
-                user_id: user_preserved
-            });
-
-// Limpiar campos principales (excepto tipopersona_id para mantener la selección)
+            // Limpiar campos principales (excepto tipopersona_id para mantener la selección)
             const campos = [
                 'id', 'tipoidentificacion_id', 'identificacion', 'dv',
                 'nombres', 'apellidos', 'nombre_establecimiento', 'telefono', 'celular',
@@ -53,14 +46,6 @@ $(document).ready(function() {
             // RESTAURAR valores críticos después de limpiar
             $('#tercerotipo_id').val(tercerotipo_preserved);
             $('#user_id').val(user_preserved);
-
-            console.log('🔓 RESTAURADOS en limpiarTodoElModal:', {
-                tercerotipo_id: $('#tercerotipo_id').val(),
-                user_id: $('#user_id').val()
-            });
-
-            console.log('✅ Todos los campos limpiados');
-
         } catch (error) {
             console.log('⚠️ Error limpiando campos:', error);
         }
@@ -68,7 +53,6 @@ $(document).ready(function() {
 
     // Override simple y directo
     window.regCliForced = function() {
-        console.log('💪 regCliForced() ejecutándose...');
 
         try {
             // Marcar que NO está en modo edición
@@ -92,14 +76,9 @@ $(document).ready(function() {
             if (typeof resetModal === 'function') {
                 resetModal();
             }
-
             // Ahora abrir el modal
             const $modal = $('#ModalCliente');
-            console.log('Modal jQuery object:', $modal.length);
-
             $modal.modal('show');
-            console.log('✅ Modal show ejecutado');
-
             // Configurar título
             $('#exampleModalLabel').html('<i class="fas fa-user-plus mr-2"></i>Registrar Cliente');
 
@@ -114,7 +93,6 @@ $(document).ready(function() {
             // Configurar evento para tipo de persona
             setTimeout(() => {
                 $('#tipopersona_id').off('change.modalForce').on('change.modalForce', function() {
-                    console.log('🔄 Tipo de persona cambió - ejecutando actualizarValidaciones');
                     if (typeof actualizarValidaciones === 'function') {
                         actualizarValidaciones();
                     }
@@ -133,9 +111,6 @@ $(document).ready(function() {
 
     // Reemplazar regCli completamente
     window.regCli = function() {
-        console.log('🔄 regCli() override activado - con limpieza completa');
         window.regCliForced();
     };
-
-    console.log('💪 Override completo de regCli aplicado');
 });

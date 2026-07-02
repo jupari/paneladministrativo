@@ -248,8 +248,8 @@
     color: #007bff;
 }
 
-/* Cards mejoradas */
-.card {
+/* Cards mejoradas (solo dentro del modal, para no afectar el card de la vista índice) */
+#ModalCliente .card {
     border: none;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
@@ -257,18 +257,18 @@
     overflow: hidden;
 }
 
-.card:hover {
+#ModalCliente .card:hover {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
     transform: translateY(-2px);
 }
 
-.card-header {
+#ModalCliente .card-header {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     border-bottom: 1px solid #dee2e6;
     padding: 1rem 1.25rem;
 }
 
-.card-header h5 {
+#ModalCliente .card-header h5 {
     margin: 0;
     color: #495057;
     font-weight: 600;
@@ -276,13 +276,13 @@
     align-items: center;
 }
 
-.card-header h5 i {
+#ModalCliente .card-header h5 i {
     color: #007bff;
     margin-right: 8px;
 }
 
-/* Botones mejorados */
-.btn {
+/* Botones mejorados (solo dentro del modal, para no afectar los botones de la vista índice/datatable) */
+#ModalCliente .btn {
     border-radius: 6px;
     font-weight: 600;
     transition: all 0.3s ease;
@@ -291,53 +291,53 @@
     pointer-events: auto !important; /* Forzar que los botones sean clickeables */
 }
 
-.btn:hover {
+#ModalCliente .btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.btn-primary {
+#ModalCliente .btn-primary {
     background: linear-gradient(135deg, #007bff, #0056b3);
 }
 
-.btn-success {
+#ModalCliente .btn-success {
     background: linear-gradient(135deg, #28a745, #20c997);
 }
 
-.btn-secondary {
+#ModalCliente .btn-secondary {
     background: linear-gradient(135deg, #6c757d, #5a6268);
 }
 
-.btn-outline-secondary {
+#ModalCliente .btn-outline-secondary {
     border: 2px solid #6c757d;
     color: #6c757d;
     background: transparent;
 }
 
-.btn-outline-secondary:hover {
+#ModalCliente .btn-outline-secondary:hover {
     background: #6c757d;
     color: white;
 }
 
-.btn-outline-primary {
+#ModalCliente .btn-outline-primary {
     border: 2px solid #007bff;
     color: #007bff;
     background: transparent;
 }
 
-.btn-outline-primary:hover {
+#ModalCliente .btn-outline-primary:hover {
     background: #007bff;
     color: white;
 }
 
-/* Tablas mejoradas */
-.table {
+/* Tablas mejoradas (solo dentro del modal, para no afectar el datatable de la vista índice) */
+#ModalCliente .table {
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.table thead th {
+#ModalCliente .table thead th {
     background: linear-gradient(135deg, #f8f9fa, #e9ecef);
     border: none;
     font-weight: 600;
@@ -348,14 +348,14 @@
     padding: 12px 8px;
 }
 
-.table tbody td {
+#ModalCliente .table tbody td {
     border: none;
     border-top: 1px solid #f1f3f4;
     padding: 12px 8px;
     vertical-align: middle;
 }
 
-.table tbody tr:hover {
+#ModalCliente .table tbody tr:hover {
     background-color: #f8f9fa;
     transform: scale(1.01);
     transition: all 0.2s ease;
@@ -562,25 +562,25 @@
     outline-offset: 2px;
 }
 
-/* Dark mode support (opcional) */
+/* Dark mode support (opcional, solo dentro del modal para no afectar la vista índice) */
 @media (prefers-color-scheme: dark) {
-    .modal-content {
+    #ModalCliente .modal-content {
         background-color: #2d3748;
         color: #e2e8f0;
     }
 
-    .card {
+    #ModalCliente .card {
         background-color: #2d3748;
         color: #e2e8f0;
     }
 
-    .form-control {
+    #ModalCliente .form-control {
         background-color: #4a5568;
         border-color: #718096;
         color: #e2e8f0;
     }
 
-    .form-control:focus {
+    #ModalCliente .form-control:focus {
         background-color: #4a5568;
         border-color: #63b3ed;
         color: #e2e8f0;

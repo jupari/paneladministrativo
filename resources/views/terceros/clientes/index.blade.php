@@ -76,9 +76,33 @@
     <link rel="stylesheet" href="{{asset('assets/css/modal-clientes-enhanced.css')}}">
     {{-- Forzar tema claro para el modal --}}
     <link rel="stylesheet" href="{{asset('assets/css/force-light-theme.css')}}">
+    {{-- Extensión Responsive de DataTables (columnas que se ocultan/expanden en móvil) --}}
+    <link rel="stylesheet" href="//cdn.datatables.net/responsive/3.0.8/css/responsive.bootstrap5.min.css">
 
     {{-- Estilos de empresa --}}
     <x-company-styles />
+
+    <style>
+        /* Indicador de "Procesando..." más visible mientras el datatable carga/filtra */
+        #clientes-table_processing {
+            padding: 10px 20px !important;
+            border-radius: 6px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+            font-weight: 600;
+        }
+
+        /* Espaciado de los badges de Tipo de persona */
+        #clientes-table .badge {
+            font-size: 85%;
+            font-weight: 600;
+            padding: 5px 10px;
+        }
+
+        /* Botón de colvis junto al de excel */
+        #clientes-table_wrapper .dt-buttons .btn + .btn {
+            margin-left: 4px;
+        }
+    </style>
 @stop
 
 @section('js')
@@ -92,6 +116,10 @@
 
         });
     </script>
+    {{-- Extensión Responsive de DataTables y botón de visibilidad de columnas (colvis) --}}
+    <script src="//cdn.datatables.net/responsive/3.0.8/js/dataTables.responsive.min.js" type="text/javascript"></script>
+    <script src="//cdn.datatables.net/responsive/3.0.8/js/responsive.bootstrap5.min.js" type="text/javascript"></script>
+    <script src="//cdn.datatables.net/buttons/3.1.1/js/buttons.colVis.min.js" type="text/javascript"></script>
     <script src="{{asset('assets/js/Terceros/clientes/quick-diagnosis.js') }}" type="text/javascript"></script>
     <script src="{{asset('assets/js/Terceros/clientes/bootstrap-4-6-compatibility.js') }}" type="text/javascript"></script>
     <script src="{{asset('assets/js/Terceros/clientes/clientes.js') }}" type="text/javascript"></script>
