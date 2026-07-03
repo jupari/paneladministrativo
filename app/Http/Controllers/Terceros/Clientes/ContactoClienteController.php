@@ -65,13 +65,13 @@ class ContactoClienteController extends Controller
 
                                 })
                                 ->addColumn('acciones', function ($td) {
-                                    if(Auth::user()->can('roles.edit')){
-                                        $href = '<button type="button" onclick="showContacto('.$td->id.')" class="btn btn-warning btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Editar Contacto"><i class="fas fa-pencil-alt"></i></button>&nbsp';
-                                    }else{
-                                        $href='';
+                                    $href = '';
+                                    if(auth()->user()->can('clientes.edit')){
+                                        $href .= '<button type="button" onclick="showContacto('.$td->id.')" class="btn btn-warning btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Editar Contacto"><i class="fas fa-pencil-alt"></i></button>&nbsp';
                                     }
-                                   $href .= '<button type="button" onclick="deleteContacto('.$td->id.')" class="btn btn-danger btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Quitar Contacto"><i class="fas fa-trash"></i></button>';
-
+                                    if(auth()->user()->can('clientes.destroy')) {
+                                        $href .= '<button type="button" onclick="deleteContacto('.$td->id.')" class="btn btn-danger btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Quitar Contacto"><i class="fas fa-trash"></i></button>';
+                                    }
                                 return $href;
 
                                 })
