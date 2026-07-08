@@ -5161,8 +5161,15 @@ async function finalizarConfiguracionCostos() {
         const cantidadOperarios = cantidadOperariosInput ? cantidadOperariosInput.value : '';
 
         // Obtener precio del display visual o input oculto
-        let precio = document.getElementById(`valorPrecio_${itemId}`)?.textContent?.replace('$', '') ||
+        let precioTotal = document.getElementById(`valorPrecio_${itemId}`)?.textContent?.replace('$', '') ||
                 document.getElementById(`precio_${itemId}`)?.value || '0';
+
+        // Obtener cantidad de items para dividir el precio y obtener el precio base
+        const cantidadItemsInput = document.getElementById(`cantidadItems_${itemId}`);
+        const cantidadItems = cantidadItemsInput ? parseFloat(cantidadItemsInput.value) : 1;
+
+        // El precio mostrado ya está multiplicado por cantidad_items, así que lo dividimos para obtener el precio base
+        let precio = cantidadItems > 0 ? parseFloat(precioTotal) / cantidadItems : parseFloat(precioTotal);
 
         if (!tipoCosto) {
             errores.push(`Debe seleccionar el tipo de costo para "${item.nombre}"`);
@@ -5258,8 +5265,6 @@ async function finalizarConfiguracionCostos() {
         const _novedadesItem = _esNominaItem ? recolectarNovedadesDeItem(itemId) : [];
 
         // Para no-Nómina: los campos de nómina (días, horas) quedan en null
-        const cantidadItemsInput = document.getElementById(`cantidadItems_${itemId}`);
-        const cantidadItems = cantidadItemsInput ? parseFloat(cantidadItemsInput.value) : 1;
         const configuracionCosto = {
             tipoCosto,
             unidadMedida,
