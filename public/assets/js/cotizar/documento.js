@@ -5258,10 +5258,13 @@ async function finalizarConfiguracionCostos() {
         const _novedadesItem = _esNominaItem ? recolectarNovedadesDeItem(itemId) : [];
 
         // Para no-Nómina: los campos de nómina (días, horas) quedan en null
+        const cantidadItemsInput = document.getElementById(`cantidadItems_${itemId}`);
+        const cantidadItems = cantidadItemsInput ? parseFloat(cantidadItemsInput.value) : 1;
         const configuracionCosto = {
             tipoCosto,
             unidadMedida,
             cantidadOperarios: parseFloat(cantidadOperarios),
+            cantidadItems: cantidadItems,
             precio: parseFloat(precio),
             costoUnitario: tipoCosto === 'unitario' ? costoEspecifico : null,
             costoHora: tipoCosto === 'hora' ? costoEspecifico : null,
