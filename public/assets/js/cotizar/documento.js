@@ -5384,15 +5384,17 @@ function sincronizarItemsTablaConProductosSeleccionados(itemsConCostos) {
         itemsConCostos.forEach(subitem => {
 
             // Usar directamente los datos de configuración de costos
-            const precioTotal = subitem.configuracionCosto ?
+            const precioUnitario = subitem.configuracionCosto ?
                 parseFloat(subitem.configuracionCosto.precio) : 50.0;
             const cantidad = subitem.configuracionCosto ?
                 parseFloat(subitem.configuracionCosto.cantidadOperarios) : 1;
+            const cantidadItems = subitem.configuracionCosto ?
+                parseFloat(subitem.configuracionCosto.cantidadItems) || 1 : 1;
             const unidad = subitem.configuracionCosto ?
                 subitem.configuracionCosto.unidadMedida : 'Unidad';
 
-            // 🔧 CORRECCIÓN: Calcular precio unitario correcto
-            const precioUnitario = cantidad > 0 ? precioTotal / cantidad : precioTotal;
+            // 🔧 CORRECCIÓN: Calcular total incluyendo cantidad_items
+            const total = precioUnitario * cantidad * cantidadItems;
             const id = subitem.id;
             const nuevoProducto = {
                 id: id,
@@ -5405,9 +5407,9 @@ function sincronizarItemsTablaConProductosSeleccionados(itemsConCostos) {
                 fuente: subitem.fuente || null, // Preservar fuente para resolución posterior
                 nombre: subitem.nombre,
                 codigo: subitem.codigo || '',
-                precio: precioUnitario, // 🎯 Usar precio unitario calculado
+                precio: precioUnitario, // 🎯 Precio unitario sin multiplicadores
                 cantidad: cantidad, // 🎯 Usar cantidad correcta
-                total: precioTotal, // 🎯 El total ya está correcto
+                total: total, // 🎯 Total = precio × cantidad × cantidad_items
                 unidad: subitem.configuracionCosto ? unidad : 'Unidad',
                 categoria: subitem.categoria?.nombre || 'Item Propio',
                 descripcion: subitem.descripcion || '',
@@ -5416,7 +5418,7 @@ function sincronizarItemsTablaConProductosSeleccionados(itemsConCostos) {
                 // Campos de configuración de costos
                 categoria_id: subitem.categoria_id || null,
                 cargo_id: subitem.cargo_id || null,
-                cantidad_items: subitem.configuracionCosto?.cantidadItems || 1,
+                cantidad_items: cantidadItems,
                 configuracionCosto: subitem.configuracionCosto || null
             };
 
