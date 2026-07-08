@@ -3651,7 +3651,7 @@ function generarCamposConfiguracionSimple(itemId, unidadMedida = '') {
                         <small class="form-text text-muted">Se precarga automáticamente desde la parametrización</small>
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-3">
                     <div class="form-group">
                         <label class="form-label font-weight-bold">
                             <i class="fas fa-sort-numeric-up mr-1 text-secondary"></i><span id="labelCantidad_${itemId}">Cantidad</span>
@@ -3660,6 +3660,17 @@ function generarCamposConfiguracionSimple(itemId, unidadMedida = '') {
                                placeholder="0" step="0.5" min="0"
                                onchange="actualizarPrecioVisual('${itemId}')">
                         <small class="form-text text-muted" id="helpCantidad_${itemId}">Ingrese la cantidad requerida</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="form-label font-weight-bold">
+                            <i class="fas fa-boxes mr-1 text-info"></i>Cantidad de Items
+                        </label>
+                        <input type="number" class="form-control" id="cantidadItems_${itemId}"
+                               placeholder="1" step="0.01" min="0.01" value="1"
+                               onchange="actualizarPrecioVisual('${itemId}')">
+                        <small class="form-text text-muted">Multiplicador de items (default: 1)</small>
                     </div>
                 </div>
             </div>
@@ -3764,7 +3775,7 @@ function generarCamposConfiguracion(itemId, unidadMedida = '') {
                         <small class="form-text text-muted">Especifique la unidad de medida del item</small>
                     </div>
                 </div>
-                <div class="col-md-6" id="campoCantidadOperarios_${itemId}">
+                <div class="col-md-3" id="campoCantidadOperarios_${itemId}">
                     <div class="form-group">
                         <label class="form-label font-weight-bold">
                             <i class="fas fa-users mr-1"></i><span id="labelCantidad_${itemId}">Cantidad</span>
@@ -3772,6 +3783,17 @@ function generarCamposConfiguracion(itemId, unidadMedida = '') {
                         <input type="number" class="form-control" id="cantidadOperarios_${itemId}"
                                placeholder="1" step="1" min="1" onchange="actualizarPrecioVisual('${itemId}')">
                         <small class="form-text text-muted" id="helpCantidad_${itemId}">Ingrese la cantidad</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label class="form-label font-weight-bold">
+                            <i class="fas fa-boxes mr-1 text-info"></i>Cantidad de Items
+                        </label>
+                        <input type="number" class="form-control" id="cantidadItems_${itemId}"
+                               placeholder="1" step="0.01" min="0.01" value="1"
+                               onchange="actualizarPrecioVisual('${itemId}')">
+                        <small class="form-text text-muted">Multiplicador de items (default: 1)</small>
                     </div>
                 </div>
             </div>
@@ -4391,6 +4413,7 @@ function actualizarPrecioVisual(itemId) {
 
     const tipoCosto = tipoRadios[0].value;
     const cantidadOperarios = parseFloat(document.getElementById(`cantidadOperarios_${itemId}`).value) || 0;
+    const cantidadItems = parseFloat(document.getElementById(`cantidadItems_${itemId}`)?.value) || 1;
     const cardItem = document.getElementById(`cardItem_${itemId}`);
     const esNomina = cardItem?.dataset?.esNomina === 'true';
     let precio = 0;
@@ -4460,6 +4483,9 @@ function actualizarPrecioVisual(itemId) {
         });
         precio += _totalNov * cantidadOperarios;
     }
+
+    // Aplicar multiplicador de cantidad de items
+    precio = precio * cantidadItems;
 
     // Actualizar display del precio
     const valorPrecio = document.getElementById(`valorPrecio_${itemId}`);
