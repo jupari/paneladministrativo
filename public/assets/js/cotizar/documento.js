@@ -5416,6 +5416,7 @@ function sincronizarItemsTablaConProductosSeleccionados(itemsConCostos) {
                 // Campos de configuración de costos
                 categoria_id: subitem.categoria_id || null,
                 cargo_id: subitem.cargo_id || null,
+                cantidad_items: subitem.configuracionCosto?.cantidadItems || 1,
                 configuracionCosto: subitem.configuracionCosto || null
             };
 
@@ -8089,6 +8090,12 @@ function actualizarTablaProductosSeleccionados() {
                                    value="${producto.cantidad}" min="1" data-id="${producto.id}"
                                    onchange="actualizarCantidadProducto('${producto.id}', this.value)">
                         </div>
+                        <div style="width: 90px;">
+                            <label class="form-label-sm mb-0 d-block">Cant. Items</label>
+                            <input type="number" class="form-control form-control-sm cantidad-items-producto"
+                                   value="${producto.cantidad_items || 1}" min="0.01" step="0.01" data-id="${producto.id}"
+                                   onchange="actualizarCantidadItemsProducto('${producto.id}', this.value)">
+                        </div>
                         <div style="width: 120px;">
                             <label class="form-label-sm mb-0 d-block">Precio</label>
                             <div class="input-group input-group-sm">
@@ -8219,6 +8226,19 @@ function actualizarPrecioProducto(productoId, nuevoPrecio) {
         actualizarTablaProductosSeleccionados();
     } else {
         console.error('❌ Producto no encontrado para actualizar precio:', productoId);
+    }
+}
+
+/**
+ * Actualizar cantidad de items de producto
+ */
+function actualizarCantidadItemsProducto(productoId, nuevaCantidadItems) {
+    const producto = productosSeleccionados.find(p => String(p.id) === String(productoId));
+    if (producto) {
+        producto.cantidad_items = parseFloat(nuevaCantidadItems) || 1;
+        actualizarTablaProductosSeleccionados();
+    } else {
+        console.error('❌ Producto no encontrado para actualizar cantidad de items:', productoId);
     }
 }
 
@@ -8741,6 +8761,7 @@ async function enviarProductosTablaABaseDatos(productosEnTabla) {
                 codigo: producto.codigo || `PROD-${Date.now()}-${index}`,
                 unidad_medida: producto.unidad || 'UND',
                 cantidad: parseFloat(producto.cantidad) || 1,
+                cantidad_items: parseFloat(producto.cantidad_items) || 1,
                 valor_unitario: parseFloat(producto.precio) || 0,
                 descuento_porcentaje: parseFloat(producto.descuento_porcentaje) || 0,
                 descuento_valor: parseFloat(producto.descuento_valor) || 0,
