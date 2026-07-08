@@ -9625,6 +9625,9 @@ function mostrarProductosGuardados(productos) {
                 <span class="badge badge-info">${cantidad.toFixed(3)}</span>
             </td>
             <td>
+                <span class="badge badge-secondary">${(producto.cantidad_items || 1).toFixed(2)}</span>
+            </td>
+            <td>
                 <strong>$${valorUnitario.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</strong>
             </td>
             <td>
@@ -10046,8 +10049,9 @@ async function editarProducto(productoId) {
         // Extraer datos actuales del producto de la tabla
         const cells = row.querySelectorAll('td');
         const cantidadActual = cells[2]?.textContent?.trim() || '1';
-        const valorUnitarioActual = cells[3]?.textContent?.replace(/[$,.]/g, '') || '0';
-        const descuentoActual = cells[4]?.textContent?.replace('%', '') || '0';
+        const cantidadItemsActual = cells[3]?.textContent?.trim() || '1';
+        const valorUnitarioActual = cells[4]?.textContent?.replace(/[$,.]/g, '') || '0';
+        const descuentoActual = cells[5]?.textContent?.replace('%', '') || '0';
         const nombreProducto = cells[1]?.textContent?.trim() || 'Producto';
 
         // Crear un modal más avanzado con mejor UX
@@ -10061,7 +10065,7 @@ async function editarProducto(productoId) {
                     </div>
 
                     <div class="row">
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <label for="swal-cantidad" class="form-label font-weight-bold">
                                 <i class="fas fa-cubes text-success"></i> Cantidad *
                             </label>
@@ -10072,10 +10076,24 @@ async function editarProducto(productoId) {
                                    min="0.001"
                                    value="${cantidadActual}"
                                    placeholder="Ej: 5.5">
-                            <small class="text-muted">Cantidad mí­nima: 0.001</small>
+                            <small class="text-muted">Horas, días o unidades</small>
                         </div>
 
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
+                            <label for="swal-cantidad-items" class="form-label font-weight-bold">
+                                <i class="fas fa-boxes text-info"></i> Cantidad Items
+                            </label>
+                            <input id="swal-cantidad-items"
+                                   class="form-control"
+                                   type="number"
+                                   step="0.01"
+                                   min="0.01"
+                                   value="${cantidadItemsActual}"
+                                   placeholder="Ej: 2">
+                            <small class="text-muted">Multiplicador de items (default: 1)</small>
+                        </div>
+
+                        <div class="col-md-3 mb-3">
                             <label for="swal-valor" class="form-label font-weight-bold">
                                 <i class="fas fa-dollar-sign text-warning"></i> Valor Unitario *
                             </label>
@@ -10094,7 +10112,7 @@ async function editarProducto(productoId) {
                             <small class="text-muted">Precio por unidad</small>
                         </div>
 
-                        <div class="col-md-4 mb-3">
+                        <div class="col-md-3 mb-3">
                             <label for="swal-descuento" class="form-label font-weight-bold">
                                 <i class="fas fa-percent text-danger"></i> Descuento
                             </label>
@@ -10150,12 +10168,14 @@ async function editarProducto(productoId) {
                 // Función para calcular totales en tiempo real
                 const calcularTotales = () => {
                     const cantidad = parseFloat(document.getElementById('swal-cantidad').value) || 0;
+                    const cantidadItems = parseFloat(document.getElementById('swal-cantidad-items').value) || 1;
                     const valorUnitario = parseFloat(document.getElementById('swal-valor').value) || 0;
                     const descuentoPorcentaje = parseFloat(document.getElementById('swal-descuento').value) || 0;
 
                     const subtotal = cantidad * valorUnitario;
                     const descuentoValor = subtotal * (descuentoPorcentaje / 100);
-                    const total = subtotal - descuentoValor;
+                    const totalBase = subtotal - descuentoValor;
+                    const total = totalBase * cantidadItems;
 
                     // Formatear números como moneda
                     const formatearMoneda = (valor) => {
@@ -10173,7 +10193,7 @@ async function editarProducto(productoId) {
                 };
 
                 // Agregar eventos para cálculo en tiempo real
-                ['swal-cantidad', 'swal-valor', 'swal-descuento'].forEach(id => {
+                ['swal-cantidad', 'swal-cantidad-items', 'swal-valor', 'swal-descuento'].forEach(id => {
                     const elemento = document.getElementById(id);
                     if (elemento) {
                         elemento.addEventListener('input', calcularTotales);
@@ -10189,6 +10209,7 @@ async function editarProducto(productoId) {
             },
             preConfirm: () => {
                 const cantidad = document.getElementById('swal-cantidad').value;
+                const cantidadItems = document.getElementById('swal-cantidad-items').value;
                 const valorUnitario = document.getElementById('swal-valor').value;
                 const descuentoPorcentaje = document.getElementById('swal-descuento').value;
 
@@ -10204,11 +10225,17 @@ async function editarProducto(productoId) {
                 }
 
                 const cantidadNum = parseFloat(cantidad);
+                const cantidadItemsNum = parseFloat(cantidadItems) || 1;
                 const valorUnitarioNum = parseFloat(valorUnitario);
                 const descuentoPorcentajeNum = parseFloat(descuentoPorcentaje) || 0;
 
                 if (isNaN(cantidadNum) || cantidadNum <= 0) {
                     Swal.showValidationMessage('<i class="fas fa-exclamation-triangle"></i> La cantidad debe ser un número mayor a 0');
+                    return false;
+                }
+
+                if (isNaN(cantidadItemsNum) || cantidadItemsNum < 0.01) {
+                    Swal.showValidationMessage('<i class="fas fa-exclamation-triangle"></i> La cantidad de items debe ser mayor a 0');
                     return false;
                 }
 
@@ -10224,6 +10251,7 @@ async function editarProducto(productoId) {
 
                 return {
                     cantidad: cantidadNum,
+                    cantidad_items: cantidadItemsNum,
                     valor_unitario: valorUnitarioNum,
                     descuento_porcentaje: descuentoPorcentajeNum
                 };
@@ -10246,16 +10274,19 @@ async function editarProducto(productoId) {
 
             // Calcular totales
             const cantidad = formValues.cantidad;
+            const cantidadItems = formValues.cantidad_items;
             const valorUnitario = formValues.valor_unitario;
             const descuentoPorcentaje = formValues.descuento_porcentaje;
 
             const subtotal = cantidad * valorUnitario;
             const descuentoValor = subtotal * (descuentoPorcentaje / 100);
-            const valorTotal = subtotal - descuentoValor;
+            const valorTotalBase = subtotal - descuentoValor;
+            const valorTotal = valorTotalBase * cantidadItems;
 
             // Preparar datos para enviar
             const datosActualizar = {
                 cantidad: cantidad,
+                cantidad_items: cantidadItems,
                 valor_unitario: valorUnitario,
                 descuento_porcentaje: descuentoPorcentaje,
                 valor_total: valorTotal

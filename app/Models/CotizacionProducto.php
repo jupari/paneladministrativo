@@ -56,6 +56,7 @@ class CotizacionProducto extends Model
         'codigo',
         'unidad_medida',
         'cantidad',
+        'cantidad_items',
         'valor_unitario',
         'descuento_porcentaje',
         'descuento_valor',
@@ -83,6 +84,7 @@ class CotizacionProducto extends Model
 
     protected $casts = [
         'cantidad' => 'decimal:3',
+        'cantidad_items' => 'decimal:2',
         'valor_unitario' => 'decimal:2',
         'descuento_porcentaje' => 'decimal:2',
         'descuento_valor' => 'decimal:2',
@@ -170,7 +172,8 @@ class CotizacionProducto extends Model
         static::saving(function ($model) {
             $subtotal = $model->cantidad * $model->valor_unitario;
             $descuento = $model->descuento_valor + ($subtotal * ($model->descuento_porcentaje / 100));
-            $model->valor_total = round(($subtotal - $descuento) + ($model->bono ?? 0), 2);
+            $cantidad_items = $model->cantidad_items ?? 1;
+            $model->valor_total = round((($subtotal - $descuento) + ($model->bono ?? 0)) * $cantidad_items, 2);
         });
     }
 }

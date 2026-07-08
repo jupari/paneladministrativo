@@ -868,12 +868,13 @@
                                                             <label class="custom-control-label" for="selectAllProductosGuardados"></label>
                                                         </div>
                                                     </th>
-                                                    <th width="35%">Producto</th>
-                                                    <th width="10%">Cantidad</th>
-                                                    <th width="15%">Valor Unit.</th>
+                                                    <th width="30%">Producto</th>
+                                                    <th width="8%">Cantidad</th>
+                                                    <th width="8%">Cant. Items</th>
+                                                    <th width="13%">Valor Unit.</th>
                                                     <th width="10%">Descuento</th>
-                                                    <th width="15%">Total</th>
-                                                    <th width="10%">Acciones</th>
+                                                    <th width="13%">Total</th>
+                                                    <th width="8%">Acciones</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="tbodyProductosGuardados">

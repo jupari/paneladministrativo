@@ -38,6 +38,7 @@ class CotizacionProductoRequest extends FormRequest
             'codigo' => 'nullable|string|max:50',
             'unidad_medida' => 'required|string|max:20',
             'cantidad' => 'required|numeric|min:0.001|max:999999.999',
+            'cantidad_items' => 'nullable|numeric|min:0.01|max:999999.99',
             'valor_unitario' => 'required|numeric|min:0|max:999999999.99',
             'descuento_porcentaje' => 'nullable|numeric|min:0|max:100',
             'descuento_valor' => 'nullable|numeric|min:0|max:999999999.99',
@@ -80,6 +81,8 @@ class CotizacionProductoRequest extends FormRequest
             'cantidad.required' => 'La cantidad es obligatoria.',
             'cantidad.min' => 'La cantidad debe ser mayor a 0.',
             'cantidad.max' => 'La cantidad no puede exceder 999,999.999.',
+            'cantidad_items.min' => 'La cantidad de items debe ser mayor a 0.',
+            'cantidad_items.max' => 'La cantidad de items no puede exceder 999,999.99.',
             'valor_unitario.required' => 'El valor unitario es obligatorio.',
             'valor_unitario.min' => 'El valor unitario debe ser mayor o igual a 0.',
             'valor_unitario.max' => 'El valor unitario no puede exceder 999,999,999.99.',
@@ -118,6 +121,7 @@ class CotizacionProductoRequest extends FormRequest
             'active' => $this->has('active') ? (bool) $this->active : true,
             'descuento_porcentaje' => $this->descuento_porcentaje ?? 0,
             'descuento_valor' => $this->descuento_valor ?? 0,
+            'cantidad_items' => $this->cantidad_items ?? 1,
             'incluir_dominicales' => $this->has('incluir_dominicales') ? (bool) $this->incluir_dominicales : false,
             'item_propio_id' => $this->item_propio_id !== null && $this->item_propio_id !== ''
                 ? (int) $this->item_propio_id
