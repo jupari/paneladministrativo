@@ -5168,8 +5168,12 @@ async function finalizarConfiguracionCostos() {
         const cantidadItemsInput = document.getElementById(`cantidadItems_${itemId}`);
         const cantidadItems = cantidadItemsInput ? parseFloat(cantidadItemsInput.value) : 1;
 
-        // El precio mostrado ya está multiplicado por cantidad_items, así que lo dividimos para obtener el precio base
-        let precio = cantidadItems > 0 ? parseFloat(precioTotal) / cantidadItems : parseFloat(precioTotal);
+        // El precio mostrado ya está multiplicado por cantidad (operarios/días) × cantidad_items
+        // Necesitamos dividir por ambos para obtener el precio unitario puro
+        const cantidadOperariosNum = parseFloat(cantidadOperarios) || 1;
+        let precio = (cantidadItems > 0 && cantidadOperariosNum > 0) ?
+            parseFloat(precioTotal) / cantidadItems / cantidadOperariosNum :
+            parseFloat(precioTotal);
 
         if (!tipoCosto) {
             errores.push(`Debe seleccionar el tipo de costo para "${item.nombre}"`);
