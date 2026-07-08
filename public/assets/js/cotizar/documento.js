@@ -9625,7 +9625,7 @@ function mostrarProductosGuardados(productos) {
                 <span class="badge badge-info">${cantidad.toFixed(3)}</span>
             </td>
             <td>
-                <span class="badge badge-secondary">${(producto.cantidad_items || 1).toFixed(2)}</span>
+                <span class="badge badge-secondary">${parseFloat(producto.cantidad_items || 1).toFixed(2)}</span>
             </td>
             <td>
                 <strong>$${valorUnitario.toLocaleString('es-CO', { minimumFractionDigits: 2 })}</strong>
