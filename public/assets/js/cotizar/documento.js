@@ -5416,7 +5416,7 @@ function sincronizarItemsTablaConProductosSeleccionados(itemsConCostos) {
                 total: total, // 🎯 Total = precio × cantidad × cantidad_items
                 unidad: subitem.configuracionCosto ? unidad : 'Unidad',
                 categoria: subitem.categoria?.nombre || 'Item Propio',
-                descripcion: subitem.descripcion || '',
+                descripcion: generarDescripcionCosto(subitem.configuracionCosto),
                 esDelAcordeon: true,
                 item_parent: subitem.subitem?.nombre || 'Configuración de Costos',
                 // Campos de configuración de costos
@@ -5677,6 +5677,34 @@ function quitarItemPropioDelModal(itemId) {
             tbodyModal.appendChild(mensajeVacio);
         }
     }
+}
+
+/**
+ * Generar descripción de costo para mostrar en la tabla de productos seleccionados
+ */
+function generarDescripcionCosto(configuracionCosto) {
+    if (!configuracionCosto) {
+        return '';
+    }
+
+    const tipoCosto = configuracionCosto.tipoCosto;
+    let descripcion = '';
+
+    switch (tipoCosto) {
+        case 'hora':
+            descripcion = `Costo por Hora: $${(configuracionCosto.costoHora || 0).toLocaleString('es-CO', {minimumFractionDigits: 2})}`;
+            break;
+        case 'dia':
+            descripcion = `Costo por Día: $${(configuracionCosto.costoDia || 0).toLocaleString('es-CO', {minimumFractionDigits: 2})}`;
+            break;
+        case 'unitario':
+            descripcion = `Costo Unitario: $${(configuracionCosto.costoUnitario || 0).toLocaleString('es-CO', {minimumFractionDigits: 2})}`;
+            break;
+        default:
+            descripcion = 'Configuración de Costos';
+    }
+
+    return descripcion;
 }
 
 /**
