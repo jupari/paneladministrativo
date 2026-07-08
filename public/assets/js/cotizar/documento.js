@@ -8208,7 +8208,8 @@ function actualizarCantidadProducto(productoId, nuevaCantidad) {
     const producto = productosSeleccionados.find(p => String(p.id) === String(productoId));
     if (producto) {
         producto.cantidad = parseInt(nuevaCantidad) || 1;
-        producto.total = producto.precio * producto.cantidad;
+        const cantidadItems = parseFloat(producto.cantidad_items || 1);
+        producto.total = producto.precio * producto.cantidad * cantidadItems;
         actualizarTablaProductosSeleccionados();
     } else {
         console.error('❌ Producto no encontrado para actualizar cantidad:', productoId);
@@ -8222,7 +8223,8 @@ function actualizarPrecioProducto(productoId, nuevoPrecio) {
     const producto = productosSeleccionados.find(p => String(p.id) === String(productoId));
     if (producto) {
         producto.precio = parseFloat(nuevoPrecio) || 0;
-        producto.total = producto.precio * producto.cantidad;
+        const cantidadItems = parseFloat(producto.cantidad_items || 1);
+        producto.total = producto.precio * producto.cantidad * cantidadItems;
         actualizarTablaProductosSeleccionados();
     } else {
         console.error('❌ Producto no encontrado para actualizar precio:', productoId);
@@ -8236,6 +8238,7 @@ function actualizarCantidadItemsProducto(productoId, nuevaCantidadItems) {
     const producto = productosSeleccionados.find(p => String(p.id) === String(productoId));
     if (producto) {
         producto.cantidad_items = parseFloat(nuevaCantidadItems) || 1;
+        producto.total = producto.precio * producto.cantidad * producto.cantidad_items;
         actualizarTablaProductosSeleccionados();
     } else {
         console.error('❌ Producto no encontrado para actualizar cantidad de items:', productoId);
