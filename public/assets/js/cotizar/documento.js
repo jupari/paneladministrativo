@@ -8055,6 +8055,7 @@ function actualizarTablaProductosSeleccionados() {
 
     productosSeleccionados.forEach(producto => {
         const row = document.createElement('tr');
+        row.setAttribute('data-item-id', producto.id);
         const esDelAcordeon = producto.esDelAcordeon || false;
         const badgeColor = esDelAcordeon ? 'bg-info' : 'bg-secondary';
         const badgeText = esDelAcordeon ? (producto.categoria || 'Acordeón') : 'Producto';
