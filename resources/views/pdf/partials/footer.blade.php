@@ -17,8 +17,10 @@
             </td>
             <td width="30%" class="center">
                 <strong>ELABORADO POR</strong><br>
-                {{ $cotizacion->usuario->name ?? 'Administrador' }}<br><br>
-                Página <span class="pagenum"></span> de <span class="pagecount"></span>
+                {{ $cotizacion->usuario->name ?? 'Administrador' }}
+                {{-- El número de página y el total se dibujan sobre el canvas
+                     de dompdf (ver CotizacionPdfService::agregarNumeracionPaginas),
+                     ya que dompdf no soporta los contadores CSS counter(page)/counter(pages). --}}
             </td>
         </tr>
     </table>

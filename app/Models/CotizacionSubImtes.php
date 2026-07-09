@@ -6,12 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * @property integer $id
+ * @property int $id
  * @property string $codigo
  * @property string $nombre
- * @property integer $unidad_medida_id
+ * @property int $unidad_medida_id
  * @property float $cantidad
- * @property integer $orden
+ * @property int $orden
  * @property string $observacion
  * @property string $created_at
  * @property string $updated_at
@@ -24,7 +24,9 @@ class CotizacionSubImtes extends Model
      * @var string
      */
     use HasFactory;
+
     protected $table = 'ord_cotizaciones_subitems';
+
     public $timestamps = true;
 
     protected $fillable = [
@@ -34,7 +36,7 @@ class CotizacionSubImtes extends Model
         'cantidad',
         'orden',
         'observacion',
-        'cotizacion_item_id'
+        'cotizacion_item_id',
     ];
 
     /**
@@ -42,12 +44,17 @@ class CotizacionSubImtes extends Model
      */
     protected $casts = [
         'cantidad' => 'decimal:2',
-        'orden' => 'integer'
+        'orden' => 'integer',
     ];
 
     public function unidadMedida()
     {
         return $this->belongsTo(UnidadMedida::class, 'unidad_medida_id');
+    }
+
+    public function productos()
+    {
+        return $this->hasMany(CotizacionProducto::class, 'cotizacion_subitem_id');
     }
 
     public function cotizacionItems()

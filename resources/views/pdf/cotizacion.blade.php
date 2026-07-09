@@ -8,15 +8,7 @@
     De acuerdo a su solicitud presentamos la siguiente oferta:
 </p>
 
-@php
-    $subtotal = 0;
-    $contador = 1;
-
-    $items = $cotizacion->productos->groupBy(fn ($p) =>
-        optional($p->cotizacionItem)->id ?? 'sin-item'
-    );
-@endphp
-
+{{-- CAPITULACIONES E ITEMS --}}
 <table class="border mt-10">
     <thead>
         <tr class="gray center">
@@ -29,63 +21,38 @@
         </tr>
     </thead>
     <tbody>
-
-@foreach($items as $itemId => $productosItem)
-
-    {{-- 🔵 ITEM PADRE --}}
-    <tr class="item-parent">
-        <td colspan="6" style="color:#1e88e5;font-weight:bold;">
-            {{ optional($productosItem->first()->cotizacionItem)->nombre ?? 'ITEM GENERAL' }}
-        </td>
-    </tr>
-
-    @php
-        $subitems = $productosItem->groupBy(fn ($p) =>
-            optional($p->cotizacionSubItem)->id ?? 'sin-subitem'
-        );
-    @endphp
-
-    @foreach($subitems as $subitemId => $productosSub)
-
-        {{-- 🟦 SUBITEM --}}
-        @if($subitemId !== 'sin-subitem')
-        <tr class="item-child">
-            <td colspan="6" style="padding-left:10px;font-weight:bold;">
-                {{ optional($productosSub->first()->cotizacionSubItem)->nombre }}
-            </td>
-        </tr>
-        @endif
-
-        {{-- 📦 PRODUCTOS --}}
-        @foreach($productosSub as $producto)
-
-            @php
-                $lineaTotal = $producto->valor_total ?? (($producto->cantidad ?? 1) * ($producto->valor_unitario ?? 0));
-                $subtotal += $lineaTotal;
-            @endphp
-
-            <tr>
-                <td class="center"><strong>{{ $producto->codigo }}</strong></td>
-                <td style="padding-left:{{ $subitemId !== 'sin-subitem' ? '20px' : '10px' }}">
-                    {{ $producto->nombre }}
+        @foreach($cotizacion->items->sortBy('orden') as $indexCap => $capitulacion)
+            {{-- Fila de CAPITULACIÓN en azul --}}
+            <tr class="item-parent" style="background-color:#e3f2fd;">
+                <td colspan="6" style="color:#1e88e5; font-weight:bold; padding:8px;">
+                    {{-- CAPITULACIÓN {{ $indexCap + 1 }}. {{ $capitulacion->nombre }} --}}
+                    {{ $capitulacion->nombre }}
                 </td>
-                <td class="center">{{ $producto->unidad_medida }}</td>
-                <td class="center">{{ number_format($producto->cantidad ?? 1, 0) }}</td>
-                <td class="right">${{ number_format($producto->valor_unitario ?? 0, 2) }}</td>
-                <td class="right">${{ number_format($lineaTotal, 2) }}</td>
             </tr>
 
+            {{-- Items dentro de la capitulación --}}
+            @foreach($capitulacion->subitems->sortBy('orden') as $indexItem => $item)
+                @php
+                    $cantidadTotal = $item->productos->sum('cantidad');
+                    $valorTotal    = $item->productos->sum(fn ($p) => $p->valor_total + $p->listas->sum('subtotal'));
+                    $unidadMedida  = $item->productos->first()?->unidad_medida ?? optional($item->unidadMedida)->nombre ?? '—';
+                    $vrUnitario    = $cantidadTotal > 0 ? $valorTotal / $cantidadTotal : 0;
+                @endphp
+                <tr>
+                    <td class="center" style="padding-left:10px;"><strong>{{ $indexCap + 1 }}.{{ $indexItem + 1 }}</strong></td>
+                    <td>
+                        <strong>{{ $item->nombre }}</strong>
+                        @if($item->observacion)
+                            <br><span style="font-size:9px; color:#666;">{{ $item->observacion }}</span>
+                        @endif
+                    </td>
+                    <td class="center">{{ $unidadMedida }}</td>
+                    <td class="center">{{ number_format($cantidadTotal, 2) }}</td>
+                    <td class="right">${{ number_format($vrUnitario, 2) }}</td>
+                    <td class="right">${{ number_format($valorTotal, 2) }}</td>
+                </tr>
+            @endforeach
         @endforeach
-
-    @endforeach
-
-@endforeach
-
-        <tr class="gray bold">
-            <td colspan="5" class="right">SUBTOTAL</td>
-            <td class="right">${{ number_format($subtotal, 2) }}</td>
-        </tr>
-
     </tbody>
 </table>
 

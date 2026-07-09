@@ -245,6 +245,8 @@ class CotizacionTotalesService
 
                 $totalDescuentos += $valorConcepto;
 
+                $cotizacionConcepto->update(['valor' => round($valorConcepto, 2)]);
+
                 Log::info('Descuento recalculado sobre base con utilidades', [
                     'concepto' => $concepto->nombre,
                     'porcentaje' => $cotizacionConcepto->porcentaje,
@@ -275,6 +277,8 @@ class CotizacionTotalesService
 
                 $totalImpuestos += $valorConcepto;
 
+                $cotizacionConcepto->update(['valor' => round($valorConcepto, 2)]);
+
                 Log::info('Impuesto recalculado sobre base gravable', [
                     'concepto' => $concepto->nombre,
                     'porcentaje' => $cotizacionConcepto->porcentaje,
@@ -302,6 +306,8 @@ class CotizacionTotalesService
                 }
 
                 $totalRetenciones += $valorConcepto;
+
+                $cotizacionConcepto->update(['valor' => round($valorConcepto, 2)]);
 
                 Log::info('Retención recalculada sobre base gravable', [
                     'concepto' => $concepto->nombre,

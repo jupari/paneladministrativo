@@ -71,14 +71,6 @@
             padding-left: 14px;
         }
 
-        .pagenum:before {
-            content: counter(page);
-        }
-
-        .pagecount:before {
-            content: counter(pages);
-        }
-
         /* Hook para estilos específicos */
         @yield('styles')
     </style>

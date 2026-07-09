@@ -6,9 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * @property integer $id
- * @property integer $cotizacion_id
- * @property integer $producto_id
+ * @property int $id
+ * @property int $cotizacion_id
+ * @property int $producto_id
  * @property string $nombre
  * @property string $descripcion
  * @property string $codigo
@@ -19,22 +19,22 @@ use Illuminate\Database\Eloquent\Model;
  * @property float $descuento_valor
  * @property float $valor_total
  * @property string $observaciones
- * @property integer $orden
- * @property boolean $active
- * @property integer $categoria_id
- * @property integer $cargo_id
+ * @property int $orden
+ * @property bool $active
+ * @property int $categoria_id
+ * @property int $cargo_id
  * @property float $costo_dia
  * @property float $costo_hora
  * @property float $costo_unitario
- * @property integer $dias_diurnos
- * @property integer $dias_nocturnos
- * @property integer $dias_remunerados_diurnos
- * @property integer $dias_remunerados_nocturnos
- * @property integer $dominicales_diurnos
- * @property integer $dominicales_nocturnos
- * @property integer $horas_diurnas
- * @property integer $horas_remuneradas
- * @property boolean $incluir_dominicales
+ * @property int $dias_diurnos
+ * @property int $dias_nocturnos
+ * @property int $dias_remunerados_diurnos
+ * @property int $dias_remunerados_nocturnos
+ * @property int $dominicales_diurnos
+ * @property int $dominicales_nocturnos
+ * @property int $horas_diurnas
+ * @property int $horas_remuneradas
+ * @property bool $incluir_dominicales
  * @property string $tipo_costo
  */
 class CotizacionProducto extends Model
@@ -48,7 +48,7 @@ class CotizacionProducto extends Model
         'cotizacion_item_id',
         'cotizacion_subitem_id',
         'item_propio_id',
-        'parametrizacion_id',//cargo id Categoria=>Nomina, Seguridad Social, Parafiscales, Prestaciones Sociales
+        'parametrizacion_id', // cargo id Categoria=>Nomina, Seguridad Social, Parafiscales, Prestaciones Sociales
         'tabla_precios_id',
         'producto_id',
         'nombre',
@@ -144,6 +144,11 @@ class CotizacionProducto extends Model
     public function parametrizacion()
     {
         return $this->belongsTo(Parametrizacion::class, 'parametrizacion_id');
+    }
+
+    public function listas()
+    {
+        return $this->hasMany(CotizacionLista::class, 'cotizacion_producto_id');
     }
 
     /**
