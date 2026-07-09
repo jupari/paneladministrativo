@@ -832,7 +832,7 @@
                                         <i class="fas fa-box-open"></i> Productos en la Cotización
                                     </h6>
                                     <div>
-                                        <span class="badge badge-light" id="contadorProductosGuardados">0</span>
+                                        <span class="badge badge-primary" id="contadorProductosGuardados">0</span>
                                         <button class="btn btn-sm btn-outline-light ml-2" id="btnAplicarUtilidadHeader" onclick="mostrarModalUtilidad()" title="Aplicar margen de utilidad">
                                             <i class="fas fa-percentage"></i>
                                         </button>

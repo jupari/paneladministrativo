@@ -4491,7 +4491,7 @@ function actualizarPrecioVisual(itemId) {
     const valorPrecio = document.getElementById(`valorPrecio_${itemId}`);
     const statusBadge = document.getElementById(`statusBadge_${itemId}`);
 
-    valorPrecio.textContent = `$${precio.toFixed(2)}`;
+    valorPrecio.textContent = `$${precio.toLocaleString('es-CO', { minimumFractionDigits: 2 })}`;
 
     // Actualizar estado visual según precio
     if (precio > 0) {
