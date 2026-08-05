@@ -24,8 +24,11 @@
     <x-breadcrumbs :breadcrumbs="$breadcrumbs" :currentTitle="$currentTitle" :currentIcon="$currentIcon" />
 
     <div class="card">
-        <div class="card-header p-0 border-bottom-0">
-            <ul class="nav nav-tabs" id="ubicacionesTabs" role="tablist">
+        <div class="card-header">
+            <h4><i class="fas fa-map-marked-alt"></i> Ubicaciones</h4>
+        </div>
+        <div class="card-body">
+            <ul class="nav nav-tabs mb-3" id="ubicacionesTabs" role="tablist">
                 <li class="nav-item">
                     <a class="nav-link active" id="tab-ciudades-link" data-toggle="pill" href="#tab-ciudades" role="tab">
                         <i class="fas fa-city"></i> Ciudades
@@ -42,8 +45,6 @@
                     </a>
                 </li>
             </ul>
-        </div>
-        <div class="card-body">
             <div class="tab-content">
 
                 {{-- Ciudades --}}
