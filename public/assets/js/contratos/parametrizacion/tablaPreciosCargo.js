@@ -83,7 +83,7 @@
 
 async function generarTablaPrecios() {
     try {
-    const res = await fetch(TABLA_PRECIOS_POST_URL, {s
+    const res = await fetch(TABLA_PRECIOS_POST_URL, {
         method: 'POST',
         headers: {
         'Content-Type': 'application/json',

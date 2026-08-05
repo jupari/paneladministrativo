@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
 class parametrizacionCostosRequest extends FormRequest
@@ -24,24 +24,24 @@ class parametrizacionCostosRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'tablaCostos.*.item'            => ['required','string','max:100'],
-            'tablaCostos.*.categoria_id'    => ['required','numeric'],
-            'tablaCostos.*.item_nombre'     => ['nullable','string','max:255'],
+            'tablaCostos.*.item' => ['required', 'string', 'max:100'],
+            'tablaCostos.*.categoria_id' => ['required', 'numeric'],
+            'tablaCostos.*.item_nombre' => ['nullable', 'string', 'max:255'],
             // Puede venir como sigla (FK) o como nombre legible; lo normalizamos en el servicio
-            'tablaCostos.*.unidad_medida'   => ['required','string','max:20'],
-            'tablaCostos.*.costo_dia'       => ['required','numeric'],
-            'tablaCostos.*.costo_hora'      => ['nullable','numeric'],
-            'tablaCostos.*.active'          => ['nullable','boolean'],
+            'tablaCostos.*.unidad_medida' => ['required', 'string', 'max:20'],
+            'tablaCostos.*.costo_dia' => ['required', 'numeric'],
+            'tablaCostos.*.costo_hora' => ['nullable', 'numeric'],
+            'tablaCostos.*.costo_unitario' => ['nullable', 'numeric'],
+            'tablaCostos.*.active' => ['nullable', 'boolean'],
             // (opcionales si los mandas desde el front)
-            'tablaCostos.*.created_at'      => ['nullable','date'],
-            'tablaCostos.*.updated_at'      => ['nullable','date'],
+            'tablaCostos.*.created_at' => ['nullable', 'date'],
+            'tablaCostos.*.updated_at' => ['nullable', 'date'],
         ];
     }
 
     /**
      * Handle a failed validation attempt.
      *
-     * @param  \Illuminate\Contracts\Validation\Validator  $validator
      * @return void
      *
      * @throws \Illuminate\Http\Exceptions\HttpResponseException
@@ -52,7 +52,7 @@ class parametrizacionCostosRequest extends FormRequest
             response()->json([
                 'success' => false,
                 'message' => 'Error de validación',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422)
         );
     }

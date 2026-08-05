@@ -502,6 +502,17 @@ function setValorX (nuevoX) {
     table.getRows().forEach(recomputeCostoHora)
 }
 
+// Inicialización propia del Tabulator viejo de Novedades (oculto con d-none).
+// Antes esto vivía en parametrizacionCostos.js; se movió aquí para que este
+// script no dependa de que el de Costos exista/se cargue.
+document.addEventListener('DOMContentLoaded', () => {
+    novedadesCombo.forEach(item => {
+        opcionesNovedad[item.id] = item.nombre
+    })
+
+    CargarNovedades(primeraCarga)
+})
+
 // document.getElementById('btn-gen-tabla-precios')?.addEventListener('click', async () => {
 //   try{
 //     const res = await fetch('/admin/admin.parametrizacion.generar_tabla_precios', {

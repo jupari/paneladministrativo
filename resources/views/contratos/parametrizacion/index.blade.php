@@ -79,16 +79,32 @@
                     <div class="tab-pane fade" id="costos-tab-pane" role="tabpanel" aria-labelledby="costos-tab" tabindex="0">
                          <fieldset class="border p-3 mb-4">
                             <div class="col-12 col-md-6 my-3">
-                                <button type="button" class="btn btn-primary mb-3" id="btn-nuevo">Nuevo Registro</button>
-                                <button id="btn-refresh" class="btn btn-outline-secondary mb-3" onclick="CargarCostos()">Actualizar</button>
+                                <button type="button" class="btn btn-primary mb-3" onclick="abrirModalCosto()">Nuevo Registro</button>
+                                <button class="btn btn-outline-secondary mb-3" onclick="CargarCostosDT()">Actualizar</button>
                                 <button type="button" class="btn btn-success mb-3" onclick="importarCostosDesdeExcel()">
                                     <i class="fas fa-file-excel"></i> Importar Excel
                                 </button>
-                                <button id="btn-guardar-costos" class="btn btn-success mb-3" onclick="saveDataCostos(null)">
+                                <button id="btn-guardar-costos" class="btn btn-success mb-3" onclick="saveDataCostosDT(null)">
                                     <i class="fas fa-save"></i> Guardar todo
                                 </button>
                             </div>
-                            <div id="tabla-parametrizacion-costos"></div>
+                            <div class="table-responsive">
+                                <table id="tabla-parametrizacion-costos-dt" class="table table-bordered table-striped" style="width:100%">
+                                    <thead>
+                                        <tr>
+                                            <th>Categoría</th>
+                                            <th>Ítem</th>
+                                            <th>Nombre</th>
+                                            <th>Unidad</th>
+                                            <th class="text-center">Costo Día</th>
+                                            <th class="text-center">Costo Hora</th>
+                                            <th class="text-center">Costo Unitario</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
                         </fieldset>
                     </div>
                     <div class="tab-pane fade" id="tabla-precios-tab-pane" role="tabpanel" aria-labelledby="tabla-precios-tab" tabindex="0">
@@ -265,6 +281,70 @@
         </div>
     </div>
 </div>
+
+{{-- ── Modal: Nuevo Registro de Costo ─────────────────────────────────────── --}}
+<div class="modal fade" id="modal-costo" tabindex="-1" role="dialog" aria-labelledby="modal-costo-label" aria-hidden="true">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modal-costo-label">
+                    <i class="fas fa-dollar-sign mr-2"></i>
+                    <span id="modal-costo-title">Nuevo Registro de Costo</span>
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="form-costo" autocomplete="off">
+                    <div class="form-group">
+                        <label for="costo-modal-categoria">Categoría <span class="text-danger">*</span></label>
+                        <select id="costo-modal-categoria" class="form-control">
+                            <option value="">-- Seleccione --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="costo-modal-item">Ítem Propio <span class="text-danger">*</span></label>
+                        <select id="costo-modal-item" class="form-control">
+                            <option value="">-- Primero seleccione una categoría --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="costo-modal-nombre">Nombre</label>
+                        <input type="text" id="costo-modal-nombre" class="form-control" style="text-transform:uppercase;">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="costo-modal-unidad">Unidad de Medida <span class="text-danger">*</span></label>
+                        <select id="costo-modal-unidad" class="form-control">
+                            <option value="">-- Seleccione --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="costo-modal-costo-dia">Costo Día <span class="text-danger">*</span></label>
+                        <input type="text" id="costo-modal-costo-dia" class="form-control" placeholder="0" inputmode="decimal">
+                    </div>
+
+                    <div class="form-group d-none" id="costo-modal-costo-unitario-group">
+                        <label for="costo-modal-costo-unitario">Costo Unitario</label>
+                        <input type="text" id="costo-modal-costo-unitario" class="form-control" placeholder="0" inputmode="decimal">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-primary btn-guardar-costo" onclick="guardarCosto()">
+                    <i class="fas fa-save mr-1"></i>Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @stop
 
 
@@ -294,14 +374,17 @@
         </script>
     @php
         $paramNovedadesVer = filemtime(public_path('assets/js/contratos/parametrizacion/parametrizacion.js'));
-        $paramCostosVer = filemtime(public_path('assets/js/contratos/parametrizacion/parametrizacionCostos.js'));
         $tablaPreciosVer = filemtime(public_path('assets/js/contratos/parametrizacion/tablaPreciosCargo.js'));
+        $paramCostosDTVer = filemtime(public_path('assets/js/contratos/parametrizacion/parametrizacionCostosDT.js'));
+        $costosModalVer = filemtime(public_path('assets/js/contratos/parametrizacion/costosModal.js'));
         @endphp
     <script src="{{ asset('assets/js/contratos/parametrizacion/parametrizacion.js') . '?v=' . $paramNovedadesVer }}" type="text/javascript"></script>
-    <script src="{{ asset('assets/js/contratos/parametrizacion/parametrizacionCostos.js') . '?v=' . $paramCostosVer }}" type="text/javascript"></script>
     <script src="{{ asset('assets/js/contratos/parametrizacion/tablaPreciosCargo.js') . '?v=' . $tablaPreciosVer }}" type="text/javascript"></script>
     <!-- Script DataTable Novedades (prueba) -->
     <script src="{{ asset('assets/js/contratos/parametrizacion/parametrizacionDT.js') }}?v={{ time() }}" type="text/javascript"></script>
+    <!-- Script DataTable Costos -->
+    <script src="{{ asset('assets/js/contratos/parametrizacion/parametrizacionCostosDT.js') . '?v=' . $paramCostosDTVer }}" type="text/javascript"></script>
+    <script src="{{ asset('assets/js/contratos/parametrizacion/costosModal.js') . '?v=' . $costosModalVer }}" type="text/javascript"></script>
     <script src="/assets/js/contratos/parametrizacion/importarCostosExcel.js"></script>
     <script src="{{ asset('assets/js/contratos/parametrizacion/novedadesModal.js') }}?v={{ filemtime(public_path('assets/js/contratos/parametrizacion/novedadesModal.js')) }}" type="text/javascript"></script>
 @stop
