@@ -1,3 +1,95 @@
+@php
+    // Indicativos telefónicos de todos los países de América y Europa.
+    // Los países de Norteamérica/Caribe que comparten NANP (+1) usan el mismo
+    // código de país (el diferenciador es el indicativo de área, no el país).
+    $indicativosTelefono = [
+        // América del Norte y Caribe
+        ['code' => '+1', 'flag' => '🇺🇸', 'name' => 'Estados Unidos'],
+        ['code' => '+1', 'flag' => '🇨🇦', 'name' => 'Canadá'],
+        ['code' => '+52', 'flag' => '🇲🇽', 'name' => 'México'],
+        ['code' => '+1', 'flag' => '🇧🇸', 'name' => 'Bahamas'],
+        ['code' => '+1', 'flag' => '🇧🇧', 'name' => 'Barbados'],
+        ['code' => '+1', 'flag' => '🇩🇲', 'name' => 'Dominica'],
+        ['code' => '+1', 'flag' => '🇩🇴', 'name' => 'República Dominicana'],
+        ['code' => '+1', 'flag' => '🇬🇩', 'name' => 'Granada'],
+        ['code' => '+1', 'flag' => '🇯🇲', 'name' => 'Jamaica'],
+        ['code' => '+1', 'flag' => '🇰🇳', 'name' => 'San Cristóbal y Nieves'],
+        ['code' => '+1', 'flag' => '🇱🇨', 'name' => 'Santa Lucía'],
+        ['code' => '+1', 'flag' => '🇻🇨', 'name' => 'San Vicente y las Granadinas'],
+        ['code' => '+1', 'flag' => '🇹🇹', 'name' => 'Trinidad y Tobago'],
+        ['code' => '+1', 'flag' => '🇦🇬', 'name' => 'Antigua y Barbuda'],
+        ['code' => '+53', 'flag' => '🇨🇺', 'name' => 'Cuba'],
+        ['code' => '+509', 'flag' => '🇭🇹', 'name' => 'Haití'],
+        ['code' => '+501', 'flag' => '🇧🇿', 'name' => 'Belice'],
+        ['code' => '+502', 'flag' => '🇬🇹', 'name' => 'Guatemala'],
+        ['code' => '+503', 'flag' => '🇸🇻', 'name' => 'El Salvador'],
+        ['code' => '+504', 'flag' => '🇭🇳', 'name' => 'Honduras'],
+        ['code' => '+505', 'flag' => '🇳🇮', 'name' => 'Nicaragua'],
+        ['code' => '+506', 'flag' => '🇨🇷', 'name' => 'Costa Rica'],
+        ['code' => '+507', 'flag' => '🇵🇦', 'name' => 'Panamá'],
+        // América del Sur
+        ['code' => '+57', 'flag' => '🇨🇴', 'name' => 'Colombia'],
+        ['code' => '+58', 'flag' => '🇻🇪', 'name' => 'Venezuela'],
+        ['code' => '+593', 'flag' => '🇪🇨', 'name' => 'Ecuador'],
+        ['code' => '+51', 'flag' => '🇵🇪', 'name' => 'Perú'],
+        ['code' => '+591', 'flag' => '🇧🇴', 'name' => 'Bolivia'],
+        ['code' => '+56', 'flag' => '🇨🇱', 'name' => 'Chile'],
+        ['code' => '+54', 'flag' => '🇦🇷', 'name' => 'Argentina'],
+        ['code' => '+595', 'flag' => '🇵🇾', 'name' => 'Paraguay'],
+        ['code' => '+598', 'flag' => '🇺🇾', 'name' => 'Uruguay'],
+        ['code' => '+55', 'flag' => '🇧🇷', 'name' => 'Brasil'],
+        ['code' => '+592', 'flag' => '🇬🇾', 'name' => 'Guyana'],
+        ['code' => '+597', 'flag' => '🇸🇷', 'name' => 'Surinam'],
+        // Europa
+        ['code' => '+34', 'flag' => '🇪🇸', 'name' => 'España'],
+        ['code' => '+33', 'flag' => '🇫🇷', 'name' => 'Francia'],
+        ['code' => '+49', 'flag' => '🇩🇪', 'name' => 'Alemania'],
+        ['code' => '+39', 'flag' => '🇮🇹', 'name' => 'Italia'],
+        ['code' => '+44', 'flag' => '🇬🇧', 'name' => 'Reino Unido'],
+        ['code' => '+351', 'flag' => '🇵🇹', 'name' => 'Portugal'],
+        ['code' => '+31', 'flag' => '🇳🇱', 'name' => 'Países Bajos'],
+        ['code' => '+32', 'flag' => '🇧🇪', 'name' => 'Bélgica'],
+        ['code' => '+41', 'flag' => '🇨🇭', 'name' => 'Suiza'],
+        ['code' => '+43', 'flag' => '🇦🇹', 'name' => 'Austria'],
+        ['code' => '+45', 'flag' => '🇩🇰', 'name' => 'Dinamarca'],
+        ['code' => '+46', 'flag' => '🇸🇪', 'name' => 'Suecia'],
+        ['code' => '+47', 'flag' => '🇳🇴', 'name' => 'Noruega'],
+        ['code' => '+358', 'flag' => '🇫🇮', 'name' => 'Finlandia'],
+        ['code' => '+354', 'flag' => '🇮🇸', 'name' => 'Islandia'],
+        ['code' => '+353', 'flag' => '🇮🇪', 'name' => 'Irlanda'],
+        ['code' => '+30', 'flag' => '🇬🇷', 'name' => 'Grecia'],
+        ['code' => '+48', 'flag' => '🇵🇱', 'name' => 'Polonia'],
+        ['code' => '+420', 'flag' => '🇨🇿', 'name' => 'República Checa'],
+        ['code' => '+421', 'flag' => '🇸🇰', 'name' => 'Eslovaquia'],
+        ['code' => '+36', 'flag' => '🇭🇺', 'name' => 'Hungría'],
+        ['code' => '+40', 'flag' => '🇷🇴', 'name' => 'Rumania'],
+        ['code' => '+359', 'flag' => '🇧🇬', 'name' => 'Bulgaria'],
+        ['code' => '+385', 'flag' => '🇭🇷', 'name' => 'Croacia'],
+        ['code' => '+386', 'flag' => '🇸🇮', 'name' => 'Eslovenia'],
+        ['code' => '+387', 'flag' => '🇧🇦', 'name' => 'Bosnia y Herzegovina'],
+        ['code' => '+381', 'flag' => '🇷🇸', 'name' => 'Serbia'],
+        ['code' => '+382', 'flag' => '🇲🇪', 'name' => 'Montenegro'],
+        ['code' => '+389', 'flag' => '🇲🇰', 'name' => 'Macedonia del Norte'],
+        ['code' => '+383', 'flag' => '🇽🇰', 'name' => 'Kosovo'],
+        ['code' => '+355', 'flag' => '🇦🇱', 'name' => 'Albania'],
+        ['code' => '+370', 'flag' => '🇱🇹', 'name' => 'Lituania'],
+        ['code' => '+371', 'flag' => '🇱🇻', 'name' => 'Letonia'],
+        ['code' => '+372', 'flag' => '🇪🇪', 'name' => 'Estonia'],
+        ['code' => '+375', 'flag' => '🇧🇾', 'name' => 'Bielorrusia'],
+        ['code' => '+380', 'flag' => '🇺🇦', 'name' => 'Ucrania'],
+        ['code' => '+373', 'flag' => '🇲🇩', 'name' => 'Moldavia'],
+        ['code' => '+7', 'flag' => '🇷🇺', 'name' => 'Rusia'],
+        ['code' => '+357', 'flag' => '🇨🇾', 'name' => 'Chipre'],
+        ['code' => '+356', 'flag' => '🇲🇹', 'name' => 'Malta'],
+        ['code' => '+352', 'flag' => '🇱🇺', 'name' => 'Luxemburgo'],
+        ['code' => '+377', 'flag' => '🇲🇨', 'name' => 'Mónaco'],
+        ['code' => '+376', 'flag' => '🇦🇩', 'name' => 'Andorra'],
+        ['code' => '+378', 'flag' => '🇸🇲', 'name' => 'San Marino'],
+        ['code' => '+423', 'flag' => '🇱🇮', 'name' => 'Liechtenstein'],
+    ];
+    usort($indicativosTelefono, fn ($a, $b) => (int) ltrim($a['code'], '+') <=> (int) ltrim($b['code'], '+'));
+@endphp
+
 <!-- Modal Completo con UX/UI Mejorado -->
 <div class="modal fade" id="ModalCliente" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-xl" role="document">
@@ -198,12 +290,9 @@
                                             <label for="telefono">Teléfono</label>
                                             <div class="input-group">
                                                 <select id="telefono_indicativo" class="form-control" style="flex: 0 0 120px;">
-                                                    <option value="+57">+57 🇨🇴</option>
-                                                    <option value="+1">+1 🇺🇸</option>
-                                                    <option value="+52">+52 🇲🇽</option>
-                                                    <option value="+54">+54 🇦🇷</option>
-                                                    <option value="+55">+55 🇧🇷</option>
-                                                    <option value="+34">+34 🇪🇸</option>
+                                                    @foreach ($indicativosTelefono as $ind)
+                                                        <option value="{{ $ind['code'] }}">{{ $ind['code'] }} {{ $ind['flag'] }}</option>
+                                                    @endforeach
                                                 </select>
                                                 <input type="text" id="telefono" class="form-control" placeholder="Número" inputmode="numeric">
                                             </div>
@@ -215,12 +304,9 @@
                                             <label for="celular">Celular</label>
                                             <div class="input-group">
                                                 <select id="celular_indicativo" class="form-control" style="flex: 0 0 120px;">
-                                                    <option value="+57">+57 🇨🇴</option>
-                                                    <option value="+1">+1 🇺🇸</option>
-                                                    <option value="+52">+52 🇲🇽</option>
-                                                    <option value="+54">+54 🇦🇷</option>
-                                                    <option value="+55">+55 🇧🇷</option>
-                                                    <option value="+34">+34 🇪🇸</option>
+                                                    @foreach ($indicativosTelefono as $ind)
+                                                        <option value="{{ $ind['code'] }}">{{ $ind['code'] }} {{ $ind['flag'] }}</option>
+                                                    @endforeach
                                                 </select>
                                                 <input type="text" id="celular" class="form-control" placeholder="Número" inputmode="numeric">
                                             </div>
@@ -403,12 +489,9 @@
                                                 <label for="contacto_celular">Celular</label>
                                                 <div class="input-group">
                                                     <select id="contacto_celular_indicativo" class="form-control" style="flex: 0 0 110px;">
-                                                        <option value="+57">+57 🇨🇴</option>
-                                                        <option value="+1">+1 🇺🇸</option>
-                                                        <option value="+52">+52 🇲🇽</option>
-                                                        <option value="+54">+54 🇦🇷</option>
-                                                        <option value="+55">+55 🇧🇷</option>
-                                                        <option value="+34">+34 🇪🇸</option>
+                                                        @foreach ($indicativosTelefono as $ind)
+                                                            <option value="{{ $ind['code'] }}">{{ $ind['code'] }} {{ $ind['flag'] }}</option>
+                                                        @endforeach
                                                     </select>
                                                     <input type="text" id="contacto_celular" class="form-control" placeholder="Número" inputmode="numeric">
                                                 </div>
@@ -420,12 +503,9 @@
                                                 <label for="contacto_telefono">Teléfono</label>
                                                 <div class="input-group">
                                                     <select id="contacto_telefono_indicativo" class="form-control" style="flex: 0 0 110px;">
-                                                        <option value="+57">+57 🇨🇴</option>
-                                                        <option value="+1">+1 🇺🇸</option>
-                                                        <option value="+52">+52 🇲🇽</option>
-                                                        <option value="+54">+54 🇦🇷</option>
-                                                        <option value="+55">+55 🇧🇷</option>
-                                                        <option value="+34">+34 🇪🇸</option>
+                                                        @foreach ($indicativosTelefono as $ind)
+                                                            <option value="{{ $ind['code'] }}">{{ $ind['code'] }} {{ $ind['flag'] }}</option>
+                                                        @endforeach
                                                     </select>
                                                     <input type="text" id="contacto_telefono" class="form-control" placeholder="Número" inputmode="numeric">
                                                 </div>
@@ -521,12 +601,9 @@
                                                 <label for="sucursal_telefono">Teléfono</label>
                                                 <div class="input-group">
                                                     <select id="sucursal_telefono_indicativo" class="form-control" style="flex: 0 0 110px;">
-                                                        <option value="+57">+57 🇨🇴</option>
-                                                        <option value="+1">+1 🇺🇸</option>
-                                                        <option value="+52">+52 🇲🇽</option>
-                                                        <option value="+54">+54 🇦🇷</option>
-                                                        <option value="+55">+55 🇧🇷</option>
-                                                        <option value="+34">+34 🇪🇸</option>
+                                                        @foreach ($indicativosTelefono as $ind)
+                                                            <option value="{{ $ind['code'] }}">{{ $ind['code'] }} {{ $ind['flag'] }}</option>
+                                                        @endforeach
                                                     </select>
                                                     <input type="text" id="sucursal_telefono" class="form-control" placeholder="Número" inputmode="numeric">
                                                 </div>
@@ -538,12 +615,9 @@
                                                 <label for="sucursal_celular">Celular</label>
                                                 <div class="input-group">
                                                     <select id="sucursal_celular_indicativo" class="form-control" style="flex: 0 0 110px;">
-                                                        <option value="+57">+57 🇨🇴</option>
-                                                        <option value="+1">+1 🇺🇸</option>
-                                                        <option value="+52">+52 🇲🇽</option>
-                                                        <option value="+54">+54 🇦🇷</option>
-                                                        <option value="+55">+55 🇧🇷</option>
-                                                        <option value="+34">+34 🇪🇸</option>
+                                                        @foreach ($indicativosTelefono as $ind)
+                                                            <option value="{{ $ind['code'] }}">{{ $ind['code'] }} {{ $ind['flag'] }}</option>
+                                                        @endforeach
                                                     </select>
                                                     <input type="text" id="sucursal_celular" class="form-control" placeholder="Número" inputmode="numeric">
                                                 </div>
