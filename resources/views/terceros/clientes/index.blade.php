@@ -122,7 +122,7 @@
     <script src="//cdn.datatables.net/buttons/3.1.1/js/buttons.colVis.min.js" type="text/javascript"></script>
     <script src="{{asset('assets/js/Terceros/clientes/quick-diagnosis.js') }}" type="text/javascript"></script>
     <script src="{{asset('assets/js/Terceros/clientes/bootstrap-4-6-compatibility.js') }}" type="text/javascript"></script>
-    <script src="{{asset('assets/js/Terceros/clientes/clientes.js') }}" type="text/javascript"></script>
+    <script src="{{asset('assets/js/Terceros/clientes/clientes.js') }}?v={{ filemtime(public_path('assets/js/Terceros/clientes/clientes.js')) }}" type="text/javascript"></script>
     <script src="{{asset('assets/js/Terceros/clientes/modal-steps-enhanced.js') }}" type="text/javascript"></script>
     <script src="{{asset('assets/js/Terceros/clientes/modal-testing.js') }}" type="text/javascript"></script>
     <script src="{{asset('assets/js/Terceros/clientes/modal-force.js') }}" type="text/javascript"></script>

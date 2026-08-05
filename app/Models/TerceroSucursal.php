@@ -6,10 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * @property integer $id
- * @property integer $tercero_id
- * @property integer $ciudad_id
- * @property integer $vendedor_id
+ * @property int $id
+ * @property int $tercero_id
+ * @property int $ciudad_id
+ * @property int $vendedor_id
  * @property string $nombre_sucursal
  * @property string $telefono
  * @property string $celular
@@ -26,26 +26,29 @@ class TerceroSucursal extends Model
      *
      * @var string
      */
+    use HasFactory;
 
-     use HasFactory;
-     protected $table = 'terceros_sucursales';
-     public $timestamps=false;
+    protected $table = 'terceros_sucursales';
+
+    public $timestamps = false;
 
     /**
      * @var array
      */
-    protected $fillable = ['tercero_id', 'ciudad_id', 'vendedor_id', 'nombre_sucursal', 'telefono', 'celular', 'correo', 'direccion', 'persona_contacto', 'created_at', 'updated_at'];
+    protected $fillable = ['tercero_id', 'ciudad_id', 'vendedor_id', 'nombre_sucursal', 'telefono', 'telefono_indicativo', 'celular', 'celular_indicativo', 'correo', 'direccion', 'persona_contacto', 'created_at', 'updated_at'];
 
     public function tercero()
     {
         return $this->belongsTo(Tercero::class, 'tercero_id');
     }
 
-    public function ciudades(){
+    public function ciudades()
+    {
         return $this->belongsTo(Ciudad::class, 'ciudad_id');
     }
 
-    public function vendedores(){
+    public function vendedores()
+    {
         return $this->belongsTo(Vendedor::class, 'vendedor_id');
     }
 }

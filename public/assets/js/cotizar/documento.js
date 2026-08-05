@@ -2692,7 +2692,10 @@ async function cargarItemsPorCategorias() {
 
         // Separar items por tipo: nómina (cargo_tabla) vs estándar
         const itemsNomina = itemsPropios.filter(i => i.tipo === 'cargo_tabla');
-        const itemsEstandar = itemsPropios.filter(i => i.tipo !== 'cargo_tabla');
+        // Categorías distintas a nómina: se ordenan alfabéticamente por nombre
+        const itemsEstandar = itemsPropios
+            .filter(i => i.tipo !== 'cargo_tabla')
+            .sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), 'es', { sensitivity: 'base' }));
 
         // Cerrar modal de categorí­as y enrutar al flujo correcto
         $('#modalSeleccionCategorias').modal('hide');
@@ -2704,7 +2707,7 @@ async function cargarItemsPorCategorias() {
                 abrirModalNominaConfig(itemsNomina);
             } else if (itemsNomina.length === 0) {
                 // Solo estándar → flujo existente
-                abrirModalSeleccionItemsPropios(itemsPropios, categoriaIds);
+                abrirModalSeleccionItemsPropios(itemsEstandar, categoriaIds);
             } else {
                 // Mixto: estándar primero, nómina después
                 window.itemsNominaPendientes = itemsNomina;
@@ -5160,9 +5163,18 @@ async function finalizarConfiguracionCostos() {
         const unidadMedida = unidadMedidaInput ? unidadMedidaInput.value.trim() : '';
         const cantidadOperarios = cantidadOperariosInput ? cantidadOperariosInput.value : '';
 
-        // Obtener precio del display visual o input oculto
-        let precioTotal = document.getElementById(`valorPrecio_${itemId}`)?.textContent?.replace('$', '') ||
-                document.getElementById(`precio_${itemId}`)?.value || '0';
+        // Obtener precio del input oculto/readonly (valor numérico "crudo", sin
+        // formato de miles) que actualizarPrecioVisual()/calcularPrecioItem() ya
+        // dejaron sincronizado. Se usa como primera opción porque el texto de
+        // valorPrecio_<id> está formateado en es-CO (p.ej. "$12.000,00") y
+        // parseFloat() lo interpreta mal (el "." de miles se lee como decimal),
+        // dejando el precio hasta 1000 veces menor. El texto visual solo se usa
+        // como último recurso, limpiando separadores de miles y decimales.
+        let precioTotal = document.getElementById(`precio_${itemId}`)?.value;
+        if (precioTotal === undefined || precioTotal === '') {
+            const textoVisual = document.getElementById(`valorPrecio_${itemId}`)?.textContent || '0';
+            precioTotal = textoVisual.replace(/\$/g, '').trim().replace(/\./g, '').replace(',', '.');
+        }
 
         // Obtener cantidad de items para dividir el precio y obtener el precio base
         const cantidadItemsInput = document.getElementById(`cantidadItems_${itemId}`);

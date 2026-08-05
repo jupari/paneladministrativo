@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
 class ClienteRequest extends FormRequest
@@ -26,6 +26,7 @@ class ClienteRequest extends FormRequest
             ]);
         }
     }
+
     public function authorize()
     {
         return true; // Permitir acceso
@@ -36,7 +37,7 @@ class ClienteRequest extends FormRequest
         return [
             'tercerotipo_id' => 'required|exists:terceros_tipos,id',
             'tipoidentificacion_id' => 'required|exists:tipo_identificacion,id',
-            'identificacion' => 'required|numeric|digits_between:5,20|unique:terceros,identificacion,' . $this->route('id'),
+            'identificacion' => 'required|numeric|digits_between:5,20|unique:terceros,identificacion,'.$this->route('id'),
             'dv' => 'nullable|string|max:1',
             'tipopersona_id' => 'required|exists:tipo_persona,id',
             'nombres' => [
@@ -70,8 +71,10 @@ class ClienteRequest extends FormRequest
                 },
             ],
             'celular' => 'nullable|regex:/^[0-9]{10}$/',
+            'celular_indicativo' => 'nullable|string|max:5',
             'telefono' => 'nullable|regex:/^[0-9]{10}$/',
-            'correo' => 'required|email|max:255|unique:terceros,correo,' . $this->route('id'),
+            'telefono_indicativo' => 'nullable|string|max:5',
+            'correo' => 'required|email|max:255|unique:terceros,correo,'.$this->route('id'),
             'correo_fe' => 'nullable|email|max:255',
             'ciudad_id' => 'required|exists:ciudades,id',
             'direccion' => 'nullable|string|max:255',
@@ -91,7 +94,6 @@ class ClienteRequest extends FormRequest
     /**
      * Handle a failed validation attempt for AJAX requests.
      *
-     * @param  \Illuminate\Contracts\Validation\Validator  $validator
      * @return void
      *
      * @throws \Illuminate\Http\Exceptions\HttpResponseException
@@ -102,7 +104,7 @@ class ClienteRequest extends FormRequest
             throw new HttpResponseException(response()->json([
                 'success' => false,
                 'message' => 'Los datos proporcionados no son válidos.',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422));
         }
 

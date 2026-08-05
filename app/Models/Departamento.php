@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * @property integer $id
- * @property integer $pais_id
+ * @property int $id
+ * @property int $pais_id
  * @property string $nombre
  * @property string $created_at
  * @property string $updated_at
@@ -24,18 +24,11 @@ class Departamento extends Model
     protected $table = 'departamentos';
 
     /**
-     * Indicates if the model should be timestamped.
-     *
-     * @var bool
-     */
-    public $timestamps = false;
-
-    /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
-    protected $fillable = ['pais_id', 'nombre'];
+    protected $fillable = ['pais_id', 'nombre', 'active'];
 
     /**
      * Get the país that owns the departamento.

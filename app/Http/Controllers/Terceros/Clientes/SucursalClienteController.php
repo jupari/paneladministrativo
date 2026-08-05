@@ -4,87 +4,91 @@ namespace App\Http\Controllers\Terceros\Clientes;
 
 use App\Http\Controllers\Controller;
 use App\Models\TerceroSucursal;
-use Spatie\Permission\Models\Permission;
 use Exception;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Yajra\Datatables\Datatables;
-use Spatie\Permission\Models\Role;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rules\Can;
-
-use Illuminate\Http\Request;
+use Spatie\Permission\Models\Permission;
+use Yajra\Datatables\Datatables;
 
 class SucursalClienteController extends Controller
 {
     //
-    public function index(Request $request,$id){
+    public function index(Request $request, $id)
+    {
         try {
 
-            $query= TerceroSucursal::with('vendedores', 'ciudades')->where('tercero_id',$id)->orderBy('created_at')->get();
-            $permissions =  Permission::All();
-            if($request->ajax()) {
+            $query = TerceroSucursal::with('vendedores', 'ciudades')->where('tercero_id', $id)->orderBy('created_at')->get();
+            $permissions = Permission::All();
+            if ($request->ajax()) {
                 return Datatables::of($query)
-                                ->addIndexColumn()
-                                ->addColumn('persona_contacto', function ($td) {
+                    ->addIndexColumn()
+                    ->addColumn('persona_contacto', function ($td) {
 
-                                    $href = $td->persona_contacto??'';
-                                    return $href;
+                        $href = $td->persona_contacto ?? '';
 
-                                })
-                                ->addColumn('nombre_sucursal', function ($td) {
+                        return $href;
 
-                                    $href = $td->nombre_sucursal;
-                                    return $href;
+                    })
+                    ->addColumn('nombre_sucursal', function ($td) {
 
-                                })
-                                ->addColumn('correo', function ($td) {
+                        $href = $td->nombre_sucursal;
 
-                                    $href = $td->correo;
-                                    return $href;
+                        return $href;
 
-                                })
-                                ->addColumn('telefono', function ($td) {
+                    })
+                    ->addColumn('correo', function ($td) {
 
-                                    $href = $td->telefono;
-                                    return $href;
+                        $href = $td->correo;
 
-                                })
-                                ->addColumn('celular', function ($td) {
+                        return $href;
 
-                                    $href = $td->celular;
-                                    return $href;
+                    })
+                    ->addColumn('telefono', function ($td) {
 
-                                })
-                                ->addColumn('ciudad', function ($td) {
+                        $href = $td->telefono;
 
-                                    $href = $td->ciudades->nombre;
-                                    return $href;
+                        return $href;
 
-                                })
-                                ->addColumn('direccion', function ($td) {
+                    })
+                    ->addColumn('celular', function ($td) {
 
-                                    $href = $td->direccion;
-                                    return $href;
+                        $href = $td->celular;
 
-                                })
-                                ->addColumn('acciones', function ($td) {
-                                    if(Auth::user()->can('clientes.edit')){
-                                        $href = '<button type="button" onclick="showSucursal('.$td->id.')" class="btn btn-warning btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Editar Contacto"><i class="fas fa-pencil-alt"></i></button>&nbsp';
-                                    }else{
-                                        $href='';
-                                    }
-                                   $href .= '<button type="button" onclick="deleteSucursal('.$td->id.')" class="btn btn-danger btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Quitar Contacto"><i class="fas fa-trash"></i></button>';
+                        return $href;
 
-                                return $href;
+                    })
+                    ->addColumn('ciudad', function ($td) {
 
-                                })
-                                ->rawColumns(['comercial','nombre_sucursal','correo','telefono','celular','ciudad','direccion','persona_contacto', 'acciones'])
-                                ->make(true);
+                        $href = $td->ciudades->nombre;
+
+                        return $href;
+
+                    })
+                    ->addColumn('direccion', function ($td) {
+
+                        $href = $td->direccion;
+
+                        return $href;
+
+                    })
+                    ->addColumn('acciones', function ($td) {
+                        if (Auth::user()->can('clientes.edit')) {
+                            $href = '<button type="button" onclick="showSucursal('.$td->id.')" class="btn btn-warning btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Editar Contacto"><i class="fas fa-pencil-alt"></i></button>&nbsp';
+                        } else {
+                            $href = '';
+                        }
+                        $href .= '<button type="button" onclick="deleteSucursal('.$td->id.')" class="btn btn-danger btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Quitar Contacto"><i class="fas fa-trash"></i></button>';
+
+                        return $href;
+
+                    })
+                    ->rawColumns(['comercial', 'nombre_sucursal', 'correo', 'telefono', 'celular', 'ciudad', 'direccion', 'persona_contacto', 'acciones'])
+                    ->make(true);
 
             }
         } catch (Exception $e) {
-            return response()->json(['OK'=>false, 'msg'=>$e->getMessage()]);
+            return response()->json(['OK' => false, 'msg' => $e->getMessage()]);
         }
     }
 
@@ -94,13 +98,15 @@ class SucursalClienteController extends Controller
             'tercero_id' => 'required|exists:terceros,id',
             'nombre_sucursal' => 'required|string|max:50',
             'ciudad_id' => 'nullable|exists:ciudades,id',
-            'vendedor_id'=> 'nullable|exists:vendedores,id',
+            'vendedor_id' => 'nullable|exists:vendedores,id',
             'correo' => 'required|email|max:50|unique:terceros_sucursales,correo',
             'celular' => 'nullable|regex:/^[0-9]{10}$/',
+            'celular_indicativo' => 'nullable|string|max:5',
             'telefono' => 'nullable|regex:/^[0-9]{10}$/',
+            'telefono_indicativo' => 'nullable|string|max:5',
             'direccion' => 'nullable|string|max:50',
             'persona_contacto' => 'required|string|max:100',
-        ],[
+        ], [
             'celular.regex' => 'El número de celular debe tener exactamente 10 dígitos y solo contener números.',
             'telefono.regex' => 'El número de teléfono debe tener exactamente 10 dígitos y solo contener números.',
         ]);
@@ -111,11 +117,12 @@ class SucursalClienteController extends Controller
 
         try {
             $sucursal = TerceroSucursal::create($request->all());
+
             return response()->json(['success' => true, 'message' => 'Sucursal creada exitosamente.', 'data' => $sucursal]);
-        // } catch (\Illuminate\Validation\ValidationException $e) {
-        //     // Devolver errores de validación como JSON
-        //     return response()->json(['success' => false, 'errorssuc' => $e->errors()], 422);
-        }catch (\Exception $e) {
+            // } catch (\Illuminate\Validation\ValidationException $e) {
+            //     // Devolver errores de validación como JSON
+            //     return response()->json(['success' => false, 'errorssuc' => $e->errors()], 422);
+        } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -124,6 +131,7 @@ class SucursalClienteController extends Controller
     {
         try {
             $sucursal = TerceroSucursal::findOrFail($id);
+
             return response()->json(['success' => true, 'data' => $sucursal]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Sucursal no encontrada.'], 404);
@@ -136,13 +144,15 @@ class SucursalClienteController extends Controller
             'tercero_id' => 'required|exists:terceros,id',
             'nombre_sucursal' => 'required|string|max:50',
             'ciudad_id' => 'nullable|exists:ciudades,id',
-            'vendedor_id'=> 'nullable|exists:vendedores,id',
+            'vendedor_id' => 'nullable|exists:vendedores,id',
             'correo' => 'required|email|max:50',
             'celular' => 'nullable|regex:/^[0-9]{10}$/',
+            'celular_indicativo' => 'nullable|string|max:5',
             'telefono' => 'nullable|regex:/^[0-9]{10}$/',
+            'telefono_indicativo' => 'nullable|string|max:5',
             'direccion' => 'nullable|string|max:50',
             'persona_contacto' => 'required|string|max:100',
-        ],[
+        ], [
             'celular.regex' => 'El número de celular debe tener exactamente 10 dígitos y solo contener números.',
             'telefono.regex' => 'El número de teléfono debe tener exactamente 10 dígitos y solo contener números.',
         ]);
@@ -154,11 +164,12 @@ class SucursalClienteController extends Controller
         try {
             $sucursal = TerceroSucursal::findOrFail($id);
             $sucursal->update($request->all());
+
             return response()->json(['success' => true, 'message' => 'Sucursal actualizada exitosamente.', 'data' => $sucursal]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             // Devolver errores de validación como JSON
             return response()->json(['success' => false, 'errorssuc' => $e->errors()], 422);
-        }catch (\Exception $e) {
+        } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -168,15 +179,18 @@ class SucursalClienteController extends Controller
         try {
             $sucursal = TerceroSucursal::findOrFail($id);
             $sucursal->delete();
+
             return response()->json(['Ok' => true, 'message' => 'Registro eliminada exitosamente.']);
         } catch (\Exception $e) {
             return response()->json(['Ok' => false, 'error' => $e->getMessage()], 500);
         }
     }
 
-    public function getSucursales($clienteId){
-        $query= TerceroSucursal::where('tercero_id',$clienteId)->orderBy('created_at')->get();
-        return response()->json(['status'=>true, 'data'=>$query??[]]);
+    public function getSucursales($clienteId)
+    {
+        $query = TerceroSucursal::where('tercero_id', $clienteId)->orderBy('created_at')->get();
+
+        return response()->json(['status' => true, 'data' => $query ?? []]);
 
     }
 }

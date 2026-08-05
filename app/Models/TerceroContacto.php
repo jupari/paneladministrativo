@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * @property integer $id
+ * @property int $id
  * @property string $nombres
  * @property string $apellidos
  * @property string $correo
@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $ext
  * @property string $created_at
  * @property string $updated_at
- * @property integer $user_id
+ * @property int $user_id
  */
 class TerceroContacto extends Model
 {
@@ -24,15 +24,16 @@ class TerceroContacto extends Model
      *
      * @var string
      */
+    use HasFactory;
 
-     use HasFactory;
     protected $table = 'terceros_contactos';
-    public $timestamps=false;
+
+    public $timestamps = false;
 
     /**
      * @var array
      */
-    protected $fillable = ['tercero_id','nombres', 'apellidos', 'correo', 'celular', 'telefono', 'ext','cargo', 'created_at', 'updated_at', 'user_id'];
+    protected $fillable = ['tercero_id', 'nombres', 'apellidos', 'correo', 'celular', 'celular_indicativo', 'telefono', 'telefono_indicativo', 'ext', 'cargo', 'created_at', 'updated_at', 'user_id'];
 
     public function tercero()
     {

@@ -3,129 +3,136 @@
 namespace App\Http\Controllers\Terceros;
 
 use App\Http\Controllers\Controller;
-use App\Models\Ciudad;
-use App\Models\Departamento;
-use App\Models\Pais;
+use App\Services\UbicacionService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Yajra\Datatables\Datatables;
 
 class UbicacionController extends Controller
 {
-    //Ubicacion ciudad
-    public function index(Request $request)
+    protected UbicacionService $ubicacionService;
+
+    public function __construct(UbicacionService $ubicacionService)
     {
-        try {
-            $ciudades = Ciudad::with('departamento.pais')->get();
-            //return response()->json($paises);
-            if($request->ajax()) {
-                return DataTables::of($ciudades)
-                                ->addIndexColumn()
-                                ->addColumn('id', function ($td) {
+        $this->middleware('can:ciudades.index')->only(['index', 'indexDepartamentos', 'indexPaises', 'paisesSelect']);
+        $this->middleware('can:ciudades.create')->only(['store', 'storeDepartamento', 'storePais']);
+        $this->middleware('can:ciudades.edit')->only(['edit', 'update', 'editDepartamento', 'updateDepartamento', 'editPais', 'updatePais']);
+        $this->middleware('can:ciudades.destroy')->only(['destroyCiudad', 'destroyDepartamento', 'destroyPais']);
 
-                                    $href = $td->id;
-                                    return $href;
-
-                                })
-                                ->addColumn('pais', function ($td) {
-
-                                    $href = $td->departamento->pais->nombre;
-                                    return $href;
-
-                                })
-                                ->addColumn('departamento', function ($td) {
-
-                                    $href = $td->departamento->nombre;
-                                    return $href;
-
-                                })
-                                ->addColumn('ciudad', function ($td) {
-
-                                    $href = $td->nombre;
-                                    return $href;
-                                })
-                                ->addColumn('acciones', function ($td) {
-                                    if(Auth::user()->can('roles.edit')){
-                                         $href = '<button type="button" onclick="upCiudad('.$td->id.')" class="btn btn-warning btn-circle btn-sm" data-toggle="tooltip" data-placement="top" title="Editar Cliente"><i class="fas fa-pencil-alt"></i></button>&nbsp';
-                                    }else{
-                                        $href='';
-                                    }
-                                    return $href;
-                                })
-                                ->rawColumns(['id', 'pais', 'departamento','ciudad','acciones'])
-                                ->make(true);
-
-            }
-
-            $paises = Pais::with('departamentos.ciudades')->orderBy('nombre')->get();
-            //dd($paises);
-            return view('terceros.ciudades.index', [
-                'paises'=>$paises
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()]);
-        }
-
-
-
+        $this->ubicacionService = $ubicacionService;
     }
 
-     public function store(Request $request)
-    {
-        $request->validate([
-            'nombre' => 'required|string|max:255',
-            'pais_id' => 'nullable|exists:paises,id',
-            'departamento_id' => 'nullable|exists:departamentos,id',
-        ]);
+    // Ciudades
 
-        if ($request->tipo == 'pais') {
-            Pais::create($request->only('nombre'));
-        } elseif ($request->tipo == 'departamento') {
-            Departamento::create($request->only('nombre', 'pais_id'));
-        } else {
-            Ciudad::create($request->only('nombre', 'departamento_id', 'pais_id'));
+    public function index(Request $request)
+    {
+        if ($request->ajax()) {
+            return $this->ubicacionService->listarCiudades($request);
         }
 
-        return response()->json(['success' => true, 'message' => 'Ciudad creada éxitosamente.'], 200);
+        return view('terceros.ciudades.index', [
+            'paises' => $this->ubicacionService->paisesParaSelect(),
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $result = $this->ubicacionService->guardarCiudad($request);
+
+        return response()->json($result, $result['code'] ?? 200);
     }
 
     public function edit($id)
     {
-        try {
-            $ciudades = Ciudad::findOrFail($id);
-            return response()->json(['success' => true, 'data' => $ciudades]);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 404);
-        }
+        $result = $this->ubicacionService->editarCiudad($id);
+
+        return response()->json($result, $result['code'] ?? 200);
     }
 
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'nombre' => 'required|string|max:255',
-        ]);
+        $result = $this->ubicacionService->actualizarCiudad($request, $id);
 
-        $ciudad =  Ciudad::where('id', $id)->first();
-        $ciudad->update($request->all());
-        return response()->json(['success' => true, 'message' => 'Ciudad actualizada éxitosamente.', 'data' =>[]]);
+        return response()->json($result, $result['code'] ?? 200);
     }
 
-    public function destroy($id, $tipo)
+    public function destroyCiudad($id)
     {
-        if ($tipo == 'pais') {
-            Pais::destroy($id);
-        } elseif ($tipo == 'departamento') {
-            Departamento::destroy($id);
-        } else {
-            Ciudad::destroy($id);
-        }
+        $result = $this->ubicacionService->eliminarCiudad($id);
 
-        return redirect()->route('ubicaciones.index')->with('success', 'Registro eliminado con éxito.');
+        return response()->json($result, $result['code'] ?? 200);
     }
 
-    //Ubicacion Departamento
+    public function paisesSelect()
+    {
+        return response()->json(['success' => true, 'data' => $this->ubicacionService->paisesParaSelect()]);
+    }
 
-    //Ubicacion Pais
+    // Departamentos
 
+    public function indexDepartamentos(Request $request)
+    {
+        return $this->ubicacionService->listarDepartamentos($request);
+    }
+
+    public function storeDepartamento(Request $request)
+    {
+        $result = $this->ubicacionService->guardarDepartamento($request);
+
+        return response()->json($result, $result['code'] ?? 200);
+    }
+
+    public function editDepartamento($id)
+    {
+        $result = $this->ubicacionService->editarDepartamento($id);
+
+        return response()->json($result, $result['code'] ?? 200);
+    }
+
+    public function updateDepartamento(Request $request, $id)
+    {
+        $result = $this->ubicacionService->actualizarDepartamento($request, $id);
+
+        return response()->json($result, $result['code'] ?? 200);
+    }
+
+    public function destroyDepartamento($id)
+    {
+        $result = $this->ubicacionService->eliminarDepartamento($id);
+
+        return response()->json($result, $result['code'] ?? 200);
+    }
+
+    // Países
+
+    public function indexPaises(Request $request)
+    {
+        return $this->ubicacionService->listarPaises($request);
+    }
+
+    public function storePais(Request $request)
+    {
+        $result = $this->ubicacionService->guardarPais($request);
+
+        return response()->json($result, $result['code'] ?? 200);
+    }
+
+    public function editPais($id)
+    {
+        $result = $this->ubicacionService->editarPais($id);
+
+        return response()->json($result, $result['code'] ?? 200);
+    }
+
+    public function updatePais(Request $request, $id)
+    {
+        $result = $this->ubicacionService->actualizarPais($request, $id);
+
+        return response()->json($result, $result['code'] ?? 200);
+    }
+
+    public function destroyPais($id)
+    {
+        $result = $this->ubicacionService->eliminarPais($id);
+
+        return response()->json($result, $result['code'] ?? 200);
+    }
 }

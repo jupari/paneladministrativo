@@ -1,71 +1,69 @@
 <?php
 
 use App\Http\Controllers\Admin\BranchController;
-use App\Http\Controllers\admin\ConfigAccountController;
-use App\Http\Controllers\Admin\CuentaController;
-use App\Http\Controllers\Admin\CuentaMadreController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\EstadoController;
-use App\Http\Controllers\Admin\OutlookController;
-use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CompanyController;
 use App\Http\Controllers\Admin\ConceptoController;
+use App\Http\Controllers\admin\ConfigAccountController;
 use App\Http\Controllers\Admin\CostCenterController;
-use App\Http\Controllers\Admin\UsuarioRolesController;
+use App\Http\Controllers\Admin\CuentaController;
+use App\Http\Controllers\Admin\CuentaMadreController;
+use App\Http\Controllers\Admin\EstadoController;
+use App\Http\Controllers\Admin\OutlookController;
 use App\Http\Controllers\Admin\RolesPermisosController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\UsuarioRolesController;
 use App\Http\Controllers\Contratos\Cargos\CargoController;
 use App\Http\Controllers\Contratos\Categorias\CategoriaController;
-use App\Http\Controllers\Contratos\Empleados\EmpleadoController;
 use App\Http\Controllers\Contratos\ContratoController;
+use App\Http\Controllers\Contratos\Empleados\EmpleadoController;
 use App\Http\Controllers\Contratos\Novedades\NovedadController;
 use App\Http\Controllers\Contratos\Novedades\NovedadDetalleController;
 use App\Http\Controllers\Contratos\Parametrizacion\ParametrizacionController;
 use App\Http\Controllers\Contratos\Plantillas\PlantillaController;
-use App\Http\Controllers\Cotizar\CotizarController;
-use App\Http\Controllers\Cotizar\CotizacionController;
-use App\Http\Controllers\Cotizar\CotizacionConceptoController;
-use App\Http\Controllers\Cotizar\CotizacionItemController;
-use App\Http\Controllers\Cotizar\ObservacionController;
 use App\Http\Controllers\Cotizar\CondicionComercialController;
-use App\Http\Controllers\Cotizar\CotizacionSolicitudController;
+use App\Http\Controllers\Cotizar\CotizacionConceptoController;
+use App\Http\Controllers\Cotizar\CotizacionController;
+use App\Http\Controllers\Cotizar\CotizacionItemController;
 use App\Http\Controllers\Cotizar\CotizacionProductoController;
-use App\Http\Controllers\Cotizar\CotizacionViaticoController;
+use App\Http\Controllers\Cotizar\CotizacionSolicitudController;
 use App\Http\Controllers\Cotizar\CotizacionUtilidadController;
+use App\Http\Controllers\Cotizar\CotizacionViaticoController;
+use App\Http\Controllers\Cotizar\CotizarController;
 use App\Http\Controllers\Cotizar\NominaLiquidacionController;
-use App\Http\Controllers\OrdObservacionController;
+use App\Http\Controllers\Cotizar\ObservacionController;
 use App\Http\Controllers\elementos\ElementoController;
-use App\Http\Controllers\elementos\ElementosController;
 use App\Http\Controllers\elementos\SubElementoController;
 use App\Http\Controllers\Inventario\BodegaController;
-use App\Http\Controllers\Inventario\ProductoController;
-use App\Http\Controllers\Produccion\FichaTecnicaController;
-use App\Http\Controllers\Produccion\FichaTecnicaBocetoController;
-use App\Http\Controllers\Produccion\FichaTecnicaMaterialController;
-use App\Http\Controllers\Produccion\FichaTecnicaProcesoController;
-use App\Http\Controllers\Produccion\ProdOrderController;
-use App\Http\Controllers\Produccion\ProdProductionLogController;
-use App\Http\Controllers\Produccion\ProdSettlementController;
-use App\Http\Controllers\Produccion\ProdOperationController;
-use App\Http\Controllers\Produccion\ProdRateController;
-use App\Http\Controllers\Produccion\ProdOrderOperationController;
-use App\Http\Controllers\Produccion\ProdReportController;
-use App\Http\Controllers\Produccion\WorkshopController;
-use App\Http\Controllers\Produccion\WorkshopPairingAdminController;
-use App\Http\Controllers\ItemPropio\ItemPropioController;
-use App\Http\Controllers\Produccion\MaterialController;
 use App\Http\Controllers\Inventario\MovimientoController;
 use App\Http\Controllers\Inventario\MovimientoDetalleController;
+use App\Http\Controllers\Inventario\ProductoController;
 use App\Http\Controllers\Inventario\ProductoPropiedadController;
 use App\Http\Controllers\Inventario\SaldoController;
+use App\Http\Controllers\ItemPropio\ItemPropioController;
 use App\Http\Controllers\Nomina\NominaConceptoController;
 use App\Http\Controllers\Nomina\NominaNovedadController;
 use App\Http\Controllers\Nomina\NominaParametrosGlobalController;
-use App\Http\Controllers\Nomina\NominaTurnoController;
 use App\Http\Controllers\Nomina\NominaPayRunController;
 use App\Http\Controllers\Nomina\NominaPayslipController;
 use App\Http\Controllers\Nomina\NominaReportController;
+use App\Http\Controllers\Nomina\NominaTurnoController;
+use App\Http\Controllers\OrdObservacionController;
+use App\Http\Controllers\Produccion\FichaTecnicaBocetoController;
+use App\Http\Controllers\Produccion\FichaTecnicaController;
+use App\Http\Controllers\Produccion\FichaTecnicaMaterialController;
+use App\Http\Controllers\Produccion\FichaTecnicaProcesoController;
+use App\Http\Controllers\Produccion\MaterialController;
 use App\Http\Controllers\Produccion\procesos\ProcesoController;
 use App\Http\Controllers\Produccion\procesos\ProcesoDetController;
+use App\Http\Controllers\Produccion\ProdOperationController;
+use App\Http\Controllers\Produccion\ProdOrderController;
+use App\Http\Controllers\Produccion\ProdOrderOperationController;
+use App\Http\Controllers\Produccion\ProdProductionLogController;
+use App\Http\Controllers\Produccion\ProdRateController;
+use App\Http\Controllers\Produccion\ProdReportController;
+use App\Http\Controllers\Produccion\ProdSettlementController;
+use App\Http\Controllers\Produccion\WorkshopController;
+use App\Http\Controllers\Produccion\WorkshopPairingAdminController;
 use App\Http\Controllers\Terceros\Clientes\ClienteController;
 use App\Http\Controllers\Terceros\Clientes\ContactoClienteController;
 use App\Http\Controllers\Terceros\Clientes\SucursalClienteController;
@@ -73,8 +71,8 @@ use App\Http\Controllers\Terceros\Proveedores\ProveedorController;
 use App\Http\Controllers\Terceros\UbicacionController;
 use App\Http\Controllers\Terceros\Vendedores\VendedorController;
 use App\Models\Tercero;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'company.license'])->group(function () {
     Route::get('admin.users.index', [UserController::class, 'indexDataTable'])->name('admin.users.index');
@@ -115,30 +113,30 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::put('admin.roles/{id}', 'update')->name('admin.roles.update');
     });
 
-    //Cuentas principales
+    // Cuentas principales
     Route::controller(CuentaMadreController::class)->group(function () {
         Route::get('admin.cuentappal.index', 'index')->name('admin.cuentappal.index');
         Route::get('admin.cuentappal/{id}', 'edit')->name('admin.cuentappal.edit');
         Route::post('admin.cuentappal', 'store')->name('admin.cuentappal.store');
         Route::put('admin.cuentappal/{id}', 'update')->name('admin.cuentappal.update');
         Route::get('admin.cuentappal.find/{email}', 'getDataEmail')->name('admin.cuentappal.find');
-        //subir archivos de excel
+        // subir archivos de excel
         Route::post('admin.cuentappal.uploadfile', 'verifyExcelData')->name('admin.cuentappal.uploadfile');
         Route::post('admin.cuentappal.saveLote', 'insertarCuentasMadre')->name('admin.cuentappal.saveLote');
     });
 
-    //Cuentas
+    // Cuentas
     Route::controller(CuentaController::class)->group(function () {
         Route::get('admin.cuenta.index', 'index')->name('admin.cuenta.index');
         Route::get('admin.cuenta/{id}', 'edit')->name('admin.cuenta.edit');
         Route::post('admin.cuenta', 'store')->name('admin.cuenta.store');
         Route::put('admin.cuenta/{id}', 'update')->name('admin.cuenta.update');
-        //subir archivos de excel
+        // subir archivos de excel
         Route::post('admin.cuenta.uploadfile', 'verifyExcelData')->name('admin.cuenta.uploadfile');
         Route::post('admin.cuenta.saveLote', 'insertarCuentas')->name('admin.cuenta.saveLote');
     });
 
-    //Cuentas
+    // Cuentas
     Route::controller(EstadoController::class)->group(function () {
         Route::get('admin.estado.index', 'index')->name('admin.estado.index');
         Route::get('admin.estado/{id}', 'edit')->name('admin.estado.edit');
@@ -146,7 +144,7 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::put('admin.estado/{id}', 'update')->name('admin.estado.update');
     });
 
-    //Emails
+    // Emails
     Route::controller(OutlookController::class)->group(function () {
         Route::get('auth/redirect/{email}', [OutlookController::class, 'redirectToProvider'])->name('auth/redirect');
         Route::get('admin.emails.index', [OutlookController::class, 'redirectToProvider'])->name('admin.emails.index');
@@ -157,9 +155,7 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::get('/fetchEmail/{email}/{password}', [OutlookController::class, 'fetchEmails']);
     });
 
-
-
-    //Configuracion de tokens de correos
+    // Configuracion de tokens de correos
     Route::controller(ConfigAccountController::class)->group(function () {
         Route::get('admin.configemail.index', [ConfigAccountController::class, 'index'])->name('admin.configemail.index');
     });
@@ -205,7 +201,6 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::post('admin.contactos.update/{id}', [ContactoClienteController::class, 'update'])->name('admin.contactos.update');
         Route::delete('admin.contactos.destroy/{id}', [ContactoClienteController::class, 'destroy'])->name('admin.contactos.destroy');
     });
-
 
     Route::controller(VendedorController::class)->group(function () {
         Route::get('admin.vendedores.index', [VendedorController::class, 'index'])->name('admin.vendedores.index');
@@ -258,9 +253,9 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::delete('admin.parametrizacion.deletecosto/{id}', [ParametrizacionController::class, 'deleteCosto'])->name('admin.parametrizacion.deletecosto');
         Route::post('admin.parametrizacion.storecostos', [ParametrizacionController::class, 'storeCostos'])->name('admin.parametrizacion.storecostos');
         Route::post('admin.parametrizacion.generar_tabla_precios', [ParametrizacionController::class, 'generarTablaPrecios'])
-                    ->name('admin.parametrizacion.generar_tabla_precios');
+            ->name('admin.parametrizacion.generar_tabla_precios');
         Route::get('admin.parametrizacion.tabla_precios', [ParametrizacionController::class, 'tablaPreciosData'])
-                ->name('admin.parametrizacion.tabla_precios');
+            ->name('admin.parametrizacion.tabla_precios');
         // Route::post('admin.parametrizacion.generar_tabla_precios', [ParametrizacionController::class, 'generarTablaPrecios'])
         //         ->name('admin.parametrizacion.generar_tabla_precios');
     });
@@ -286,11 +281,27 @@ Route::middleware(['auth', 'company.license'])->group(function () {
     });
 
     Route::controller(UbicacionController::class)->group(function () {
+        // Ciudades
         Route::get('admin.ubicaciones.index', [UbicacionController::class, 'index'])->name('admin.ubicaciones.index');
         Route::post('admin.ubicaciones.store', [UbicacionController::class, 'store'])->name('admin.ubicaciones.store');
         Route::get('admin.ubicaciones.edit/{id}', [UbicacionController::class, 'edit'])->name('admin.ubicaciones.edit');
         Route::post('admin.ubicaciones.update/{id}', [UbicacionController::class, 'update'])->name('admin.ubicaciones.update');
-        Route::delete('admin.ubicaciones/{id}/{tipo}', [UbicacionController::class, 'destroy'])->name('admin.ubicaciones.destroy');
+        Route::delete('admin.ubicaciones.destroy/{id}', [UbicacionController::class, 'destroyCiudad'])->name('admin.ubicaciones.destroy');
+
+        // Departamentos
+        Route::get('admin.ubicaciones.departamentos.index', [UbicacionController::class, 'indexDepartamentos'])->name('admin.ubicaciones.departamentos.index');
+        Route::post('admin.ubicaciones.departamentos.store', [UbicacionController::class, 'storeDepartamento'])->name('admin.ubicaciones.departamentos.store');
+        Route::get('admin.ubicaciones.departamentos.edit/{id}', [UbicacionController::class, 'editDepartamento'])->name('admin.ubicaciones.departamentos.edit');
+        Route::post('admin.ubicaciones.departamentos.update/{id}', [UbicacionController::class, 'updateDepartamento'])->name('admin.ubicaciones.departamentos.update');
+        Route::delete('admin.ubicaciones.departamentos.destroy/{id}', [UbicacionController::class, 'destroyDepartamento'])->name('admin.ubicaciones.departamentos.destroy');
+
+        // Países
+        Route::get('admin.ubicaciones.paises.select', [UbicacionController::class, 'paisesSelect'])->name('admin.ubicaciones.paises.select');
+        Route::get('admin.ubicaciones.paises.index', [UbicacionController::class, 'indexPaises'])->name('admin.ubicaciones.paises.index');
+        Route::post('admin.ubicaciones.paises.store', [UbicacionController::class, 'storePais'])->name('admin.ubicaciones.paises.store');
+        Route::get('admin.ubicaciones.paises.edit/{id}', [UbicacionController::class, 'editPais'])->name('admin.ubicaciones.paises.edit');
+        Route::post('admin.ubicaciones.paises.update/{id}', [UbicacionController::class, 'updatePais'])->name('admin.ubicaciones.paises.update');
+        Route::delete('admin.ubicaciones.paises.destroy/{id}', [UbicacionController::class, 'destroyPais'])->name('admin.ubicaciones.paises.destroy');
     });
 
     Route::controller(CotizarController::class)->group(function () {
@@ -434,7 +445,7 @@ Route::middleware(['auth', 'company.license'])->group(function () {
     });
 
     Route::controller(ItemPropioController::class)->group(function () {
-        //Route::post('admin.itempropio.store', [ItemPropioController::class, 'store'])->name('admin.itempropio.store');
+        // Route::post('admin.itempropio.store', [ItemPropioController::class, 'store'])->name('admin.itempropio.store');
         Route::get('admin.items-propios', [ItemPropioController::class, 'index'])->name('admin.items-propios.index');
 
         // Endpoints JSON para la grilla (Tabulator)
@@ -443,7 +454,6 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::put('admin.items-propios/{item_propio}', [ItemPropioController::class, 'update'])->name('admin.items-propios.update');
         Route::delete('admin.items-propios/{item_propio}', [ItemPropioController::class, 'destroy'])->name('admin.items-propios.destroy');
     });
-
 
     Route::controller(FichaTecnicaController::class)->group(function () {
         Route::get('admin.fichas-tecnicas.index', [FichaTecnicaController::class, 'index'])->name('admin.fichas-tecnicas.index');
@@ -468,7 +478,6 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::delete('admin.fichas-tecnicas-bocetos/{ficha_tecnica_boceto}', [FichaTecnicaBocetoController::class, 'destroy'])->name('admin.fichas-tecnicas-bocetos.destroy');
     });
 
-
     Route::controller(FichaTecnicaMaterialController::class)->group(function () {
         Route::get('admin.fichas-tecnicas-materiales.index/{id}', [FichaTecnicaMaterialController::class, 'index'])->name('admin.fichas-tecnicas-materiales.index');
         // Endpoints JSON para la grilla (Tabulator)
@@ -488,7 +497,6 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::post('admin.fichas-tecnicas-procesos/{ficha_tecnica_proceso}', [FichaTecnicaProcesoController::class, 'update'])->name('admin.fichas-tecnicas-procesos.update');
         Route::delete('admin.fichas-tecnicas-procesos/{ficha_tecnica_proceso}', [FichaTecnicaProcesoController::class, 'destroy'])->name('admin.fichas-tecnicas-procesos.destroy');
     });
-
 
     Route::controller(MaterialController::class)->group(function () {
         Route::get('admin.materiales.index', [MaterialController::class, 'index'])->name('admin.materiales.index');
@@ -563,7 +571,6 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::delete('admin.productospropiedades.destroy/{id}', [ProductoPropiedadController::class, 'destroy'])->name('admin.productospropiedades.destroy');
     });
 
-
     Route::controller(BodegaController::class)->group(function () {
         Route::get('admin.bodegas.index', [BodegaController::class, 'index'])->name('admin.bodegas.index');
         // Endpoints JSON para la grilla (Tabulator)
@@ -619,21 +626,21 @@ Route::middleware(['auth', 'company.license'])->group(function () {
 
     // Turnos de Trabajo (catálogo para cotización Costo Día)
     Route::controller(NominaTurnoController::class)->group(function () {
-        Route::get('admin.nomina.turnos.index',            'index')  ->name('admin.nomina.turnos.index');
-        Route::post('admin.nomina.turnos.store',           'store')  ->name('admin.nomina.turnos.store');
-        Route::get('admin.nomina.turnos.edit/{id}',        'edit')   ->name('admin.nomina.turnos.edit');
-        Route::post('admin.nomina.turnos.update/{id}',     'update') ->name('admin.nomina.turnos.update');
-        Route::delete('admin.nomina.turnos.destroy/{id}',  'destroy')->name('admin.nomina.turnos.destroy');
-        Route::get('admin.nomina.turnos.activos',          'activos')->name('admin.nomina.turnos.activos');
+        Route::get('admin.nomina.turnos.index', 'index')->name('admin.nomina.turnos.index');
+        Route::post('admin.nomina.turnos.store', 'store')->name('admin.nomina.turnos.store');
+        Route::get('admin.nomina.turnos.edit/{id}', 'edit')->name('admin.nomina.turnos.edit');
+        Route::post('admin.nomina.turnos.update/{id}', 'update')->name('admin.nomina.turnos.update');
+        Route::delete('admin.nomina.turnos.destroy/{id}', 'destroy')->name('admin.nomina.turnos.destroy');
+        Route::get('admin.nomina.turnos.activos', 'activos')->name('admin.nomina.turnos.activos');
     });
 
     // Parámetros Globales de Nómina (SMLV, Aux. Transporte, UVT, Tope Ley 1607)
     Route::controller(NominaParametrosGlobalController::class)->group(function () {
-        Route::get('admin.nomina.parametros.index',            'index')  ->name('admin.nomina.parametros.index');
-        Route::post('admin.nomina.parametros.store',           'store')  ->name('admin.nomina.parametros.store');
-        Route::get('admin.nomina.parametros.edit/{id}',        'edit')   ->name('admin.nomina.parametros.edit');
-        Route::post('admin.nomina.parametros.update/{id}',     'update') ->name('admin.nomina.parametros.update');
-        Route::delete('admin.nomina.parametros.destroy/{id}',  'destroy')->name('admin.nomina.parametros.destroy');
+        Route::get('admin.nomina.parametros.index', 'index')->name('admin.nomina.parametros.index');
+        Route::post('admin.nomina.parametros.store', 'store')->name('admin.nomina.parametros.store');
+        Route::get('admin.nomina.parametros.edit/{id}', 'edit')->name('admin.nomina.parametros.edit');
+        Route::post('admin.nomina.parametros.update/{id}', 'update')->name('admin.nomina.parametros.update');
+        Route::delete('admin.nomina.parametros.destroy/{id}', 'destroy')->name('admin.nomina.parametros.destroy');
     });
 
     Route::controller(NominaPayRunController::class)->group(function () {
@@ -645,7 +652,6 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::get('admin.nomina.payruns.list', [NominaPayRunController::class, 'list'])->name('admin.nomina.payruns.list');
     });
 
-
     Route::controller(NominaNovedadController::class)->group(function () {
         Route::get('admin.nomina.novelties.index', [NominaNovedadController::class, 'index'])->name('admin.nomina.novelties.index');
         Route::get('admin.nomina.novelties.participants', [NominaNovedadController::class, 'participants'])->name('admin.nomina.novelties.participants');
@@ -653,11 +659,11 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::get('admin.nomina.novelties.edit/{id}', [NominaNovedadController::class, 'edit'])->name('admin.nomina.novelties.edit');
         Route::post('admin.nomina.novelties.update/{id}', [NominaNovedadController::class, 'update'])->name('admin.nomina.novelties.update');
         Route::post('admin.nomina.novelties.recalculate-destajo', [NominaNovedadController::class, 'recalculateDestajo'])
-                ->name('admin.nomina.novelties.recalculateDestajo');
+            ->name('admin.nomina.novelties.recalculateDestajo');
         Route::post('admin.nomina.novelties.recalculate-destajo-settlements', [NominaNovedadController::class, 'recalculateDestajoFromSettlements'])
-                ->name('admin.nomina.novelties.recalculateDestajoFromSettlements');
+            ->name('admin.nomina.novelties.recalculateDestajoFromSettlements');
         Route::post('admin.nomina.novelties.duplicate/{id}', [NominaNovedadController::class, 'duplicate'])
-                ->name('admin.nomina.novelties.duplicate');
+            ->name('admin.nomina.novelties.duplicate');
     });
 
     Route::controller(NominaConceptoController::class)->group(function () {
@@ -686,7 +692,6 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::get('admin.nomina.payruns.payslips.list/{payRunId}', [NominaPayslipController::class, 'list'])->name('admin.nomina.payruns.payslips.list'); // select
         Route::get('admin.nomina.payruns.payslips.show/{payRun}/{participantType}/{participantId}', [NominaPayslipController::class, 'show'])->name('admin.nomina.payruns.payslips.show');
     });
-
 
     // Órdenes
     Route::controller(ProdOrderController::class)->group(function () {
@@ -777,20 +782,20 @@ Route::middleware(['auth', 'company.license'])->group(function () {
 
     // Sucursales
     Route::controller(BranchController::class)->group(function () {
-        Route::get('admin.organization.branches', [BranchController::class,'index'])->name('admin.branches.index');
-        Route::post('admin.organization.branches.store', [BranchController::class,'store'])->name('admin.branches.store');
-        Route::get('admin.organization.branches.edit/{id}', [BranchController::class,'edit'])->name('admin.branches.edit');
-        Route::post('admin.organization.branches.update/{id}', [BranchController::class,'update'])->name('admin.branches.update');
-        Route::get('admin.organization.branches.list', [BranchController::class,'list'])->name('admin.branches.list');
+        Route::get('admin.organization.branches', [BranchController::class, 'index'])->name('admin.branches.index');
+        Route::post('admin.organization.branches.store', [BranchController::class, 'store'])->name('admin.branches.store');
+        Route::get('admin.organization.branches.edit/{id}', [BranchController::class, 'edit'])->name('admin.branches.edit');
+        Route::post('admin.organization.branches.update/{id}', [BranchController::class, 'update'])->name('admin.branches.update');
+        Route::get('admin.organization.branches.list', [BranchController::class, 'list'])->name('admin.branches.list');
     });
 
     // Centros de costo
     Route::controller(CostCenterController::class)->group(function () {
-        Route::get('admin.organization.cost-centers', [CostCenterController::class,'index'])->name('admin.costCenters.index');
-        Route::post('admin.organization.cost-centers.store', [CostCenterController::class,'store'])->name('admin.costCenters.store');
-        Route::get('admin.organization.cost-centers.edit/{id}', [CostCenterController::class,'edit'])->name('admin.costCenters.edit');
-        Route::post('admin.organization.cost-centers.update/{id}', [CostCenterController::class,'update'])->name('admin.costCenters.update');
-        Route::get('admin.organization.cost-centers.list', [CostCenterController::class,'list'])->name('admin.costCenters.list');
+        Route::get('admin.organization.cost-centers', [CostCenterController::class, 'index'])->name('admin.costCenters.index');
+        Route::post('admin.organization.cost-centers.store', [CostCenterController::class, 'store'])->name('admin.costCenters.store');
+        Route::get('admin.organization.cost-centers.edit/{id}', [CostCenterController::class, 'edit'])->name('admin.costCenters.edit');
+        Route::post('admin.organization.cost-centers.update/{id}', [CostCenterController::class, 'update'])->name('admin.costCenters.update');
+        Route::get('admin.organization.cost-centers.list', [CostCenterController::class, 'list'])->name('admin.costCenters.list');
     });
 
     Route::controller(ConceptoController::class)->group(function () {
@@ -802,12 +807,13 @@ Route::middleware(['auth', 'company.license'])->group(function () {
         Route::delete('admin.conceptos/{id}', 'destroy')->name('admin.conceptos.destroy');
     });
 
-    Route::post('/validar-identificacion', function(Request $request) {
+    Route::post('/validar-identificacion', function (Request $request) {
         $identificacion = $request->input('identificacion');
         $tipoidentificacion_id = $request->input('tipoidentificacion_id');
         $exists = Tercero::where('identificacion', $identificacion)
             ->where('tipoidentificacion_id', $tipoidentificacion_id)
             ->exists();
+
         return response()->json(['exists' => $exists]);
     });
 

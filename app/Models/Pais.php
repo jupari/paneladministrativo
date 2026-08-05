@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * @property integer $id
+ * @property int $id
  * @property string $nombre
  * @property string $created_at
  * @property string $updated_at
@@ -14,13 +14,13 @@ use Illuminate\Database\Eloquent\Model;
 class Pais extends Model
 {
     use HasFactory;
+
     protected $table = 'paises';
-    public $timestamps=false;
-    protected $fillable = ['nombre', 'created_at', 'updated_at'];
+
+    protected $fillable = ['nombre', 'active'];
 
     public function departamentos()
     {
         return $this->hasMany(Departamento::class);
     }
-
- }
+}

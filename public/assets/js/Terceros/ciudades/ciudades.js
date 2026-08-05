@@ -19,372 +19,474 @@ $(function () {
         "hideMethod": "fadeOut"
     }
 
-    // Obtener la fecha actual
-    let fechaActual = new Date();
+    CargarCiudades();
+    CargarDepartamentos();
+    CargarPaises();
 
-    // Formatear la fecha al formato "2009-04-19"
-    let fechaFormateada = '2009-' + ('0' + (fechaActual.getMonth() + 1)).slice(-2) + '-' + ('0' + fechaActual.getDate()).slice(-2);
-
-
-     //carga de la datatable
-    Cargar();
-
-    $('#pais_id').change(function(){
+    $('#pais_id').change(function () {
         let pais_id = $(this).val();
-        let dptos;
-        dataPaises.forEach((p)=>{
-            if(p.id==pais_id){
-                dptos = p;
+        let seleccionado;
+        dataPaises.forEach((p) => {
+            if (p.id == pais_id) {
+                seleccionado = p;
             }
-
         });
         $('#departamento_id').empty();
         $('#departamento_id').append('<option value="">Seleccione un departamento</option>');
-        $.each(dptos.departamentos, function (index, value) {
-            $('#departamento_id').append('<option value="'+ value.id +'">'+ value.nombre +'</option>');
-        });
-
+        if (seleccionado) {
+            $.each(seleccionado.departamentos, function (index, value) {
+                $('#departamento_id').append('<option value="' + value.id + '">' + value.nombre + '</option>');
+            });
+        }
     });
 });
 
-//se declara la variable del modal
-var myModal = new bootstrap.Modal(document.getElementById('ModalCiudad'), {
-    keyboard: false
-})
+function csrfHeader() {
+    return { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') };
+}
 
-// var modalPaisDpto = new bootstrap.Modal(document.getElementById('ModalPaisDpto'), {
-//     keyboard: false
-// })
+// Recarga dataPaises desde el servidor y repuebla los selects de país
+// que dependen de él (modal de Ciudad y modal de Departamento), sin
+// necesidad de refrescar toda la página.
+function refrescarSelectsPaises() {
+    $.get('/admin/admin.ubicaciones.paises.select', function (response) {
+        dataPaises = response.data;
 
+        const paisCiudadActual = $('#pais_id').val();
+        $('#pais_id').empty().append('<option value="">Seleccione un país</option>');
+        $.each(dataPaises, function (index, pais) {
+            $('#pais_id').append('<option value="' + pais.id + '">' + pais.nombre + '</option>');
+        });
+        if (paisCiudadActual) {
+            $('#pais_id').val(paisCiudadActual);
+        }
 
-function Cargar() {
+        const paisDepartamentoActual = $('#departamento_pais_id').val();
+        $('#departamento_pais_id').empty().append('<option value="">Seleccione un país</option>');
+        $.each(dataPaises, function (index, pais) {
+            $('#departamento_pais_id').append('<option value="' + pais.id + '">' + pais.nombre + '</option>');
+        });
+        if (paisDepartamentoActual) {
+            $('#departamento_pais_id').val(paisDepartamentoActual);
+        }
+    });
+}
+
+function manejarErrorAjax(e, prefix) {
+    const arr = e.responseJSON;
+    if (e.status === 422) {
+        $.each(arr.errors, function (key, value) {
+            $('#error_' + prefix + key).text(value[0]);
+            $('#error_' + key).text(value[0]);
+        });
+        toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.');
+    } else if (e.status === 403) {
+        toastr.warning('No tiene permisos para realizar esta acción.');
+    } else {
+        toastr.error(arr && arr.message ? arr.message : 'Ocurrió un error inesperado.');
+    }
+}
+
+function confirmarEliminar(url, onSuccess) {
+    Swal.fire({
+        title: "¿Desea eliminar este registro?",
+        text: "El registro eliminado no se puede volver a recuperar",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "Sí",
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+    }).then((result) => {
+        if (result.value == true) {
+            $.ajax({
+                url: url,
+                headers: csrfHeader(),
+                method: 'DELETE',
+                dataType: 'json',
+            }).then(response => {
+                if (response.success) {
+                    toastr.success(response.message);
+                    onSuccess();
+                } else {
+                    toastr.warning(response.message);
+                }
+            }).catch(e => {
+                const arr = e.responseJSON;
+                toastr.error(arr && arr.message ? arr.message : 'No fue posible eliminar el registro.');
+            });
+        }
+    });
+}
+
+/* =======================
+   Ciudades
+   ======================= */
+
+function CargarCiudades() {
     if ($.fn.DataTable.isDataTable('#ciudades-table')) {
-        $('#ciudades-table').DataTable().destroy();
+        // Solo refrescar los datos de la tabla ya inicializada. Destruir y
+        // recrear el DataTable sobre el mismo <table> deja el <thead> en
+        // blanco (DataTables 2.x + Buttons/Responsive no limpian del todo
+        // las cabeceras al reinicializar sin recargar la página).
+        $('#ciudades-table').DataTable().ajax.reload(null, false);
+        return;
     }
 
-    let table = $('#ciudades-table').DataTable(
-        {
-            language: {
-                "url": "/assets/js/spanish.json"
-            },
-            responsive: true,
-            dom: "<'row'<'col-sm-6'B><'col-sm-6'f>>" +
-                "<'row'<'col-sm-12'ltr>>" +
-                "<'row'<'col-sm-5'i><'col-sm-7'p>>",
-            buttons: [
-                {
-                    extend: 'excel',
-                    className: 'btn btn-success',
-                    exportOptions: {
-                        columns: ':not(.exclude)'
-                    },
-                    text: '<i class="far fa-file-excel"></i>',
-                    titleAttr: 'Exportar a Excel',
-                    filename: 'reporte_excel'
-                }],
-            ajax: '/admin/admin.ubicaciones.index',
-                columns: [
-                { data: 'DT_RowIndex', name: 'DT_RowIndex', className: 'exclude', orderable: false,searchable: false},
-                { data: 'id', name: 'id'},
-                { data: 'pais', name: 'pais'},
-                { data: 'departamento', name: 'departamento'},
-                { data: 'ciudad', name: 'ciudad',className:'text-center'},
-                { data: 'acciones', name: 'acciones', className: 'exclude'},
-            ],
-            order: [[1, "asc"]],
-            pageLength: 10,
-            lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "Todo(s)"]],
-        }
-    );
-    // table.ajax.reload();
-}
-
-// Limpiar inputs
-function cleanInput(btn) {
-
-    const bool = (btn == null) ? false : true;
-
-    // Campos del formulario actual
-    const fields = [
-        'pais_id',
-        'departamento_id',
-        'ciudad'
-    ];
-
-    // Limpiar cada campo
-    fields.forEach(field => {
-        $('#' + field).val(''); // Limpiar el valor
-    });
-
-    // Opcional: desmarcar todos los checkboxes si es necesario
-    $('input[type="checkbox"]').prop('checked', false);
-}
-
-function showCustomCiudad(btn) {
-    $.get("/admin/admin.ubicaciones.edit/" + btn, (response) => {
-        const usr = response.data;
-
-        // Mapear los campos del formulario
-        const usuarioFields = [
-            'nombre',
-            'pais_id',
-            'departamento_id',
-            'active'
-        ];
-
-        usuarioFields.forEach(field => {
-            if (field === 'active') {
-                // Configurar el checkbox
-                $('#' + field).prop('checked', usr[field] == 1 ? true : false);
-            } else if (field.endsWith('_id')) {
-                // Configurar el valor de los selects
-                $('#' + field).val(usr[field]).change();
-            } else {
-                // Configurar el valor de los campos de texto
-                $('#ciudad').val(usr[field]);
-            }
-        });
-
-        const tercero_id=$('#id').val();
-        //CargarSucursales(tercero_id);
-        //CargarContactos(tercero_id);
+    $('#ciudades-table').DataTable({
+        language: { "url": "/assets/js/spanish.json" },
+        responsive: true,
+        dom: "<'row'<'col-sm-6'B><'col-sm-6'f>>" +
+            "<'row'<'col-sm-12'ltr>>" +
+            "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+        buttons: [{
+            extend: 'excel',
+            className: 'btn btn-success',
+            exportOptions: { columns: ':not(.exclude)' },
+            text: '<i class="far fa-file-excel"></i>',
+            titleAttr: 'Exportar a Excel',
+            filename: 'reporte_ciudades'
+        }],
+        ajax: '/admin/admin.ubicaciones.index',
+        columns: [
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', className: 'exclude', orderable: false, searchable: false },
+            { data: 'id', name: 'id' },
+            { data: 'pais', name: 'pais' },
+            { data: 'departamento', name: 'departamento' },
+            { data: 'ciudad', name: 'ciudad', className: 'text-center' },
+            { data: 'active', name: 'active', className: 'text-center' },
+            { data: 'acciones', name: 'acciones', className: 'exclude' },
+        ],
+        order: [[1, "asc"]],
+        pageLength: 10,
+        lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "Todo(s)"]],
     });
 }
 
-//Registrar usuario
+function cleanInputCiudad() {
+    ['pais_id', 'departamento_id', 'ciudad'].forEach(field => $('#' + field).val(''));
+    $('#ciudad_id').val('');
+    $('#ciudad_active').prop('checked', true);
+    ['error_pais_id', 'error_departamento_id', 'error_nombre'].forEach(field => $('#' + field).text(''));
+}
+
 function regCiudad() {
     $('#ModalCiudad').modal('show');
-    $('#exampleModalLabel').html('Registrar Ciudad');
+    $('#ciudadModalLabel').html('Registrar Ciudad');
+    cleanInputCiudad();
 
-    // LIMPIAR CAMPOS
-    cleanInput();
-     // FIN LIMPIAR CAMPOS
-    limpiarValidaciones();
-     let r = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
-        '<button type="button" class="btn btn-primary" onclick="registerCiudad()"><span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="spinnerRegister"></span>Agregar</button>';
+    const footer = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
+        '<button type="button" class="btn btn-primary" onclick="registerCiudad()">Agregar</button>';
+    $('#modal_footer_ciudad').html(footer);
+}
 
-    $(".modal-footer").html(r);
+function upCiudad(id) {
+    $('#ModalCiudad').modal('show');
+    $('#ciudadModalLabel').html('Editar Ciudad');
+    cleanInputCiudad();
 
+    $.get("/admin/admin.ubicaciones.edit/" + id, (response) => {
+        const c = response.data;
+        $('#ciudad_id').val(c.id);
+        $('#pais_id').val(c.pais_id).change();
+        setTimeout(() => $('#departamento_id').val(c.departamento_id), 150);
+        $('#ciudad').val(c.nombre);
+        $('#ciudad_active').prop('checked', c.active == 1);
+    });
+
+    const footer = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
+        '<button class="btn btn-primary" onclick="updateCiudad(' + id + ')">Guardar</button>';
+    $('#modal_footer_ciudad').html(footer);
+}
+
+function datosFormularioCiudad() {
+    const data = new FormData();
+    data.append('pais_id', $('#pais_id').val());
+    data.append('departamento_id', $('#departamento_id').val());
+    data.append('nombre', $('#ciudad').val());
+    data.append('active', $('#ciudad_active').is(':checked') ? 1 : 0);
+    return data;
 }
 
 function registerCiudad() {
-
-    $('#spinnerRegister').addClass('d-none');
-    $('#spinnerRegister').removeClass('d-block');
-
-    const route = "/admin/admin.ubicaciones.store";
-
-    let activo=$('#active').is(':checked')?1:0;
-    $('#active').change(function(){
-        if($(this).is(':checked')){
-            activo=1;
-        }else{
-            activo=0;
-        }
-    })
-
-    // Crear un objeto FormData directamente desde el formulario
-    let ajax_data = new FormData();
-
-    // Agregar los nuevos campos del formulario
-    ajax_data.append('pais_id', $('#pais_id').val());
-    ajax_data.append('departamento_id', $('#departamento_id').val());
-    ajax_data.append('nombre', $('#ciudad').val());
-    ajax_data.append('active', activo);
-
-
-    // Realizar la solicitud AJAX
     $.ajax({
-        url: route,
-        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        url: "/admin/admin.ubicaciones.store",
+        headers: csrfHeader(),
         type: 'POST',
         dataType: 'json',
-        data: ajax_data,
-        contentType: false, // IMPORTANTE PARA SUBIR IMÁGENES O ARCHIVOS POR AJAX
-        processData: false,
-    }).then(response => {
-        $('#spinnerRegister').addClass('d-none');
-        $('#spinnerRegister').removeClass('d-block');
-        Cargar();
-        $('#ModalCiudad').modal('hide');
-        toastr.success(response.message); // Muestra el mensaje de éxito
-
-    }).catch(e => {
-        // Manejo de errores
-        limpiarValidaciones(); // Reemplaza con tu función de limpieza de validaciones
-        const arr = e.responseJSON;
-        const toast = arr.errors;
-
-        if (e.status == 422) {
-            // Errores de validación
-            $.each(toast, function (key, value) {
-                $('#error_' + key).text(value[0]);
-            });
-            toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.'); // Muestra el mensaje de error
-        } else if (e.status == 403) {
-            // Errores de permisos
-            $('#ModalCiudad').modal('toggle');
-            toastr.warning(arr.error);
-        }
-    });
-}
-
-// Actualizar usuario
-function upCiudad(btn) {
-    $('#ModalCiudad').modal('show');
-    $('#exampleModalLabel').html('Editar Vendedor');
-    // LIMPIAR CAMPOS
-    cleanInput();
-    showCustomCiudad(btn);
-    // FIN LIMPIAR CAMPOS
-    let u = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
-        '<button id="editar" class="btn btn-primary" onclick="updateCiudad(' + btn + ')">Guardar</button>';
-    $(".modal-footer").html(u);
-}
-
-function updateCiudad(btn) {
-    const route = `/admin/admin.ubicaciones.update/${btn}`;
-
-    // Crear un objeto FormData para enviar los datos
-    let ajax_data = new FormData();
-
-    // Recorrer los campos y agregarlos al FormData
-    // fields.forEach(field => {
-    //     if (field === 'active') {
-    //         // Manejar checkbox (true o false)
-    //         ajax_data.append(field, $('#' + field).is(':checked') ? 1 : 0);
-    //     } else {
-    //         ajax_data.append(field, $('#' + field).val());
-    //     }
-    // });
-    let activo=$('#active').is(':checked')?1:0;
-    $('#active').change(function(){
-        if($(this).is(':checked')){
-            activo=1;
-        }else{
-            activo=0;
-        }
-    })
-
-    ajax_data.append('pais_id', $('#pais_id').val());
-    ajax_data.append('departamento_id', $('#departamento_id').val());
-    ajax_data.append('nombre', $('#ciudad').val());
-    ajax_data.append('active', activo);
-
-    // Enviar la solicitud AJAX
-    $.ajax({
-        url: route,
-        headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-            'X-HTTP-Method-Override': 'POST'
-        },
-        type: 'POST',
-        dataType: 'json',
-        data: ajax_data,
+        data: datosFormularioCiudad(),
         contentType: false,
         processData: false,
-    })
-    .then(response => {
-        Cargar();
+    }).then(response => {
+        CargarCiudades();
         $('#ModalCiudad').modal('hide');
         toastr.success(response.message);
-    })
-    .catch(e => {
-        limpiarValidaciones();
-        const arr = e.responseJSON;
-        const toast = arr.errors;
-
-        if (e.status === 422) {
-            // Errores de validación
-            $('#modalCiudad').data('bs.modal')._config.backdrop = 'static';
-            $.each(toast, function(key, value) {
-                $('#error_' + key).text(value[0]);
-            });
-        toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.');
-        } else if (e.status === 403) {
-            myModal.modal('toggle');
-            toastr.warning(arr.message);
-        }
-    });
+    }).catch(e => manejarErrorAjax(e, ''));
 }
 
-function limpiarValidaciones() {
-    const fields = [
-        'pais_id',
-        'departamento_id',
-        'ciudad'
-    ];
-
-    fields.forEach(field => {
-        $('#error_' + field).text('');
-    });
-}
-
-function openModalPaisDpto(e){
-
-    $(document).on('click', '#btnCrearPais', function() {
-        $('#ModalPaisDpto').modal('show');
-      });
-
-
-    $('#modalLabelPaisDpto').html('Registrar País o Departamento');
-
-    let r = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
-    '<button type="button" class="btn btn-primary" onclick="registerPais()"><span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="spinnerRegister"></span>Agregar</button>';
-    $("#modal_footer").html(r);
-}
-
-function registerPais(){
-     const route = "/admin/admin.ubicaciones.storepais";
-
-
-    // Crear un objeto FormData directamente desde el formulario
-    let ajax_data = new FormData();
-
-    // Agregar los nuevos campos del formulario
-    ajax_data.append('pais_id', $('#input_pais_id').val());
-
-    // Realizar la solicitud AJAX
+function updateCiudad(id) {
     $.ajax({
-        url: route,
-        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        url: "/admin/admin.ubicaciones.update/" + id,
+        headers: csrfHeader(),
         type: 'POST',
         dataType: 'json',
-        data: ajax_data,
-        contentType: false, // IMPORTANTE PARA SUBIR IMÁGENES O ARCHIVOS POR AJAX
+        data: datosFormularioCiudad(),
+        contentType: false,
         processData: false,
     }).then(response => {
-        getPais();
-       $('#ModalCiudad').modal('hide');
-        toastr.success(response.message); // Muestra el mensaje de éxito
+        CargarCiudades();
+        $('#ModalCiudad').modal('hide');
+        toastr.success(response.message);
+    }).catch(e => manejarErrorAjax(e, ''));
+}
 
-    }).catch(e => {
-        const arr = e.responseJSON;
-        const toast = arr.errors;
+function deleteCiudad(id) {
+    confirmarEliminar('/admin/admin.ubicaciones.destroy/' + id, CargarCiudades);
+}
 
-        if (e.status == 422) {
-            // Errores de validación
-            $.each(toast, function (key, value) {
-                $('#error_' + key).text(value[0]);
-            });
-            toastr.warning('No fue posible guardar el registro, revisar los errores en los campos.'); // Muestra el mensaje de error
-        } else if (e.status == 403) {
-            // Errores de permisos
-            $('#ModalPaisDpto').modal('toggle');
-            toastr.warning(arr.error);
-        }
+/* =======================
+   Departamentos
+   ======================= */
+
+function CargarDepartamentos() {
+    if ($.fn.DataTable.isDataTable('#departamentos-table')) {
+        // Ver comentario en CargarCiudades(): reload en vez de destroy+reinit.
+        $('#departamentos-table').DataTable().ajax.reload(null, false);
+        return;
+    }
+
+    $('#departamentos-table').DataTable({
+        language: { "url": "/assets/js/spanish.json" },
+        responsive: true,
+        dom: "<'row'<'col-sm-6'B><'col-sm-6'f>>" +
+            "<'row'<'col-sm-12'ltr>>" +
+            "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+        buttons: [{
+            extend: 'excel',
+            className: 'btn btn-success',
+            exportOptions: { columns: ':not(.exclude)' },
+            text: '<i class="far fa-file-excel"></i>',
+            titleAttr: 'Exportar a Excel',
+            filename: 'reporte_departamentos'
+        }],
+        ajax: '/admin/admin.ubicaciones.departamentos.index',
+        columns: [
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', className: 'exclude', orderable: false, searchable: false },
+            { data: 'id', name: 'id' },
+            { data: 'pais', name: 'pais' },
+            { data: 'nombre', name: 'nombre' },
+            { data: 'ciudades_count', name: 'ciudades_count', className: 'text-center' },
+            { data: 'active', name: 'active', className: 'text-center' },
+            { data: 'acciones', name: 'acciones', className: 'exclude' },
+        ],
+        order: [[1, "asc"]],
+        pageLength: 10,
+        lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "Todo(s)"]],
     });
 }
 
-function getPais(){
-    $.get("/admin/admin.ubicaciones.paises", (response) => {
-        const pais = response.data;
+function cleanInputDepartamento() {
+    $('#departamento_form_id').val('');
+    $('#departamento_pais_id').val('');
+    $('#departamento_nombre').val('');
+    $('#departamento_active').prop('checked', true);
+    ['error_departamento_pais_id', 'error_departamento_nombre'].forEach(field => $('#' + field).text(''));
+}
 
-        $('#input_pais_id').empty();
-        $('#input_pais_id').append('<option value="">Seleccione un país</option>');
-        $.each(pais, function (value) {
-            $('#input_pais_id').append('<option value="'+ value.id +'">'+ value.nombre +'</option>');
-        });
+function regDepartamento() {
+    $('#ModalDepartamento').modal('show');
+    $('#departamentoModalLabel').html('Registrar Departamento');
+    cleanInputDepartamento();
 
+    const footer = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
+        '<button type="button" class="btn btn-primary" onclick="registerDepartamento()">Agregar</button>';
+    $('#modal_footer_departamento').html(footer);
+}
+
+function upDepartamento(id) {
+    $('#ModalDepartamento').modal('show');
+    $('#departamentoModalLabel').html('Editar Departamento');
+    cleanInputDepartamento();
+
+    $.get("/admin/admin.ubicaciones.departamentos.edit/" + id, (response) => {
+        const d = response.data;
+        $('#departamento_form_id').val(d.id);
+        $('#departamento_pais_id').val(d.pais_id);
+        $('#departamento_nombre').val(d.nombre);
+        $('#departamento_active').prop('checked', d.active == 1);
+    });
+
+    const footer = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
+        '<button class="btn btn-primary" onclick="updateDepartamento(' + id + ')">Guardar</button>';
+    $('#modal_footer_departamento').html(footer);
+}
+
+function datosFormularioDepartamento() {
+    const data = new FormData();
+    data.append('pais_id', $('#departamento_pais_id').val());
+    data.append('nombre', $('#departamento_nombre').val());
+    data.append('active', $('#departamento_active').is(':checked') ? 1 : 0);
+    return data;
+}
+
+function registerDepartamento() {
+    $.ajax({
+        url: "/admin/admin.ubicaciones.departamentos.store",
+        headers: csrfHeader(),
+        type: 'POST',
+        dataType: 'json',
+        data: datosFormularioDepartamento(),
+        contentType: false,
+        processData: false,
+    }).then(response => {
+        CargarDepartamentos();
+        refrescarSelectsPaises();
+        $('#ModalDepartamento').modal('hide');
+        toastr.success(response.message);
+    }).catch(e => manejarErrorAjax(e, 'departamento_'));
+}
+
+function updateDepartamento(id) {
+    $.ajax({
+        url: "/admin/admin.ubicaciones.departamentos.update/" + id,
+        headers: csrfHeader(),
+        type: 'POST',
+        dataType: 'json',
+        data: datosFormularioDepartamento(),
+        contentType: false,
+        processData: false,
+    }).then(response => {
+        CargarDepartamentos();
+        refrescarSelectsPaises();
+        $('#ModalDepartamento').modal('hide');
+        toastr.success(response.message);
+    }).catch(e => manejarErrorAjax(e, 'departamento_'));
+}
+
+function deleteDepartamento(id) {
+    confirmarEliminar('/admin/admin.ubicaciones.departamentos.destroy/' + id, () => {
+        CargarDepartamentos();
+        refrescarSelectsPaises();
+    });
+}
+
+/* =======================
+   Países
+   ======================= */
+
+function CargarPaises() {
+    if ($.fn.DataTable.isDataTable('#paises-table')) {
+        // Ver comentario en CargarCiudades(): reload en vez de destroy+reinit.
+        $('#paises-table').DataTable().ajax.reload(null, false);
+        return;
+    }
+
+    $('#paises-table').DataTable({
+        language: { "url": "/assets/js/spanish.json" },
+        responsive: true,
+        dom: "<'row'<'col-sm-6'B><'col-sm-6'f>>" +
+            "<'row'<'col-sm-12'ltr>>" +
+            "<'row'<'col-sm-5'i><'col-sm-7'p>>",
+        buttons: [{
+            extend: 'excel',
+            className: 'btn btn-success',
+            exportOptions: { columns: ':not(.exclude)' },
+            text: '<i class="far fa-file-excel"></i>',
+            titleAttr: 'Exportar a Excel',
+            filename: 'reporte_paises'
+        }],
+        ajax: '/admin/admin.ubicaciones.paises.index',
+        columns: [
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', className: 'exclude', orderable: false, searchable: false },
+            { data: 'id', name: 'id' },
+            { data: 'nombre', name: 'nombre' },
+            { data: 'departamentos_count', name: 'departamentos_count', className: 'text-center' },
+            { data: 'active', name: 'active', className: 'text-center' },
+            { data: 'acciones', name: 'acciones', className: 'exclude' },
+        ],
+        order: [[1, "asc"]],
+        pageLength: 10,
+        lengthMenu: [[5, 10, 25, 50, 100, -1], [5, 10, 25, 50, 100, "Todo(s)"]],
+    });
+}
+
+function cleanInputPais() {
+    $('#pais_form_id').val('');
+    $('#pais_nombre').val('');
+    $('#pais_active').prop('checked', true);
+    $('#error_pais_nombre').text('');
+}
+
+function regPais() {
+    $('#ModalPais').modal('show');
+    $('#paisModalLabel').html('Registrar País');
+    cleanInputPais();
+
+    const footer = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
+        '<button type="button" class="btn btn-primary" onclick="registerPais()">Agregar</button>';
+    $('#modal_footer_pais').html(footer);
+}
+
+function upPais(id) {
+    $('#ModalPais').modal('show');
+    $('#paisModalLabel').html('Editar País');
+    cleanInputPais();
+
+    $.get("/admin/admin.ubicaciones.paises.edit/" + id, (response) => {
+        const p = response.data;
+        $('#pais_form_id').val(p.id);
+        $('#pais_nombre').val(p.nombre);
+        $('#pais_active').prop('checked', p.active == 1);
+    });
+
+    const footer = '<button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>' +
+        '<button class="btn btn-primary" onclick="updatePais(' + id + ')">Guardar</button>';
+    $('#modal_footer_pais').html(footer);
+}
+
+function datosFormularioPais() {
+    const data = new FormData();
+    data.append('nombre', $('#pais_nombre').val());
+    data.append('active', $('#pais_active').is(':checked') ? 1 : 0);
+    return data;
+}
+
+function registerPais() {
+    $.ajax({
+        url: "/admin/admin.ubicaciones.paises.store",
+        headers: csrfHeader(),
+        type: 'POST',
+        dataType: 'json',
+        data: datosFormularioPais(),
+        contentType: false,
+        processData: false,
+    }).then(response => {
+        CargarPaises();
+        refrescarSelectsPaises();
+        $('#ModalPais').modal('hide');
+        toastr.success(response.message);
+    }).catch(e => manejarErrorAjax(e, 'pais_'));
+}
+
+function updatePais(id) {
+    $.ajax({
+        url: "/admin/admin.ubicaciones.paises.update/" + id,
+        headers: csrfHeader(),
+        type: 'POST',
+        dataType: 'json',
+        data: datosFormularioPais(),
+        contentType: false,
+        processData: false,
+    }).then(response => {
+        CargarPaises();
+        refrescarSelectsPaises();
+        $('#ModalPais').modal('hide');
+        toastr.success(response.message);
+    }).catch(e => manejarErrorAjax(e, 'pais_'));
+}
+
+function deletePais(id) {
+    confirmarEliminar('/admin/admin.ubicaciones.paises.destroy/' + id, () => {
+        CargarPaises();
+        refrescarSelectsPaises();
     });
 }

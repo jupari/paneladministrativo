@@ -6,12 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * @property integer $id
- * @property integer $tercerotipo_id
- * @property integer $tipoidentificacion_id
+ * @property int $id
+ * @property int $tercerotipo_id
+ * @property int $tipoidentificacion_id
  * @property string $identificacion
  * @property string $dv
- * @property integer $tipopersona_id
+ * @property int $tipopersona_id
  * @property string $nombres
  * @property string $apellidos
  * @property string $nombre_estableciemiento
@@ -19,45 +19,26 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $celular
  * @property string $correo
  * @property string $correo_fe
- * @property integer $ciudad_id
+ * @property int $ciudad_id
  * @property string $direccion
  * @property string $vendedor
  * @property string $created_at
  * @property string $updated_at
- * @property integer $user_id
+ * @property int $user_id
  */
 class Tercero extends Model
 {
     /**
      * @var array
      */
+    use HasFactory;
 
-     use HasFactory;
+    protected $table = 'terceros';
 
-    protected $table='terceros';
-    public $timestamps=false;
+    public $timestamps = false;
 
     protected $fillable = [
-          'company_id'
-        , 'tercerotipo_id'
-        , 'tipoidentificacion_id'
-        , 'identificacion'
-        , 'dv'
-        , 'tipopersona_id'
-        , 'nombres'
-        , 'apellidos'
-        , 'nombre_establecimiento'
-        , 'telefono'
-        , 'celular'
-        , 'correo'
-        , 'correo_fe'
-        , 'ciudad_id'
-        , 'direccion'
-        , 'vendedor_id'
-        , 'created_at'
-        , 'updated_at'
-        , 'user_id'
-        , 'active'
+        'company_id', 'tercerotipo_id', 'tipoidentificacion_id', 'identificacion', 'dv', 'tipopersona_id', 'nombres', 'apellidos', 'nombre_establecimiento', 'telefono', 'telefono_indicativo', 'celular', 'celular_indicativo', 'correo', 'correo_fe', 'ciudad_id', 'direccion', 'vendedor_id', 'created_at', 'updated_at', 'user_id', 'active',
     ];
 
     public function company()
@@ -70,27 +51,33 @@ class Tercero extends Model
         return $this->belongsTo(TerceroTipo::class, 'tercerotipo_id');
     }
 
-    public function tipoIdentificacion(){
+    public function tipoIdentificacion()
+    {
         return $this->belongsTo(TipoIdentificacion::class, 'tipoidentificacion_id');
     }
 
-    public function tipoPersona(){
+    public function tipoPersona()
+    {
         return $this->belongsTo(TipoPersona::class, 'tipopersona_id');
     }
 
-    public function ciudad(){
+    public function ciudad()
+    {
         return $this->belongsTo(Ciudad::class, 'ciudad_id');
     }
 
-    public function vendedores(){
+    public function vendedores()
+    {
         return $this->belongsTo(Vendedor::class, 'vendedor_id');
     }
 
-    public function contactos(){
+    public function contactos()
+    {
         return $this->hasMany(TerceroContacto::class, 'tercero_id');
     }
 
-    public function sucursales(){
+    public function sucursales()
+    {
         return $this->hasMany(TerceroSucursal::class, 'tercero_id');
     }
 
@@ -120,5 +107,4 @@ class Tercero extends Model
     {
         return $this->morphMany(\App\Models\Nomina\NominaPayRunParticipant::class, 'participant', 'participant_type', 'participant_id');
     }
-
 }

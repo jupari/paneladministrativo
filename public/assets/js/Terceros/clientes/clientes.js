@@ -188,6 +188,7 @@ $(function () {
 
     $('#sucursal_pais_id').change(function(){
         let pais_id = $(this).val();
+        dptos = undefined;
         dataPaises.forEach((p)=>{
             if(p.id==pais_id){
                 dptos = p;
@@ -196,27 +197,35 @@ $(function () {
         });
         $('#sucursal_departamento_id').empty();
         $('#sucursal_departamento_id').append('<option value="">Seleccione un departamento</option>');
-        $.each(dptos.departamentos, function (index, value) {
-            $('#sucursal_departamento_id').append('<option value="'+ value.id +'">'+ value.nombre +'</option>');
-        });
+        $('#sucursal_ciudad_id').empty();
+        $('#sucursal_ciudad_id').append('<option value="">Seleccione una ciudad</option>');
+
+        if(dptos && dptos.departamentos) {
+            $.each(dptos.departamentos, function (index, value) {
+                $('#sucursal_departamento_id').append('<option value="'+ value.id +'">'+ value.nombre +'</option>');
+            });
+        }
     });
 
     $('#sucursal_departamento_id').change(function(){
         let departamento_id = $(this).val();
         let dpto;
 
-        if(dptos.departamentos){
+        $('#sucursal_ciudad_id').empty();
+        $('#sucursal_ciudad_id').append('<option value="">Seleccione una ciudad</option>');
+
+        if(dptos && dptos.departamentos){
             dptos.departamentos.forEach((p)=>{
                 if(p.id==departamento_id){
                     dpto = p;
                 }
+            });
 
-            });
-            $('#sucursal_ciudad_id').empty();
-            $('#sucursal_ciudad_id').append('<option value="">Seleccione una ciudad</option>');
-            $.each(dpto.ciudades, function (index, value) {
-                $('#sucursal_ciudad_id').append('<option value="'+ value.id +'">'+ value.nombre +'</option>');
-            });
+            if(dpto && dpto.ciudades) {
+                $.each(dpto.ciudades, function (index, value) {
+                    $('#sucursal_ciudad_id').append('<option value="'+ value.id +'">'+ value.nombre +'</option>');
+                });
+            }
         }
     });
 
@@ -227,7 +236,13 @@ var myModal = $('#ModalCliente');
 
 function Cargar() {
     if ($.fn.DataTable.isDataTable('#clientes-table')) {
-        $('#clientes-table').DataTable().destroy();
+        // Solo refrescar los datos de la tabla ya inicializada. Destruir y
+        // volver a crear el DataTable sobre el mismo <table> (como se hacía
+        // antes) deja el <thead> en blanco: DataTables 2.x + Buttons/Responsive
+        // no limpian del todo las cabeceras al reinicializar sin recargar la
+        // página. ajax.reload() refresca las filas sin tocar cabecera/botones.
+        $('#clientes-table').DataTable().ajax.reload(null, false);
+        return;
     }
     let table = $('#clientes-table').DataTable(
         {
@@ -293,8 +308,13 @@ function renderTipoPersona(data, type) {
 }
 
 function CargarSucursales(id) {
+    const urlSucursales = '/admin/admin.sucursales.index/' + id;
+
     if ($.fn.DataTable.isDataTable('#sucursales-table')) {
-        $('#sucursales-table').DataTable().destroy();
+        // Igual que en Cargar(): reapuntar el ajax al cliente actual y
+        // recargar, sin destruir/reinicializar (rompe el <thead>).
+        $('#sucursales-table').DataTable().ajax.url(urlSucursales).load();
+        return;
     }
     let table = $('#sucursales-table').DataTable(
         {
@@ -316,7 +336,7 @@ function CargarSucursales(id) {
                     titleAttr: 'Exportar a Excel',
                     filename: 'reporte_excel'
                 }],
-            ajax: '/admin/admin.sucursales.index/'+id,
+            ajax: urlSucursales,
                 columns: [
                 { data: 'DT_RowIndex', name: 'DT_RowIndex', className: 'exclude', orderable: false,searchable: false},
                 { data: 'nombre_sucursal', name: 'Nombre Sucursal'},
@@ -338,8 +358,13 @@ function CargarSucursales(id) {
 }
 
 function CargarContactos(id) {
+    const urlContactos = '/admin/admin.contactos.index/' + id;
+
     if ($.fn.DataTable.isDataTable('#contactos-table')) {
-        $('#contactos-table').DataTable().destroy();
+        // Igual que en Cargar(): reapuntar el ajax al cliente actual y
+        // recargar, sin destruir/reinicializar (rompe el <thead>).
+        $('#contactos-table').DataTable().ajax.url(urlContactos).load();
+        return;
     }
     let table = $('#contactos-table').DataTable(
         {
@@ -361,7 +386,7 @@ function CargarContactos(id) {
                     titleAttr: 'Exportar a Excel',
                     filename: 'reporte_excel'
                 }],
-            ajax: '/admin/admin.contactos.index/'+id,
+            ajax: urlContactos,
                 columns: [
                 { data: 'DT_RowIndex', name: 'DT_RowIndex', className: 'exclude', orderable: false,searchable: false},
                 { data: 'nombres', name: 'nombres'},
@@ -412,6 +437,11 @@ function cleanInput(btn) {
     fields.forEach(field => {
         $('#' + field).val(''); // Limpiar el valor
     });
+
+    // Los selects de indicativo no tienen opción en blanco, así que .val('')
+    // no los limpia: se dejan explícitamente en el valor por defecto.
+    $('#telefono_indicativo').val('+57');
+    $('#celular_indicativo').val('+57');
 
     // RESTAURAR valores críticos
     $('#tercerotipo_id').val(tercerotipo_preserved);
@@ -468,6 +498,11 @@ function cleanInputSucursal(btn) {
     $('#sucursal_departamento_id').empty().append('<option value="">Seleccione un departamento</option>');
     $('#sucursal_ciudad_id').empty().append('<option value="">Seleccione una ciudad</option>');
 
+    // Los selects de indicativo no tienen opción en blanco, así que .val('')
+    // no los limpia: se dejan explícitamente en el valor por defecto.
+    $('#sucursal_telefono_indicativo').val('+57');
+    $('#sucursal_celular_indicativo').val('+57');
+
     // Opcional: desmarcar todos los checkboxes si es necesario
     $('input[type="checkbox"]').prop('checked', false);
 }
@@ -492,6 +527,11 @@ function cleanInputContacto(btn) {
         $('#contacto_' + field).val(''); // Limpiar el valor
     });
 
+    // Los selects de indicativo no tienen opción en blanco, así que .val('')
+    // no los limpia: se dejan explícitamente en el valor por defecto.
+    $('#contacto_telefono_indicativo').val('+57');
+    $('#contacto_celular_indicativo').val('+57');
+
     // Opcional: desmarcar todos los checkboxes si es necesario
     $('input[type="checkbox"]').prop('checked', false);
 }
@@ -511,7 +551,9 @@ function showCustomUser(btn) {
             'apellidos',
             'nombre_establecimiento',
             'telefono',
+            'telefono_indicativo',
             'celular',
+            'celular_indicativo',
             'correo',
             'correo_fe',
             'ciudad_id',
@@ -528,6 +570,9 @@ function showCustomUser(btn) {
             } else if (field.endsWith('_id')) {
                 // Configurar el valor de los selects
                 $('#' + field).val(usr[field]).change();
+            } else if (field === 'telefono_indicativo' || field === 'celular_indicativo') {
+                // Registros creados antes de este campo no tienen indicativo guardado
+                $('#' + field).val(usr[field] || '+57');
             } else {
                 // Configurar el valor de los campos de texto
                 $('#' + field).val(usr[field]);
@@ -652,9 +697,14 @@ function registerCli() {
     // Crear un objeto FormData directamente desde el formulario
     let ajax_data = new FormData();
 
-    // Limpiar números de teléfono (solo dígitos)
-    const telefonoLimpio = $('#telefono').val().replace(/[^\d]/g, '');
-    const celularLimpio = $('#celular').val().replace(/[^\d]/g, '');
+    // El backend valida telefono/celular como 10 dígitos exactos (sin
+    // indicativo de país); el indicativo elegido se manda aparte en
+    // telefono_indicativo/celular_indicativo. registerCli() maneja tanto
+    // creación como edición (detecta el modo por $('#id').val()).
+    const soloDigitos = (phoneInput) => $(phoneInput).val().replace(/[^\d]/g, '');
+
+    const telefonoFormateado = soloDigitos('#telefono');
+    const celularFormateado = soloDigitos('#celular');
 
     let terceroTipo='2';
     // Agregar los nuevos campos del formulario
@@ -666,8 +716,10 @@ function registerCli() {
     ajax_data.append('nombres', $('#nombres').val());
     ajax_data.append('apellidos', $('#apellidos').val());
     ajax_data.append('nombre_establecimiento', $('#nombre_establecimiento').val());
-    ajax_data.append('telefono', telefonoLimpio);
-    ajax_data.append('celular', celularLimpio);
+    ajax_data.append('telefono', telefonoFormateado);
+    ajax_data.append('telefono_indicativo', $('#telefono_indicativo').val() || '+57');
+    ajax_data.append('celular', celularFormateado);
+    ajax_data.append('celular_indicativo', $('#celular_indicativo').val() || '+57');
     ajax_data.append('correo', $('#correo').val());
     ajax_data.append('correo_fe', $('#correo_fe').val());
     ajax_data.append('ciudad_id', $('#ciudad_id').val());
@@ -800,7 +852,9 @@ function updateCli(btn) {
         'apellidos',
         'nombre_establecimiento',
         'telefono',
+        'telefono_indicativo',
         'celular',
+        'celular_indicativo',
         'correo',
         'correo_fe',
         'ciudad_id',
@@ -976,7 +1030,9 @@ function crearClienteYLuego(callbackExito, spinnerId) {
     ajax_data.append('apellidos', $('#apellidos').val());
     ajax_data.append('nombre_establecimiento', $('#nombre_establecimiento').val());
     ajax_data.append('telefono', telefonoLimpio);
+    ajax_data.append('telefono_indicativo', $('#telefono_indicativo').val() || '+57');
     ajax_data.append('celular', celularLimpio);
+    ajax_data.append('celular_indicativo', $('#celular_indicativo').val() || '+57');
     ajax_data.append('correo', $('#correo').val());
     ajax_data.append('correo_fe', $('#correo_fe').val());
     ajax_data.append('ciudad_id', $('#ciudad_id').val());
@@ -1062,13 +1118,19 @@ function saveSucursal(){
     // Crear un objeto FormData directamente desde el formulario
     let ajax_data = new FormData();
     setTimeout(() => {
+        // El backend valida telefono/celular como 10 dígitos exactos (sin
+        // indicativo de país); el indicativo elegido se manda aparte.
+        const soloDigitos = (phoneInput) => $(phoneInput).val().replace(/[^\d]/g, '');
+
         // Agregar los nuevos campos del formulario
         ajax_data.append('tercero_id', $('#id').val());
         ajax_data.append('ciudad_id', $('#sucursal_ciudad_id').val());
         ajax_data.append('vendedor_id', obtenerVendedor());
         ajax_data.append('nombre_sucursal', $('#sucursal_nombre_sucursal').val());
-        ajax_data.append('celular', $('#sucursal_celular').val());
-        ajax_data.append('telefono', $('#sucursal_telefono').val());
+        ajax_data.append('celular', soloDigitos('#sucursal_celular'));
+        ajax_data.append('celular_indicativo', $('#sucursal_celular_indicativo').val() || '+57');
+        ajax_data.append('telefono', soloDigitos('#sucursal_telefono'));
+        ajax_data.append('telefono_indicativo', $('#sucursal_telefono_indicativo').val() || '+57');
         ajax_data.append('correo', $('#sucursal_correo').val());
         ajax_data.append('direccion', $('#sucursal_direccion').val());
         ajax_data.append('persona_contacto', $('#sucursal_persona_contacto').val());
@@ -1124,12 +1186,18 @@ function saveContacto(){
     // Crear un objeto FormData directamente desde el formulario
     let ajax_data = new FormData();
 
+    // El backend valida telefono/celular como 10 dígitos exactos (sin
+    // indicativo de país); el indicativo elegido se manda aparte.
+    const soloDigitos = (phoneInput) => $(phoneInput).val().replace(/[^\d]/g, '');
+
     // Agregar los nuevos campos del formulario
     ajax_data.append('tercero_id', $('#id').val());
     ajax_data.append('nombres', $('#contacto_nombres').val());
     ajax_data.append('apellidos', $('#contacto_apellidos').val());
-    ajax_data.append('telefono', $('#contacto_telefono').val());
-    ajax_data.append('celular', $('#contacto_celular').val());
+    ajax_data.append('telefono', soloDigitos('#contacto_telefono'));
+    ajax_data.append('telefono_indicativo', $('#contacto_telefono_indicativo').val() || '+57');
+    ajax_data.append('celular', soloDigitos('#contacto_celular'));
+    ajax_data.append('celular_indicativo', $('#contacto_celular_indicativo').val() || '+57');
     ajax_data.append('ext', $('#contacto_ext').val());
     ajax_data.append('correo', $('#contacto_correo').val());
     ajax_data.append('cargo', $('#contacto_cargo').val());
@@ -1197,8 +1265,12 @@ function showSucursal(btn){
             'nombre_sucursal',
             'vendedor_id',
             'telefono',
+            'telefono_indicativo',
             'celular',
+            'celular_indicativo',
             'correo',
+            'pais_id',
+            'departamento_id',
             'ciudad_id',
             'direccion',
             'persona_contacto',
@@ -1212,6 +1284,9 @@ function showSucursal(btn){
             } else if (field.endsWith('_id')) {
                 // Configurar el valor de los selects
                 $('#sucursal_' + field).val(usr[field]).change();
+            } else if (field === 'telefono_indicativo' || field === 'celular_indicativo') {
+                // Registros creados antes de este campo no tienen indicativo guardado
+                $('#sucursal_' + field).val(usr[field] || '+57');
             } else {
                 // Configurar el valor de los campos de texto
                 $('#sucursal_' + field).val(usr[field]);
@@ -1230,7 +1305,9 @@ function showContacto(btn){
             'nombres',
             'apellidos',
             'telefono',
+            'telefono_indicativo',
             'celular',
+            'celular_indicativo',
             'correo',
             'cargo',
             'ext',
@@ -1244,6 +1321,9 @@ function showContacto(btn){
             } else if (field.endsWith('_id')) {
                 // Configurar el valor de los selects
                 $('#contacto_' + field).val(usr[field]).change();
+            } else if (field === 'telefono_indicativo' || field === 'celular_indicativo') {
+                // Registros creados antes de este campo no tienen indicativo guardado
+                $('#contacto_' + field).val(usr[field] || '+57');
             } else {
                 // Configurar el valor de los campos de texto
                 $('#contacto_' + field).val(usr[field]);
@@ -1275,7 +1355,9 @@ function updateSucursal(btn){
     ajax_data.append('vendedor_id', obtenerVendedor());
     ajax_data.append('nombre_sucursal', $('#sucursal_nombre_sucursal').val());
     ajax_data.append('celular', $('#sucursal_celular').val());
+    ajax_data.append('celular_indicativo', $('#sucursal_celular_indicativo').val() || '+57');
     ajax_data.append('telefono', $('#sucursal_telefono').val());
+    ajax_data.append('telefono_indicativo', $('#sucursal_telefono_indicativo').val() || '+57');
     ajax_data.append('correo', $('#sucursal_correo').val());
     ajax_data.append('direccion', $('#sucursal_direccion').val());
     ajax_data.append('persona_contacto', $('#sucursal_persona_contacto').val());
@@ -1337,7 +1419,9 @@ function updateContacto(btn){
      ajax_data.append('nombres', $('#contacto_nombres').val());
      ajax_data.append('apellidos', $('#contacto_apellidos').val());
      ajax_data.append('telefono', $('#contacto_telefono').val());
+     ajax_data.append('telefono_indicativo', $('#contacto_telefono_indicativo').val() || '+57');
      ajax_data.append('celular', $('#contacto_celular').val());
+     ajax_data.append('celular_indicativo', $('#contacto_celular_indicativo').val() || '+57');
      ajax_data.append('ext', $('#contacto_ext').val());
      ajax_data.append('correo', $('#contacto_correo').val());
      ajax_data.append('cargo', $('#contacto_cargo').val());

@@ -197,10 +197,15 @@
                                         <div class="form-group">
                                             <label for="telefono">Teléfono</label>
                                             <div class="input-group">
-                                                <div class="input-group-prepend">
-                                                    <span class="input-group-text"><i class="fas fa-phone"></i></span>
-                                                </div>
-                                                <input type="text" id="telefono" class="form-control" placeholder="Teléfono fijo">
+                                                <select id="telefono_indicativo" class="form-control" style="flex: 0 0 120px;">
+                                                    <option value="+57">+57 🇨🇴</option>
+                                                    <option value="+1">+1 🇺🇸</option>
+                                                    <option value="+52">+52 🇲🇽</option>
+                                                    <option value="+54">+54 🇦🇷</option>
+                                                    <option value="+55">+55 🇧🇷</option>
+                                                    <option value="+34">+34 🇪🇸</option>
+                                                </select>
+                                                <input type="text" id="telefono" class="form-control" placeholder="Número" inputmode="numeric">
                                             </div>
                                             <span class="text-danger" id="error_telefono"></span>
                                         </div>
@@ -209,10 +214,15 @@
                                         <div class="form-group">
                                             <label for="celular">Celular</label>
                                             <div class="input-group">
-                                                <div class="input-group-prepend">
-                                                    <span class="input-group-text"><i class="fas fa-mobile-alt"></i></span>
-                                                </div>
-                                                <input type="text" id="celular" class="form-control" placeholder="Número de celular">
+                                                <select id="celular_indicativo" class="form-control" style="flex: 0 0 120px;">
+                                                    <option value="+57">+57 🇨🇴</option>
+                                                    <option value="+1">+1 🇺🇸</option>
+                                                    <option value="+52">+52 🇲🇽</option>
+                                                    <option value="+54">+54 🇦🇷</option>
+                                                    <option value="+55">+55 🇧🇷</option>
+                                                    <option value="+34">+34 🇪🇸</option>
+                                                </select>
+                                                <input type="text" id="celular" class="form-control" placeholder="Número" inputmode="numeric">
                                             </div>
                                             <span class="text-danger" id="error_celular"></span>
                                         </div>
@@ -391,14 +401,34 @@
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label for="contacto_celular">Celular</label>
-                                                <input type="text" id="contacto_celular" class="form-control" placeholder="Celular">
+                                                <div class="input-group">
+                                                    <select id="contacto_celular_indicativo" class="form-control" style="flex: 0 0 110px;">
+                                                        <option value="+57">+57 🇨🇴</option>
+                                                        <option value="+1">+1 🇺🇸</option>
+                                                        <option value="+52">+52 🇲🇽</option>
+                                                        <option value="+54">+54 🇦🇷</option>
+                                                        <option value="+55">+55 🇧🇷</option>
+                                                        <option value="+34">+34 🇪🇸</option>
+                                                    </select>
+                                                    <input type="text" id="contacto_celular" class="form-control" placeholder="Número" inputmode="numeric">
+                                                </div>
                                                 <span class="text-danger" id="error_contacto_celular"></span>
                                             </div>
                                         </div>
                                         <div class="col-md-4">
                                             <div class="form-group">
                                                 <label for="contacto_telefono">Teléfono</label>
-                                                <input type="text" id="contacto_telefono" class="form-control" placeholder="Teléfono">
+                                                <div class="input-group">
+                                                    <select id="contacto_telefono_indicativo" class="form-control" style="flex: 0 0 110px;">
+                                                        <option value="+57">+57 🇨🇴</option>
+                                                        <option value="+1">+1 🇺🇸</option>
+                                                        <option value="+52">+52 🇲🇽</option>
+                                                        <option value="+54">+54 🇦🇷</option>
+                                                        <option value="+55">+55 🇧🇷</option>
+                                                        <option value="+34">+34 🇪🇸</option>
+                                                    </select>
+                                                    <input type="text" id="contacto_telefono" class="form-control" placeholder="Número" inputmode="numeric">
+                                                </div>
                                                 <span class="text-danger" id="error_contacto_telefono"></span>
                                             </div>
                                         </div>
@@ -489,14 +519,34 @@
                                         <div class="col-md-3">
                                             <div class="form-group">
                                                 <label for="sucursal_telefono">Teléfono</label>
-                                                <input type="text" id="sucursal_telefono" class="form-control" placeholder="Teléfono">
+                                                <div class="input-group">
+                                                    <select id="sucursal_telefono_indicativo" class="form-control" style="flex: 0 0 110px;">
+                                                        <option value="+57">+57 🇨🇴</option>
+                                                        <option value="+1">+1 🇺🇸</option>
+                                                        <option value="+52">+52 🇲🇽</option>
+                                                        <option value="+54">+54 🇦🇷</option>
+                                                        <option value="+55">+55 🇧🇷</option>
+                                                        <option value="+34">+34 🇪🇸</option>
+                                                    </select>
+                                                    <input type="text" id="sucursal_telefono" class="form-control" placeholder="Número" inputmode="numeric">
+                                                </div>
                                                 <span class="text-danger" id="error_sucursal_telefono"></span>
                                             </div>
                                         </div>
                                         <div class="col-md-3">
                                             <div class="form-group">
                                                 <label for="sucursal_celular">Celular</label>
-                                                <input type="text" id="sucursal_celular" class="form-control" placeholder="Celular">
+                                                <div class="input-group">
+                                                    <select id="sucursal_celular_indicativo" class="form-control" style="flex: 0 0 110px;">
+                                                        <option value="+57">+57 🇨🇴</option>
+                                                        <option value="+1">+1 🇺🇸</option>
+                                                        <option value="+52">+52 🇲🇽</option>
+                                                        <option value="+54">+54 🇦🇷</option>
+                                                        <option value="+55">+55 🇧🇷</option>
+                                                        <option value="+34">+34 🇪🇸</option>
+                                                    </select>
+                                                    <input type="text" id="sucursal_celular" class="form-control" placeholder="Número" inputmode="numeric">
+                                                </div>
                                                 <span class="text-danger" id="error_sucursal_celular"></span>
                                             </div>
                                         </div>
@@ -615,6 +665,60 @@
     </div>
 </div>
 
+<!-- Indicativos telefónicos -->
+<script>
+window.phoneIndicatives = {
+    'CO': { code: '+57', name: 'Colombia' },
+    'US': { code: '+1', name: 'Estados Unidos' },
+    'MX': { code: '+52', name: 'México' },
+    'AR': { code: '+54', name: 'Argentina' },
+    'BR': { code: '+55', name: 'Brasil' },
+    'CL': { code: '+56', name: 'Chile' },
+    'PE': { code: '+51', name: 'Perú' },
+    'VE': { code: '+58', name: 'Venezuela' },
+    'EC': { code: '+593', name: 'Ecuador' },
+    'BO': { code: '+591', name: 'Bolivia' },
+    'PY': { code: '+595', name: 'Paraguay' },
+    'UY': { code: '+598', name: 'Uruguay' },
+    'CR': { code: '+506', name: 'Costa Rica' },
+    'PA': { code: '+507', name: 'Panamá' },
+    'DO': { code: '+1', name: 'República Dominicana' },
+    'CU': { code: '+53', name: 'Cuba' },
+    'ES': { code: '+34', name: 'España' },
+    'IT': { code: '+39', name: 'Italia' },
+    'DE': { code: '+49', name: 'Alemania' },
+    'FR': { code: '+33', name: 'Francia' },
+    'GB': { code: '+44', name: 'Reino Unido' }
+};
+
+// Función para concatenar indicativo con número de teléfono
+window.formatPhoneNumber = function(indicativo, numero) {
+    if (!numero || numero.trim() === '') return '';
+    const cleanNum = numero.replace(/\D/g, '');
+    return indicativo + cleanNum;
+};
+
+// Función para obtener todos los números de teléfono formateados
+window.getFormattedPhones = function() {
+    return {
+        telefono: formatPhoneNumber($('#telefono_indicativo').val(), $('#telefono').val()),
+        celular: formatPhoneNumber($('#celular_indicativo').val(), $('#celular').val()),
+        contacto_telefono: formatPhoneNumber($('#contacto_telefono_indicativo').val(), $('#contacto_telefono').val()),
+        contacto_celular: formatPhoneNumber($('#contacto_celular_indicativo').val(), $('#contacto_celular').val()),
+        sucursal_telefono: formatPhoneNumber($('#sucursal_telefono_indicativo').val(), $('#sucursal_telefono').val()),
+        sucursal_celular: formatPhoneNumber($('#sucursal_celular_indicativo').val(), $('#sucursal_celular').val())
+    };
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Event listeners para cuando se llenen los inputs de teléfono
+    $('#telefono, #celular, #contacto_telefono, #contacto_celular, #sucursal_telefono, #sucursal_celular').on('blur', function() {
+        // Solo números
+        this.value = this.value.replace(/\D/g, '');
+    });
+});
+</script>
+
 <!-- Toast Container -->
 <div class="position-fixed" style="top: 20px; right: 20px; z-index: 9999;">
     <div id="toast-container"></div>
@@ -720,4 +824,6 @@
 .bg-gradient-primary {
     background: linear-gradient(45deg, #007bff, #0056b3);
 }
+
+
 </style>
