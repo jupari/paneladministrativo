@@ -6,6 +6,8 @@
 
 @section('plugin.Sweetalert2')
 
+@section('plugin.Select2')
+
 @section('content')
     {{-- Breadcrumbs mejorados usando componente --}}
     @php

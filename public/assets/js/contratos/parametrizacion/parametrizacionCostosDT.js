@@ -49,6 +49,23 @@ let itemsByCatDT = (itemsPropios || []).reduce((acc, i) => {
     return acc;
 }, {});
 
+// Además del catálogo items_propios, se agregan los ítems que ya existen en la
+// tabla de costos (muchos códigos históricos nunca se registraron en items_propios),
+// así el modal "Nuevo Registro" y los selects inline los pueden reutilizar por categoría.
+(Array.isArray(initialData) ? initialData : []).forEach(row => {
+    if (!row.item) return;
+    if (!itemOptionsDT[row.item]) {
+        itemOptionsDT[row.item] = {
+            nombre: row.item_nombre || '',
+            codigo: row.item,
+            unidad_medida: row.unidad_medida,
+            categoria_id: row.categoria_id
+        };
+    }
+    const lista = (itemsByCatDT[row.categoria_id] ??= []);
+    if (!lista.includes(row.item)) lista.push(row.item);
+});
+
 let valorXCostosDT = cantHorasDiarias;
 
 // ============================ Render de celdas ================================
@@ -74,9 +91,9 @@ function renderItemSelectDT(rowData, selected) {
 // ==================== Visibilidad dinámica de Costo Unitario ==================
 function actualizarVisibilidadCostoUnitarioDT() {
     if (!window.tablaCostosDT) return;
-    const datos = window.tablaCostosDT.rows().data().toArray();
-    const necesita = datos.some(fila => esCategoriaConCostoUnitarioDT(fila.categoria_id));
-    window.tablaCostosDT.column('costo_unitario:name').visible(necesita);
+    // La columna se mantiene siempre visible: al ocultarla dinámicamente,
+    // categorías como TARIFAS no la mostraban hasta tener alguna fila cargada.
+    window.tablaCostosDT.column('costo_unitario:name').visible(true);
 }
 
 // =========================== Lectura de una fila (para guardar) ===============
@@ -317,8 +334,14 @@ async function CargarCostosDT(primeraCarga = false) {
             },
             {
                 data: 'costo_hora', name: 'costo_hora',
-                render: function (data, type) {
-                    const v = toNumber(data);
+                render: function (data, type, row) {
+                    let v = toNumber(data);
+                    if (!Number.isFinite(v)) {
+                        // costo_hora no se persiste en BD (es derivado); si la fila
+                        // viene sin calcular (carga inicial), se deriva de costo_dia.
+                        const dia = toNumber(row.costo_dia);
+                        v = (Number.isFinite(dia) && valorXCostosDT) ? +(dia / valorXCostosDT).toFixed(2) : null;
+                    }
                     if (type === 'display') {
                         const txt = Number.isFinite(v) ? fmtMiles.format(v) : '';
                         return `<span class="costo-hora-auto">${txt}</span>`;

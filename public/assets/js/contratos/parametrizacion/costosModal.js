@@ -29,15 +29,21 @@ function _costoModalPopulateItems(categoriaId, selected) {
     $sel.empty();
     if (!categoriaId) {
         $sel.append('<option value="">-- Primero seleccione una categoría --</option>');
+        $sel.trigger('change');
         return;
     }
     $sel.append('<option value="">-- Seleccione --</option>');
-    const codigos = itemsByCatDT[categoriaId] || [];
+    const codigos = [...(itemsByCatDT[categoriaId] || [])].sort((a, b) => {
+        const nombreA = itemOptionsDT[a]?.nombre || '';
+        const nombreB = itemOptionsDT[b]?.nombre || '';
+        return nombreA.localeCompare(nombreB, 'es');
+    });
     codigos.forEach(cod => {
         const nombre = itemOptionsDT[cod]?.nombre || '';
         $sel.append(`<option value="${cod}"${cod === selected ? ' selected' : ''}>${cod} - ${nombre}</option>`);
     });
     $sel.append(`<option value="${COSTO_MODAL_ITEM_NUEVO}">➕ Crear nuevo ítem…</option>`);
+    $sel.trigger('change');
 }
 
 function _costoModalActualizarVisibilidadUnitario() {
@@ -91,6 +97,12 @@ $(document).ready(function () {
     _costoModalPopulateItems(null, '');
     _costoModalPopulateUnidades('');
     _costoModalBindEvents();
+
+    $('#costo-modal-item').select2({
+        placeholder: '-- Seleccione --',
+        width: '100%',
+        dropdownParent: $('#modal-costo')
+    });
 });
 
 function abrirModalCosto() {
